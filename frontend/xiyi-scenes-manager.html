@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="xiyi-theme.css?v=3">
+  <link rel="stylesheet" href="xiyi-theme.css?v=5">
   <title>场景管理 · 兮易AI大脑</title>
 <style>
 /* scenes-manager 特有样式 */
@@ -34,6 +34,22 @@
 .pagination .page-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .pagination .page-btn:disabled{opacity:0.3;cursor:default}
 .pagination .page-info{font-size:11px;color:var(--muted);margin:0 6px}
+
+/* 场景管理特有 - 覆盖theme.css通用.card */
+.cat-grid{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.cat-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:12px;cursor:pointer;color:var(--text2);background:transparent;transition:all .15s}
+.cat-btn:hover,.cat-btn.active{color:#fff;border-color:var(--blue);background:rgba(59,130,246,0.1)}
+.scene-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.grid .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;overflow:hidden;cursor:pointer;transition:all .15s;margin-bottom:0}
+.grid .card:hover{transform:translateY(-2px);border-color:var(--blue)}
+.grid .card-h{display:flex;gap:12px;padding:16px;align-items:flex-start;border-bottom:none}
+.card-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.card-body{flex:1}
+.card-body .cat{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(59,130,246,0.1);color:var(--blue);margin-bottom:6px}
+.card-body .name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.card-body .desc{font-size:12px;color:var(--text2);line-height:1.5}
+.card-footer{display:flex;gap:12px;padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+
 </style>
 
 </head>
