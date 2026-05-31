@@ -149,7 +149,7 @@ async function showPlanDetail(planId) {
         <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showNewTaskForm(${planId})" style="margin-top:8px">＋ 添加任务</button>
       </div>
     </div>
-    <div class="modal-f"><button class="btn btn-outline" onclick="this.closest(\\'.modal-overlay\\').remove()">关闭</button></div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">关闭</button></div>
   </div>`;
   document.body.appendChild(overlay);
 }
@@ -169,7 +169,7 @@ function showNewPlanForm() {
       <div class="form-group"><label>优先级</label><select class="form-control" id="np_priority"><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></div>
     </div>
     <div class="modal-f">
-      <button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>
+      <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
       <button class="btn btn-primary" onclick="submitNewPlan()">💾 创建</button>
     </div>
   </div>`;
@@ -208,7 +208,7 @@ function showNewTaskForm(planId) {
       <div class="form-group"><label>交付物</label><textarea class="form-control" id="nt_deliverables" rows="2"></textarea></div>
     </div>
     <div class="modal-f">
-      <button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>
+      <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
       <button class="btn btn-primary" onclick="submitNewTask(${planId})">💾 添加</button>
     </div>
   </div>`;
@@ -246,7 +246,7 @@ function showTrackForm(taskId, taskTitle) {
       <div class="form-group"><label>验证人</label><input class="form-control" id="tr_verifier" placeholder="(可选)"></div>
     </div>
     <div class="modal-f">
-      <button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>
+      <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
       <button class="btn btn-primary" onclick="submitTrack(${taskId})">💾 提交跟踪</button>
     </div>
   </div>`;
