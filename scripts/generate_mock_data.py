@@ -10,8 +10,11 @@ pwd = __import__('os').environ.get('XIYI_MYSQL_PASS', '') or \
 conn = pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',password=pwd,database='xiyi_quality')
 cur = conn.cursor()
 
-# 清理旧模拟数据
-cur.execute("TRUNCATE TABLE ds_mock_data")
+# FIXED: P0-6 - TRUNCATE改为DELETE+事务包裹，避免误清CSV导入的真实数据
+# FIXED: P0-7 - 只删除模拟数据(is_mock=1)，保留CSV导入数据(is_mock=0)
+cur.execute("BEGIN")
+cur.execute("DELETE FROM ds_mock_data WHERE is_mock=1")
+cur.execute("COMMIT")
 
 mock_count = 0
 
@@ -37,7 +40,8 @@ for day in range(30):
             'defect_analysis': defect_data,
             'machine_status': random.choice(['normal','normal','normal','warning','normal'])
         }
-        cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(1,%s,'fpy_daily',%s)",
+        # FIXED: P0-7 - 设置is_mock=1标识模拟数据
+        cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(1,%s,'fpy_daily',%s,1)",
             (d, json.dumps(data, ensure_ascii=False)))
         mock_count += 1
 print(f"场景1 FPY合格率: {mock_count}条 (累计)")
@@ -57,7 +61,7 @@ for day in range(30):
             'is_abnormal': is_abnormal,
             'risk_level': 'high' if is_abnormal else ('medium' if mag_value > 2.0 else 'low')
         }
-        cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(2,%s,'mag_health',%s)",
+        cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(2,%s,'mag_health',%s,1)",
             (d, json.dumps(data, ensure_ascii=False)))
         mock_count += 1
 print(f"场景2 磁物健康: {mock_count}条 (累计)")
@@ -76,7 +80,7 @@ for batch in range(20):
         'stock_location': random.choice(['A区-01','A区-05','B区-03','C区-02']),
         'supplier': random.choice(['供应商A','供应商B','供应商C','供应商D']),
     }
-    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(3,%s,'abnormal_stock',%s)",
+    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(3,%s,'abnormal_stock',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
     mock_count += 1
 print(f"场景3 异常料: {mock_count}条 (累计)")
@@ -96,7 +100,7 @@ for item in range(15):
         'reason': random.choice(['订单取消','工艺变更','客户退货','替代料导入','备料过多'])
     }
     data['total_value'] = round(data['qty_kg'] * data['unit_price'], 2)
-    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(4,%s,'dead_stock',%s)",
+    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(4,%s,'dead_stock',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
     mock_count += 1
 print(f"场景4 呆滞库存: {mock_count}条 (累计)")
@@ -121,7 +125,7 @@ for insp in range(50):
     }
     if not is_pass:
         data['disposition'] = random.choice(['退货','让步接收','挑选使用','报废'])
-    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(5,%s,'iqc_record',%s)",
+    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(5,%s,'iqc_record',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
     mock_count += 1
 print(f"场景5 IQC: {mock_count}条 (累计)")
@@ -143,7 +147,7 @@ for day in range(30):
             'machine_id': f'MC-{random.choice(["01","02","03","04","05"])}'
         }
         data['output_qty'] = int(data['input_qty'] * data['fpy'] / 100)
-        cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(6,%s,'pmp_fpy',%s)",
+        cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(6,%s,'pmp_fpy',%s,1)",
             (d, json.dumps(data, ensure_ascii=False)))
         mock_count += 1
 print(f"场景6 PMP: {mock_count}条 (累计)")
@@ -168,7 +172,7 @@ for month in range(6):
     }
     data['total_coq'] = data['internal_loss'] + data['external_loss'] + data['appraisal_cost'] + data['prevention_cost']
     data['coq_rate'] = round(data['total_coq'] / data['sales_amount'] * 100, 2)
-    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json) VALUES(7,%s,'coq_monthly',%s)",
+    cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(7,%s,'coq_monthly',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
     mock_count += 1
 print(f"场景7 COQ: {mock_count}条 (累计)")

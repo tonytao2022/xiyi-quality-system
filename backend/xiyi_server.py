@@ -249,26 +249,27 @@ def list_standards():
 def realtime_kpi():
     import statistics
     with get_cursor() as cur:
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=1 ORDER BY mock_date DESC LIMIT 30")
+        # FIXED: P0-7 - KPI查询只查is_mock=1的模拟数据，排除CSV导入数据
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=1 AND is_mock=1 ORDER BY mock_date DESC LIMIT 30")
         fpy_rows = cur.fetchall()
         fpy_vals = [json.loads(r['data_json'])['fpy'] for r in fpy_rows]
         cur_fpy = round(fpy_vals[0],2) if fpy_vals else 97.5
         avg_fpy = round(statistics.mean(fpy_vals),2) if fpy_vals else 97.5
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=2 ORDER BY mock_date DESC LIMIT 50")
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=2 AND is_mock=1 ORDER BY mock_date DESC LIMIT 50")
         mag = cur.fetchall()
         mag_abn = sum(1 for r in mag if json.loads(r['data_json']).get('is_abnormal'))
         mag_r = round(mag_abn/len(mag)*100,1) if mag else 0
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=3")
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=3 AND is_mock=1")
         abn_all = cur.fetchall()
         abn_pending = sum(1 for r in abn_all if json.loads(r['data_json']).get('status') in ['pending','processing'])
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=5")
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=5 AND is_mock=1")
         iqc_all = cur.fetchall()
         iqc_pass = sum(1 for r in iqc_all if json.loads(r['data_json']).get('result')=='PASS')
         iqc_r = round(iqc_pass/len(iqc_all)*100,1) if iqc_all else 0
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=6")
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=6 AND is_mock=1")
         pmp_all = cur.fetchall()
         pmp_fpy = round(statistics.mean([json.loads(r['data_json'])['fpy'] for r in pmp_all]),2) if pmp_all else 0
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=7 ORDER BY mock_date DESC LIMIT 1")
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=7 AND is_mock=1 ORDER BY mock_date DESC LIMIT 1")
         coq_r = cur.fetchone()
         coq = json.loads(coq_r['data_json'])['coq_rate'] if coq_r else 0
         kpis = [
@@ -506,7 +507,8 @@ def metrics_query():
         cur.execute("SELECT id FROM dg_indicator_atom WHERE indicator_code=%s AND is_active=1", (indicator_code,))
         if not cur.fetchone():
             return api_error(f'指标 {indicator_code} 未注册或已禁用')
-        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=%s ORDER BY mock_date DESC LIMIT %s", (scene_id or 1, limit))
+        # FIXED: P0-7 - 指标查询只查模拟数据
+        cur.execute("SELECT data_json FROM ds_mock_data WHERE scene_id=%s AND is_mock=1 ORDER BY mock_date DESC LIMIT %s", (scene_id or 1, limit))
         return api_success({'rows': [json.loads(r['data_json']) for r in cur.fetchall()]})
 
 @app.route('/api/v1/xiyi/rules/evaluate', methods=['POST'])
@@ -896,8 +898,9 @@ def list_datasources():
 @api_handler
 def create_datasource():
     data = request.get_json()
+    # FIXED: P0-3 - 移除DDL中不存在的sync_frequency/retry_count
     with get_cursor() as cur:
-        cur.execute("INSERT INTO ds_source_connection (source_code,source_name,source_type,host,port,db_name,config_json,sync_frequency,retry_count) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", (data['source_code'], data['source_name'], data.get('source_type','MySQL'), data.get('host',''), data.get('port',3306), data.get('db_name',''), json.dumps(data.get('config',{})), data.get('sync_frequency','daily'), data.get('retry_count',3)))
+        cur.execute("INSERT INTO ds_source_connection (source_code,source_name,source_type,host,port,db_name,config_json) VALUES (%s,%s,%s,%s,%s,%s,%s)", (data['source_code'], data['source_name'], data.get('source_type','MySQL'), data.get('host',''), data.get('port',3306), data.get('db_name',''), json.dumps(data.get('config',{}))))
         return api_success({'id': cur.lastrowid, 'message':'ok'})
 
 @app.route('/api/v1/xiyi/datasources/<int:ds_id>', methods=['GET'])
@@ -914,7 +917,8 @@ def get_datasource(ds_id):
 def update_datasource(ds_id):
     data = request.get_json()
     # FIXED: P0-5 白名单校验,禁止f-string动态拼接列名(防SQL注入)
-    ALLOWED_COLS = {'source_code','source_name','source_type','host','port','db_name','sync_frequency','retry_count','status'}
+    # FIXED: P0-3 - 移除DDL中不存在的sync_frequency/retry_count
+    ALLOWED_COLS = {'source_code','source_name','source_type','host','port','db_name','status'}
     with get_cursor() as cur:
         sets = []
         params = []
@@ -937,9 +941,10 @@ def csv_import():
     reader = csv.DictReader(io.StringIO(f.read().decode('utf-8')))
     rows = [r for r in reader]
     if not rows: return api_error('empty csv')
+    # FIXED: P0-7 - CSV导入数据设置is_mock=0，与模拟数据隔离
     with get_cursor() as cur:
         for row in rows:
-            cur.execute("INSERT INTO ds_mock_data (scene_id,mock_date,data_json) VALUES (%s,%s,%s)", (scene_id, row.get('trade_date',row.get('date','')), json.dumps(row)))
+            cur.execute("INSERT INTO ds_mock_data (scene_id,mock_date,data_json,is_mock) VALUES (%s,%s,%s,0)", (scene_id, row.get('trade_date',row.get('date','')), json.dumps(row)))
     return api_success({'imported': len(rows), 'message': f'{len(rows)}条导入成功'})
 
 # ── Phase 2: 提示词模板 ──
