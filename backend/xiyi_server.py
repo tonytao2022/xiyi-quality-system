@@ -624,9 +624,23 @@ def ai_analysis_run():
             _conn.close()
             _update_progress('metrics_ready', '指标数据已就绪(%d个)' % len(metrics_result), 25)
 
-            _update_progress('calling_llm', '正在调用AI大模型进行分析(约10-30秒)...', 30)
+            _update_progress('calling_llm', '正在加载AI分析提示词...', 30)
             _metrics_summary = '\n'.join(["%s: %s" % (k, v) for k, v in metrics_result.items()])
-            _prompt = "你是一位制造企业品质专员助理。请分析以下品质数据：\n\n场景：%s\n指标数据：%s\n\n请输出：\n1. 当前品质状况评估\n2. 异常指标识别\n3. 建议的4M1E排查方向\n4. 下一步行动计划\n\n请以结构化方式输出。" % (scene_name, _metrics_summary)
+            # 从ag_prompt_template表按scene_id读取提示词
+            try:
+                _pc = _direct_conn()
+                _pcr = _pc.cursor(pymysql.cursors.DictCursor)
+                _pcr.execute("SELECT system_prompt,user_prompt FROM ag_prompt_template WHERE scene_id=%s AND is_active=1 LIMIT 1", (scene_id,))
+                _pt = _pcr.fetchone()
+                _pcr.close(); _pc.close()
+                if _pt:
+                    _sys_prompt = _pt['system_prompt']
+                    _usr_prompt = _pt['user_prompt'].replace('{scene_name}', scene_name).replace('{metrics_data}', _metrics_summary)
+                    _prompt = f"{_sys_prompt}\n\n{_usr_prompt}"
+                else:
+                    _prompt = "请分析以下品质数据：\n\n场景：" + scene_name + "\n指标数据：" + _metrics_summary[:500]
+            except:
+                _prompt = "请分析以下品质数据：\n\n场景：" + scene_name + "\n指标数据：" + _metrics_summary[:500]
             import os as _os
             _env = _os.environ.copy()
             _env['HOME'] = '/root'
