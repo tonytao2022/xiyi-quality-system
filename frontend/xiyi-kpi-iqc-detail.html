@@ -28,6 +28,17 @@ td{padding:6px 10px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2
 tr:hover td{background:rgba(59,130,246,0.03)}
 @media(max-width:768px){.stats,.g2{grid-template-columns:1fr}body{padding:12px}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--muted);opacity:0.7}
+
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--muted);opacity:0.7}
 </head>
 <body>
 <div class="header">
@@ -58,7 +69,7 @@ H += '<div class="card"><div class="card-header">不合格批次明细 (本周)<
   '<tr style="background:rgba(239,68,68,0.04)"><td>RM-A-20251020</td><td>供应商A</td><td>钴酸锂</td><td>粒度D50</td><td style="color:var(--red)">12.8μm</td><td><span style="color:var(--red);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.12)">不合格</span></td></tr>' +
   '<tr style="background:rgba(239,68,68,0.04)"><td>RM-B-20251018</td><td>供应商B</td><td>碳酸锂</td><td>Co含量</td><td style="color:var(--red)">58.2%</td><td><span style="color:var(--red);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.12)">不合格</span></td></tr>' +
   '<tr style="background:rgba(245,158,11,0.04)"><td>RM-C-20251015</td><td>供应商C</td><td>氢氧化锂</td><td>水分</td><td>0.12%</td><td><span style="color:var(--yellow);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.12)">合格(OOT)</span></td></tr>' +
-'</tbody></table></div></div>';
+'</tbody></table><div id="empty-table-xiyi-kpi-iqc-detail" style="display:none"></div></div></div>';
 
 // 分解维度
 H += '<div class="card"><div class="card-header">关联分解维度与数据来源</div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
@@ -135,6 +146,16 @@ setTimeout(function(){
     });
   }
 }, 100);
+</script>
+
+<!-- FIXED: P1-2 空数据判断帮助函数 -->
+<script>
+function renderEmptyState(containerId, msg, hint) {
+  var el = document.getElementById(containerId);
+  if (el) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">📋</span><p>' + (msg||'暂无数据') + '</p><div class="hint">' + (hint||'当前没有可展示的数据，请检查筛选条件或稍后重试') + '</div></div>';
+  }
+}
 </script>
 </body>
 </html>

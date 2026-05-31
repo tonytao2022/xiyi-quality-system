@@ -41,6 +41,12 @@ td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)
 .tb-t{font-size:12px;font-weight:600;color:var(--blue);margin-bottom:4px}.tb-c{font-size:11px;color:var(--text2);line-height:1.6}.tb-c li{margin-bottom:2px}
 @media(max-width:768px){.g4,.g2{grid-template-columns:1fr}body{padding:12px}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--text-muted);opacity:0.7}
+
 </head>
 <body>
 <div class="header"><div><h1>🏚️ 库存呆滞情况跟踪分析 (SIA) · 全景数据分析平台</h1><div style="font-size:12px;color:var(--text2);margin-top:2px">🤖 智能体角色定位：业务方案专家 & 数据分析师</div></div><div><a href="/xiyi-quality-workbench.html" class="btn">←返回</a></div></div>
@@ -83,33 +89,4 @@ H+='<div class="card"><div class="card-header">呆滞库存明细清单<button c
 H+='<tr style="background:rgba(239,68,68,0.04)"><td>NCM811-CUS-002</td><td>定制成品</td><td>10000kg</td><td>85.0</td><td>95天</td><td>客户订单变更</td><td><span class="sb sd">待分析</span></td><td><button class="btn btn-sm btn-primary" onclick="ai(\'NCM811-CUS-002\')">深度分析</button></td></tr>';
 H+='<tr style="background:rgba(245,158,11,0.04)"><td>LCO-RND-005</td><td>研发中试品</td><td>500kg</td><td>35.5</td><td>180天</td><td>研发项目结余</td><td><span class="sb sp">待分析</span></td><td><button class="btn btn-sm btn-primary" onclick="ai(\'LCO-RND-005\')">深度分析</button></td></tr>';
 H+='<tr><td>RM-PRECURSOR-088</td><td>前驱体原料</td><td>8000kg</td><td>40.0</td><td>120天</td><td>安全库存过高</td><td><span class="sb sp">分析中</span></td><td><button class="btn btn-sm">查看</button></td></tr>';
-H+='</tbody></table></div></div></div>';
-
-// Tab2
-H+='<div id="t2" class="tc"><div class="f"><label style="font-size:11px;color:var(--muted)">物料:</label><select id="sel" onchange="ci()" class="fs" style="flex:0 0 250px"><option value="NCM811-CUS-002">NCM811-CUS-002(定制成品)</option><option value="LCO-RND-005">LCO-RND-005(研发中试品)</option></select></div>';
-H+='<div class="ai" id="ai2"><h4>🤖 AI根因分析摘要</h4><p>物料【NCM811-CUS-002】对应订单SO-20250715-001已取消，质量合格，非质量原因呆滞。<b>确认为: 需求侧原因</b></p></div>';
-H+='<div class="g2"><div class="card"><div class="ch2" style="color:var(--blue)">📄 需求与订单追溯(ERP/PLM)</div><div class="card-body np" id="tb2"><ul style="padding-left:16px;margin-top:6px"><li><b>销售订单:</b> SO-20250715-001</li><li><b>客户:</b> 客户B(海外)</li><li><b>状态:</b> <span class="sb sd">已取消(2025-09-01)</span></li><li><b>原因:</b> 客户产品策略调整</li></ul></div></div>';
-H+='<div class="card"><div class="ch2" style="color:var(--green)">🏭 生产与质量追溯(MOM/LIMS)</div><div class="card-body np" id="tb3"><ul style="padding-left:16px;margin-top:6px"><li><b>生产批次:</b> NCM-W29-008</li><li><b>生产日期:</b> 2025-07-20</li><li><b>质量:</b> <span class="sb sc">合格</span></li></ul></div></div></div></div>';
-
-// Tab3
-H+='<div id="t3" class="tc"><div class="ai"><h4>🤖 AI智能解决方案推荐</h4><p>根据呆滞原因【客户订单变更】及物料属性【定制成品】，优先推荐【方案二：转入标准品销售】，处置周期短，价值回收率较高。</p></div>';
-H+='<div class="card"><div class="card-header">请为物料【<span id="bid2">NCM811-CUS-002</span>】选择处置方案</div><div class="card-body">';
-H+='<div class="scard"><div class="sbadge">AI推荐</div><div class="sh" style="color:var(--blue)">🔄 方案一: 转入标准品销售</div><div class="sd2">重新包装检验转为通用标准品销售。<br><b>优点:</b>处置周期短，确定性高。 <b>缺点:</b>可能需要小幅折价。<br><b>预估价值回收率:</b>70%~85% | <b>预估周期:</b><1月<br><button class="btn btn-sm btn-primary" style="margin-top:6px">选择此方案</button></div></div>';
-H+='<div class="scard"><div class="sh" style="color:var(--yellow)">🔀 方案二: 寻找替代客户</div><div class="sd2">市场部尝试寻找有需求的其它客户。<br><b>优点:</b>价值回收率最高。 <b>缺点:</b>周期长不确定性高。<br><b>预估价值回收率:</b>80%~100% | <b>预估周期:</b>>3月<br><button class="btn btn-sm">选择此方案</button></div></div>';
-H+='<div class="scard"><div class="sh" style="color:var(--red)">♻️ 方案三: 报废处置</div><div class="sd2">环保报废处理。<br><b>优点:</b>操作简单快速。 <b>缺点:</b>价值损失巨大。<br><b>预估价值回收率:</b><5% | <b>预估周期:</b>2周<br><button class="btn btn-sm">选择此方案</button></div></div></div></div></div>';
-
-// Tab4
-H+='<div id="t4" class="tc"><div class="g2"><div class="card"><div class="card-header">呆滞库存分析与处置报告</div><div class="card-body"><div class="rp">';
-H+='<h4 style="text-align:center">呆滞库存分析与处置报告</h4><p><b>报告编号:</b> SIA-RPT-20251010-001</p>';
-H+='<h4>1. 呆滞物料信息</h4><ul><li><b>物料编码:</b> <span id="rptB">NCM811-CUS-002</span></li><li><b>呆滞价值:</b> <span id="rptV">85.0</span>万元</li><li><b>库龄:</b> 95天</li></ul>';
-H+='<h4>2. 根因分析</h4><p>确认本次呆滞核心原因为：<strong id="rptR">客户订单变更</strong>。质量检验合格，非质量原因导致呆滞。</p>';
-H+='<h4>3. 选定处置方案</h4><p>基于AI推荐选定：<strong id="rptS">转入标准品销售</strong>。</p><ul><li><b>预期价值回收率:</b>70%~85%</li><li><b>责任部门:</b>销售部</li><li><b>完成时限:</b>一个月内</li></ul>';
-H+='<p style="text-align:right;font-size:11px;color:var(--muted)">分析人: 品质专员(李明)</p></div><div class="ra"><button class="btn btn-primary">⬇️导出PDF</button><button class="btn" style="color:var(--green);border-color:var(--green)">📨提交审批</button></div></div></div>';
-H+='<div class="card"><div class="card-header">处置方案执行跟踪</div><div class="card-body"><div class="al2"><div class="al2i"><div class="ah2">SIA-TASK-035: 处置方案执行</div><div class="am">销售部 | 计划:2025-11-10</div><span class="sb sp">待审批</span></div>';
-H+='<div class="al2i"><div class="ah2">SIA-TASK-034: LCO-HV-008报废</div><div class="am">仓储部 | 完成:2025-10-08</div><span class="sb sc">已完成</span></div></div></div></div></div></div>';
-
-document.getElementById('tc').innerHTML=H;
-drawC1();
-</script>
-</body>
-</html>
+H+='</tbody></table><div id="empty-table-xiyi-full-scene-4-0" style="display:none"></div></div></div></div>

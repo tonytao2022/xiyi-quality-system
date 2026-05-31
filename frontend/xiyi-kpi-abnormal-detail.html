@@ -34,6 +34,17 @@ tr:hover td{background:rgba(59,130,246,0.03)}
 .ah{background:var(--green)}.aw{background:var(--yellow);color:var(--text)}.ad{background:var(--red)}
 @media(max-width:768px){.stats,.g2{grid-template-columns:1fr}body{padding:12px}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--muted);opacity:0.7}
+
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--muted);opacity:0.7}
 </head>
 <body>
 <div class="header">
@@ -71,7 +82,7 @@ H += '<div class="card"><div class="card-header">Top 异常料批次明细</div>
   '<tr style="background:rgba(239,68,68,0.04)"><td>LCO-W39-005</td><td>LCO-HV445钴酸锂</td><td>成品</td><td>45.0</td><td>15天</td><td><span style="color:var(--red);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.12)">待分析</span></td></tr>' +
   '<tr style="background:rgba(245,158,11,0.04)"><td>NCM-W38-012</td><td>NCM811三元</td><td>半成品</td><td>25.5</td><td>35天</td><td><span style="color:var(--yellow);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.12)">分析中</span></td></tr>' +
   '<tr style="background:rgba(239,68,68,0.04)"><td>RM-Co-20250901</td><td>四氧化三钴</td><td>原料</td><td>20.0</td><td>40天</td><td><span style="color:var(--red);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.12)">待分析</span></td></tr>' +
-'</tbody></table></div></div>';
+'</tbody></table><div id="empty-table-xiyi-kpi-abnormal-detail" style="display:none"></div></div></div>';
 
 document.getElementById('content').innerHTML = H;
 
@@ -120,6 +131,16 @@ setTimeout(function(){
     });
   }
 }, 100);
+</script>
+
+<!-- FIXED: P1-2 空数据判断帮助函数 -->
+<script>
+function renderEmptyState(containerId, msg, hint) {
+  var el = document.getElementById(containerId);
+  if (el) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">📋</span><p>' + (msg||'暂无数据') + '</p><div class="hint">' + (hint||'当前没有可展示的数据，请检查筛选条件或稍后重试') + '</div></div>';
+  }
+}
 </script>
 </body>
 </html>

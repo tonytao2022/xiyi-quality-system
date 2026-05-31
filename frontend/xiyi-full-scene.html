@@ -78,6 +78,12 @@ tr.correlation-highlight td{background:rgba(245,158,11,0.04)}
 .scenario-summary-title{font-size:13px;color:var(--color-hold);padding:10px 16px;background:rgba(59,130,246,0.05);border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
 @media(max-width:768px){body{padding:12px}.grid-4{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}.fpy-tabs{overflow-x:auto;flex-wrap:nowrap}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--text-muted);opacity:0.7}
+
 </head>
 <body>
 <div class="header">
@@ -238,78 +244,4 @@ function renderTab2() {
     '<tr><td>LCO-W40-003</td><td>粒度 (D50)</td><td style="color:var(--color-warning)">12.5 μm</td><td>15.0 μm ± 1.0 μm</td><td style="color:var(--color-warning)">-16.67%</td><td>2025-10-10 10:20</td><td><button class="btn btn-sm">详情</button></td></tr>' +
     '<tr class="correlation-highlight"><td>LCO-W40-002</td><td>磁物总量 (Fe+Cr+Ni)</td><td style="color:var(--color-defect)">65 ppm</td><td>&lt; 50 ppm</td><td style="color:var(--color-defect)">+30.00%</td><td>2025-10-10 09:30</td><td><button class="btn btn-sm btn-primary" onclick="switchTab(\'tab-correlation\')">关联分析</button></td></tr>' +
     '<tr><td>LCO-W40-001</td><td>ICP (Co含量)</td><td style="color:var(--color-warning)">58.8%</td><td>59.5% ± 0.5%</td><td style="color:var(--color-warning)">-1.17%</td><td>2025-10-10 08:45</td><td><button class="btn btn-sm">详情</button></td></tr>' +
-    '</table></div></div></div>';
-}
-
-// ═══ Tab3: 关联性深度分析 ═══
-function renderTab3() {
-  return '<div id="tab-correlation" class="fpy-tab-content">' +
-    '<div class="ai-summary-box">' +
-      '<h4>🤖 AI关联性分析摘要 (全景数据分析师)</h4>' +
-      '<p>智能体已自动提取不合格批次数据，并根据不合格类型，自动关联MOM系统中的原料投入批次、配比关系、工艺参数，以及MES系统中的设备维修、保养数据。识别出两大类核心关联因素：</p>' +
-      '<ul><li><strong>ICP/粒度异常 (影响占比 65%):</strong> 主要集中在LCO-W40批次，强关联至原料批次RM-Co-20251005及其配比参数。</li>' +
-      '<li><strong>磁物异常 (影响占比 25%):</strong> 主要出现在产线B，强关联至2#烧结炉的近期维保记录和原料磁物数据。</li></ul>' +
-    '</div>' +
-    '<div class="card"><div class="correlation-header" style="color:var(--color-defect)">🧪 场景一：ICP/粒度异常与原料批次/配比关联分析 (物料继承关系追溯)</div><div class="card-body"><p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">分析对象：LCO-W40-003批次 (ICP Co含量偏低 58.2%)</p>' +
-    '<div class="grid-2">' +
-      '<div><h5 style="font-size:13px;margin-bottom:6px">关联原料批次追溯 (IQC数据)</h5>' +
-      '<table><tr><th>原料类型</th><th>批次号</th><th>供应商</th><th>IQC关键指标</th><th>关联度</th></tr>' +
-      '<tr class="correlation-critical"><td>钴酸锂前驱体</td><td>RM-Co-20251005</td><td>供应商A</td><td>Co: 59.0% (偏低)</td><td style="color:var(--color-defect)">95%</td></tr>' +
-      '<tr><td>碳酸锂</td><td>RM-Li-20251001</td><td>供应商B</td><td>Li: 18.5% (正常)</td><td>30%</td></tr></table></div>' +
-      '<div><h5 style="font-size:13px;margin-bottom:6px">原料配比与制造过程数据 (MOM)</h5>' +
-      '<table><tr><th>参数名称</th><th>设定值 (SOP)</th><th>实际值</th><th>偏差</th></tr>' +
-      '<tr><td>钴前驱体投料量</td><td>1000 kg</td><td>998.5 kg</td><td>-0.15%</td></tr>' +
-      '<tr class="correlation-highlight"><td>混合时间</td><td>120 min</td><td style="color:var(--color-warning)">105 min</td><td style="color:var(--color-warning)">-12.5%</td></tr>' +
-      '<tr><td>混合转速</td><td>500 rpm</td><td>505 rpm</td><td>+1.0%</td></tr></table></div>' +
-    '</div></div></div>' +
-    '<div class="card"><div class="correlation-header" style="color:var(--color-warning)">🧲 场景二：磁物异常与设备/原料磁物关联分析</div><div class="card-body"><p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">分析对象：LCO-W40-002批次 (磁物总量超标 65 ppm)</p>' +
-    '<div class="grid-2">' +
-      '<div><h5 style="font-size:13px;margin-bottom:6px">设备维修/保养关联 (MES集成)</h5>' +
-      '<table><tr><th>关联设备</th><th>事件类型</th><th>发生时间</th><th>描述</th><th>关联度</th></tr>' +
-      '<tr class="correlation-critical"><td>2# 烧结炉 (Sinter-02)</td><td>非计划停机</td><td>2025-10-09 14:00</td><td>内壁耐火材料局部脱落修复</td><td style="color:var(--color-defect)">88%</td></tr>' +
-      '<tr><td>除磁器 (MagSep-05)</td><td>定期保养</td><td>2025-10-08 08:00</td><td>磁棒清洁与效能检测</td><td>45%</td></tr></table></div>' +
-      '<div><h5 style="font-size:13px;margin-bottom:6px">原料磁物数据追溯 (IQC)</h5>' +
-      '<table><tr><th>原料批次</th><th>Fe (ppm)</th><th>Cr (ppm)</th><th>Ni (ppm)</th><th>IQC判定</th></tr>' +
-      '<tr class="correlation-highlight"><td>RM-Co-20251005</td><td>25</td><td>5</td><td>10</td><td style="color:var(--color-warning)">合格 (接近上限)</td></tr>' +
-      '<tr><td>RM-Li-20251001</td><td>10</td><td>2</td><td>5</td><td style="color:var(--color-bear)">合格</td></tr></table></div>' +
-    '</div></div></div></div>';
-}
-
-// ═══ Tab4: 报告与改善行动 ═══
-function renderTab4() {
-  return '<div id="tab-reporting" class="fpy-tab-content">' +
-    '<div class="grid-2">' +
-      '<div class="card"><div class="card-header">一次检验合格率异常分析报告 (自动生成预览)</div>' +
-      '<div class="card-body"><div class="report-preview">' +
-        '<h4 style="text-align:center;">报告摘要 (2025年10月10日)</h4>' +
-        '<p>本报告针对近期LCO产线FPY从98.5%下降至97.5%的异常情况进行分析。</p>' +
-        '<h4>1. 核心问题与根因定位</h4>' +
-        '<p>通过对MOM、LIMS、SCADA数据的集成分析，确定了导致FPY下降的主要原因：</p>' +
-        '<ul><li><strong>主因 (65%):</strong> 供应商A提供的钴酸锂前驱体批次(RM-Co-20251005)Co含量偏低，结合混合时间不足(-12.5%)，导致成品ICP检测不合格。</li>' +
-        '<li><strong>次因 (25%):</strong> 2#烧结炉内壁耐火材料修复后，未充分清洁，导致生产过程中引入外部磁物，造成磁物总量超标。</li></ul>' +
-        '<h4>2. 影响范围评估</h4>' +
-        '<p>预计影响LCO-W40批次共计5吨产品，需进行隔离复检或降级处理。</p>' +
-        '<h4>3. 建议的纠正与预防措施 (CAPA)</h4>' +
-        '<ul><li><strong>[纠正]</strong> 立即停用RM-Co-20251005批次原料，并通知SQE启动供应商审核。</li>' +
-        '<li><strong>[纠正]</strong> 对2#烧结炉进行深度清洁和首件确认(FAI)。</li>' +
-        '<li><strong>[预防]</strong> 强化MOM系统对混合时间的防呆控制，低于SOP设定值自动报警并锁定设备。</li></ul>' +
-        '<p style="text-align:right;color:var(--text-muted);font-size:12px">分析人：品质专员 (李明) / 智能体辅助分析</p>' +
-      '</div>' +
-      '<div class="report-actions" style="padding:0 16px 16px">' +
-        '<button class="btn"><span>✏️</span> 编辑报告</button>' +
-        '<button class="btn btn-primary"><span>⬇️</span> 导出完整报告 (PDF/Word)</button>' +
-        '<button class="btn" style="color:var(--color-bear);border-color:var(--color-bear)"><span>📨</span> 提交技术管理经理审批</button>' +
-      '</div></div></div>' +
-      '<div class="card"><div class="card-header">改善措施跟踪 (CAPA)</div><div class="card-body">' +
-      '<div class="action-timeline">' +
-        '<div class="action-item"><div class="action-header">CAPA-2025-051: 2#烧结炉清洁与FAI</div><div class="action-meta">负责人: 设备部张工 | 计划完成: 2025-10-11</div><span class="status-badge status-inprogress">进行中 (30%)</span></div>' +
-        '<div class="action-item"><div class="action-header">CAPA-2025-052: 供应商原料质量复核</div><div class="action-meta">负责人: SQE王经理 | 计划完成: 2025-10-15</div><span class="status-badge status-pending">待启动</span></div>' +
-        '<div class="action-item"><div class="action-header">CAPA-2025-045: 混合工序防呆系统升级</div><div class="action-meta">负责人: IT部刘主管 | 计划完成: 2025-10-08</div><span class="status-badge status-completed">已完成</span></div>' +
-      '</div></div></div>' +
-    '</div></div>';
-}
-
-renderAll();
-</script>
-</body>
-</html>
+    '</table><div id="empty-table-xiyi-full-scene-0" style="display:none"></div></div></div></div>

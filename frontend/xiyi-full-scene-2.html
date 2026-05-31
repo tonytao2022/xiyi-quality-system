@@ -62,6 +62,12 @@ tr:hover td{background:rgba(59,130,246,0.03)}
 .mm-nn{font-size:11px;color:var(--text2)}.mm-nv{font-size:18px;font-weight:700;margin-top:2px}
 @media(max-width:768px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}body{padding:12px}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--text-muted);opacity:0.7}
+
 </head>
 <body>
 <div class="header">
@@ -133,121 +139,5 @@ tr:hover td{background:rgba(59,130,246,0.03)}
 <tr style="background:rgba(245,158,11,0.04)"><td>3</td><td>Sinter-03</td><td>烧结</td><td style="color:var(--yellow)">45</td><td>9.0%</td><td><span class="sb badge-w">需关注</span></td><td><button class="btn btn-sm btn-primary" onclick="ae('Sinter-03',45)">关联分析</button></td></tr>
 <tr style="background:rgba(245,158,11,0.04)"><td>4</td><td>Mixer-02</td><td>混合</td><td style="color:var(--yellow)">38</td><td>7.6%</td><td><span class="sb badge-w">需关注</span></td><td><button class="btn btn-sm btn-primary" onclick="ae('Mixer-02',38)">关联分析</button></td></tr>
 <tr><td>5</td><td>Sinter-01</td><td>烧结</td><td>30</td><td>6.0%</td><td><span class="sb badge-h">健康</span></td><td><button class="btn btn-sm">查看</button></td></tr>
-</tbody></table></div></div>
+</tbody></table><div id="empty-table-xiyi-full-scene-2-0" style="display:none"></div></div></div>
 </div>
-
-<!--==== Tab3 设备维保关联分析 ====-->
-<div id="t3" class="fpy-tab-content">
-<div class="filters">
-<label style="font-size:12px;color:var(--muted)">当前分析设备:</label>
-<select id="eq" onchange="ce()" style="padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px">
-<option value="Sinter-02|58">Sinter-02 (烧结炉)</option>
-<option value="Crusher-02|52">Crusher-02 (粉碎机)</option>
-</select>
-</div>
-<div class="ai-box"><h4>🤖 AI关联性分析结论</h4><p id="aiT">【Sinter-02】10月9日的非计划维修(内壁耐火材料修复)与磁物激增存在强关联(相关系数0.85)。</p></div>
-<div class="card"><div class="corr-hd" style="color:var(--red)">🔧 1. 设备维修/保养记录关联(MES集成)</div>
-<div class="card-body nopad"><table><thead><tr><th>时间</th><th>事件类型</th><th>描述</th><th>执行人</th><th>关联度</th></tr></thead>
-<tbody id="eam">
-<tr style="background:rgba(239,68,68,0.04)"><td>2025-10-09 14:00</td><td>非计划维修</td><td>内壁耐火材料局部脱落修复</td><td>设备部张工</td><td style="color:var(--red)">0.85(强关联)</td></tr>
-<tr><td>2025-10-01 08:00</td><td>季度保养</td><td>加热元件检查与清洁</td><td>设备部李工</td><td>0.21(弱关联)</td></tr>
-</tbody></table></div></div>
-<div class="card"><div class="corr-hd" style="color:var(--yellow)">🧪 2. 产品复测记录关联(LIMS集成)</div>
-<div class="card-body nopad"><table><thead><tr><th>批次号</th><th>时间</th><th>初测(PPM)</th><th>复测(PPM)</th><th>结论</th></tr></thead>
-<tbody id="rt">
-<tr style="background:rgba(245,158,11,0.04)"><td>LCO-W41-005</td><td>10/10 10:00</td><td>65</td><td>58</td><td style="color:var(--yellow)">确认超标(改善不明显)</td></tr>
-<tr style="background:rgba(239,68,68,0.04)"><td>LCO-W40-012(维修后首批)</td><td>10/09 18:00</td><td>72</td><td>N/A</td><td style="color:var(--red)">确认超标</td></tr>
-</tbody></table></div></div>
-<div class="card"><div class="card-header">📈 3. 时间序列关联分析图(维修事件影响)</div>
-<div class="card-body"><div class="chart-box"><canvas id="c4"></canvas></div></div></div>
-</div>
-
-<!--==== Tab4 分析报告与改善 ====-->
-<div id="t4" class="fpy-tab-content">
-<div class="grid-2">
-<div class="card"><div class="card-header">磁物健康地图分析报告(W41周报预览)</div>
-<div class="card-body"><div class="report-preview">
-<h4 style="text-align:center">磁物监控周报(2025年 W41)</h4>
-<h4>1. 总体概览</h4><p>本周平均磁物总量35.2 PPM，环比上周上升5.1 PPM。超标(>50ppm)批次占比8.5%，呈上升趋势，需重点关注。</p>
-<h4>2. 高风险设备定位</h4><p>通过磁物健康地图和贡献度柏拉图分析，定位出两台高风险设备：</p>
-<ul><li><strong>Sinter-02(2#烧结炉):</strong> 平均磁物58 PPM，贡献度约35%。</li><li><strong>Crusher-02(2#粉碎机):</strong> 平均磁物52 PPM，贡献度约30%。</li></ul>
-<h4>3. 关联性分析与根因</h4>
-<ul><li><strong>Sinter-02:</strong> 强关联至10月9日的非计划维修(内壁耐火材料修复)，维修过程引入外部污染物。</li><li><strong>Crusher-02:</strong> 强关联至10月5日的研磨介质更换，新批次介质磁物水平偏高。</li></ul>
-<h4>4. 建议的改善措施(CAPA)</h4>
-<ul><li><strong>[P0]</strong> 立即对Sinter-02进行停机深度清洁，执行FAI。</li><li><strong>[P1]</strong> 复核新批次研磨介质(ZRM-1005)的IQC数据。</li><li><strong>[P2]</strong> 强化设备维修后的清洁SOP和验收流程。</li></ul>
-<p style="text-align:right;color:var(--muted);font-size:12px">分析人：品质专员(李明) / 智能体辅助分析</p>
-</div>
-<div class="report-actions">
-<button class="btn">✏️ 编辑报告</button>
-<button class="btn btn-primary">⬇️ 导出PDF</button>
-<button class="btn" style="color:var(--green);border-color:var(--green)">📨 提交审批</button>
-</div></div></div>
-<div class="card"><div class="card-header">磁物改善专项跟踪</div>
-<div class="card-body"><div class="al">
-<div class="al-item"><div class="al-h">MHM-A-081: Sinter-02停机清洁与FAI</div><div class="al-m">设备部张工 | 计划: 2025-10-12</div><span class="sb sb-pd">待启动(P0)</span></div>
-<div class="al-item"><div class="al-h">MHM-A-082: 研磨介质ZRM-1005复核</div><div class="al-m">技术部刘经理 | 计划: 2025-10-15</div><span class="sb sb-pd">待启动(P1)</span></div>
-<div class="al-item"><div class="al-h">MHM-A-075: 除磁器效能提升改造</div><div class="al-m">设备部李工 | 完成: 2025-10-05</div><span class="sb sb-cp">已完成</span></div>
-</div></div></div>
-</div>
-</div>
-</div>
-
-<script>
-Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='rgba(30,45,74,0.5)';
-Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
-var cH={};
-
-function sw(t){document.querySelectorAll('.fpy-tab-item').forEach(function(e){e.classList.toggle('active',e.dataset.tab===t)});
-document.querySelectorAll('.fpy-tab-content').forEach(function(e){e.classList.toggle('active',e.id===t)});setTimeout(function(){drawAll();},100);}
-
-function ae(n,v){var s=document.getElementById('eq');if(s)s.value=n+'|'+v;ce();sw('t3');setTimeout(function(){drawChart4();},200);}
-
-function ce(){var s=document.getElementById('eq');if(!s)return;
-var p=s.value.split('|'),n=p[0],v=p[1],si=n.includes('Sinter');
-document.getElementById('aiT').innerHTML=si?'【'+n+'】10月9日非计划维修(内壁修复)与磁物激增存在强关联(相关系数0.85)。':'【'+n+'】10月5日研磨介质更换与磁物水平上升有关(相关系数0.78)。';
-document.getElementById('eam').innerHTML=si?'<tr style="background:rgba(239,68,68,0.04)"><td>2025-10-09 14:00</td><td>非计划维修</td><td>内壁耐火材料局部脱落修复</td><td>设备部张工</td><td style="color:var(--red)">0.85(强关联)</td></tr><tr><td>2025-10-01 08:00</td><td>季度保养</td><td>加热元件检查与清洁</td><td>设备部李工</td><td>0.21(弱关联)</td></tr>':'<tr style="background:rgba(239,68,68,0.04)"><td>2025-10-05 10:00</td><td>耗材更换</td><td>研磨介质更换(批次ZRM-1005)</td><td>生产部王班长</td><td style="color:var(--red)">0.78(强关联)</td></tr>';
-document.getElementById('rt').innerHTML=si?'<tr style="background:rgba(245,158,11,0.04)"><td>LCO-W41-005</td><td>10/10 10:00</td><td>65</td><td>58</td><td style="color:var(--yellow)">确认超标(改善不明显)</td></tr><tr style="background:rgba(239,68,68,0.04)"><td>LCO-W40-012</td><td>10/09 18:00</td><td>72</td><td>N/A</td><td style="color:var(--red)">确认超标</td></tr>':'<tr style="background:rgba(245,158,11,0.04)"><td>NCM-W40-008</td><td>10/05 15:00</td><td>55</td><td>52</td><td style="color:var(--yellow)">确认超标</td></tr>';
-drawChart4();}
-
-function drawAll(){Object.keys(cH).forEach(function(k){if(cH[k])cH[k].destroy()});cH={};
-drawChart1();drawChart2();drawChart3();drawChart4();}
-
-function drawChart1(){var e=document.getElementById('c1');if(!e)return;
-cH.c1=new Chart(e,{type:'line',data:{labels:Array.from({length:12},function(_,i){return 'W'+(30+i)}),
-datasets:[{label:'平均磁物(PPM)',data:[25.1,28.5,26.2,30.5,29.8,31.2,28.0,29.5,30.8,30.1,35.2,34.8],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:0.4,fill:true},
-{label:'UCL 50 PPM',data:Array(12).fill(50),borderColor:'#ef4444',borderWidth:2,borderDash:[5,5],pointRadius:0}]},
-options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{min:0,max:60,title:{display:true,text:'PPM'}}}}})}
-
-function drawChart2(){var e=document.getElementById('c2');if(!e)return;
-var lb=['0-10ppm','10-20ppm','20-30ppm','30-40ppm','40-50ppm','>50ppm'];
-cH.c2=new Chart(e,{type:'bar',data:{labels:lb,datasets:[{label:'上周(W40)%',data:[15,30,25,15,10,5],backgroundColor:'#64748b'},
-{label:'本周(W41)%',data:[10,25,20,20,15,10],backgroundColor:lb.map(function(_,i){return i===5?'#ef4444':'#3b82f6'})}]},
-options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,title:{display:true,text:'批次占比(%)'}}}}})}
-
-function drawChart3(){var e=document.getElementById('c3');if(!e)return;
-var lb=['Sinter-02','Crusher-02','Mixer-02','Sinter-03','Crusher-01','其他'],da=[35,30,15,10,5,5],cum=0,cd=da.map(function(v){cum+=v;return cum});
-cH.c3=new Chart(e,{type:'bar',data:{labels:lb,datasets:[{label:'贡献度(%)',data:da,backgroundColor:'#3b82f6',yAxisID:'y'},
-{label:'累计贡献度(%)',data:cd,type:'line',borderColor:'#ef4444',tension:0.3,yAxisID:'y1'}]},
-options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
-scales:{y:{position:'left',title:{display:true,text:'%'},max:100,beginAtZero:true},
-y1:{position:'right',grid:{drawOnChartArea:false},min:0,max:100}}}})}
-
-function drawChart4(){var e=document.getElementById('c4');if(!e)return;
-var s=document.getElementById('eq'),is=s?s.value.includes('Sinter'):true;
-var lb=is?['10/5','10/6','10/7','10/8','10/9','10/10','10/11']:['10/2','10/3','10/4','10/5','10/6','10/7','10/8'];
-var da=is?[30,32,28,35,72,65,58]:[30,32,28,55,52,48,50],ei=is?4:3;
-if(cH.c4){cH.c4.destroy();delete cH.c4}
-cH.c4=new Chart(e,{type:'line',data:{labels:lb,datasets:[{label:'磁物水平(PPM)',data:da,borderColor:'#3b82f6',tension:0.2,
-pointBackgroundColor:lb.map(function(_,i){return i>=ei?'#ef4444':'#3b82f6'}),
-pointRadius:lb.map(function(_,i){return i===ei?8:5})}]},
-options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{min:0,max:80,title:{display:true,text:'PPM'}}}},
-plugins:[{id:'evt',afterDraw:function(ch){var x=ch.scales.x.getPixelForValue(ei);
-if(x&&x>0&&x<ch.width){var cx=ch.ctx;cx.save();cx.beginPath();cx.moveTo(x,ch.scales.y.top);cx.lineTo(x,ch.scales.y.bottom);
-cx.lineWidth=2;cx.strokeStyle='#ef4444';cx.setLineDash([5,5]);cx.stroke();
-cx.fillStyle='#ef4444';cx.font='bold 11px sans-serif';
-cx.fillText(is?'维修事件(10/9)':'介质更换(10/5)',x+5,ch.scales.y.top+20);cx.restore();}}}]})}
-
-setTimeout(function(){drawAll();},200);
-</script>
-</body>
-</html>

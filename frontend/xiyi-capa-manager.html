@@ -57,6 +57,14 @@ body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg)
 .form-control:focus{border-color:var(--color-hold)}
 select.form-control{cursor:pointer}
 </style>
+<!-- FIXED: P2-4 前端分页控件样式 -->
+.pagination{display:flex;justify-content:center;align-items:center;gap:4px;padding:12px 0}
+.pagination .page-btn{padding:4px 10px;border:1px solid var(--border-color);border-radius:4px;font-size:11px;cursor:pointer;color:var(--text-secondary);background:transparent;transition:all .15s}
+.pagination .page-btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.pagination .page-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
+.pagination .page-btn:disabled{opacity:0.3;cursor:default}
+.pagination .page-info{font-size:11px;color:var(--text-muted);margin:0 6px}
+
 </head>
 <body>
 
@@ -259,6 +267,43 @@ async function submitTrack(taskId) {
 }
 
 loadCAPA();
+</script>
+
+<!-- FIXED: P2-4 前端分页帮助函数 -->
+<script>
+var PAGE_SIZE = 20;
+
+function paginateItems(items, page) {
+  var totalPages = Math.ceil(items.length / PAGE_SIZE) || 1;
+  page = Math.max(1, Math.min(page, totalPages));
+  var start = (page - 1) * PAGE_SIZE;
+  var end = Math.min(start + PAGE_SIZE, items.length);
+  var pageItems = items.slice(start, end);
+  return { items: pageItems, page: page, totalPages: totalPages, start: start, end: end, total: items.length };
+}
+
+function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  
+  var html = '<div class="pagination">';
+  html += '<button class="page-btn" onclick="'+onPageChange+'('+(currentPage-1)+')" '+(currentPage<=1?'disabled':'')+'>‹</button>';
+  
+  var startP = Math.max(1, currentPage - 2);
+  var endP = Math.min(totalPages, currentPage + 2);
+  
+  if (startP > 1) { html += '<button class="page-btn" onclick="'+onPageChange+'(1)">1</button>'; if (startP > 2) html += '<span class="page-info">...</span>'; }
+  for (var p = startP; p <= endP; p++) {
+    html += '<button class="page-btn '+(p===currentPage?'active':'')+'" onclick="'+onPageChange+'('+p+')">'+p+'</button>';
+  }
+  if (endP < totalPages) { if (endP < totalPages - 1) html += '<span class="page-info">...</span>'; html += '<button class="page-btn" onclick="'+onPageChange+'('+totalPages+')">'+totalPages+'</button>'; }
+  
+  html += '<button class="page-btn" onclick="'+onPageChange+'('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>›</button>';
+  html += '<span class="page-info">' + (currentPage) + '/' + totalPages + '</span>';
+  html += '</div>';
+  el.innerHTML = html;
+}
 </script>
 </body>
 </html>

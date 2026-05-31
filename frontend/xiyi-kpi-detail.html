@@ -34,6 +34,17 @@ tr:hover td{background:rgba(59,130,246,0.03)}
 .dims .it .dl{font-size:10px;color:var(--muted);margin-bottom:2px}
 @media(max-width:768px){.triple,.grid-2{grid-template-columns:1fr}body{padding:12px}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--muted);opacity:0.7}
+
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--muted);opacity:0.7}
 </head>
 <body>
 <div class="header">
@@ -97,7 +108,7 @@ H += '<div class="card"><div class="card-header">本周磁物异常设备明细 
   '<tr style="background:rgba(245,158,11,0.04)"><td>除磁器 (MagSep-05)</td><td>除磁</td><td style="color:var(--yellow)">6</td><td>14%</td><td>→ 持平</td></tr>' +
   '<tr><td>混合机 (Mixer-02)</td><td>混合</td><td>5</td><td>12%</td><td>→ 持平</td></tr>' +
   '<tr><td>粉碎机 (Crusher-01)</td><td>粉碎</td><td>3</td><td>7%</td><td>↓ 下降</td></tr>' +
-'</tbody></table></div></div>';
+'</tbody></table><div id="empty-table-xiyi-kpi-detail" style="display:none"></div></div></div>';
 
 document.getElementById('content').innerHTML = H;
 
@@ -135,5 +146,15 @@ setTimeout(function(){
 }, 100);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- FIXED: P1-2 空数据判断帮助函数 -->
+<script>
+function renderEmptyState(containerId, msg, hint) {
+  var el = document.getElementById(containerId);
+  if (el) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">📋</span><p>' + (msg||'暂无数据') + '</p><div class="hint">' + (hint||'当前没有可展示的数据，请检查筛选条件或稍后重试') + '</div></div>';
+  }
+}
+</script>
 </body>
 </html>

@@ -40,6 +40,12 @@ td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)
 .al2{padding:4px 0}.al2i{padding:8px 0;border-bottom:1px solid var(--border)}.al2i .ah2{font-size:12px;font-weight:600}.am{font-size:10px;color:var(--muted)}
 @media(max-width:768px){.g4,.g2,.g1f2{grid-template-columns:1fr}body{padding:12px}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--text-muted);opacity:0.7}
+
 </head>
 H+='<tr class="cr"><td>烧结工序报废(磁物超标)</td><td>报废</td><td>66.5</td><td>NCM811/5批</td><td>过程磁物合格率97.5%</td><td><button class="btn btn-sm btn-danger" data-item="Sinter_Scrap_Mag" onclick="as(this.dataset.item)">深度关联</button></td></tr>';
 <div class="header"><div><h1>💰 全业务质量损失成本 (COQ) 分析平台 · 全景数据分析平台</h1><div style="font-size:12px;color:var(--text2);margin-top:2px">🤖 智能体角色定位：全景数据分析师 — MOM/MES全流程数据集成与COQ优化</div></div><div><a href="/xiyi-quality-workbench.html" class="btn">←返回</a></div></div>
@@ -96,29 +102,4 @@ H+='<div class="card"><div class="card-header">Top 10 质量损失明细清单(M
 H+='<tr class="cr"><td>烧结工序报废(磁物超标)</td><td>报废</td><td>66.5</td><td>NCM811/5批</td><td>过程磁物合格率97.5%</td><td><button class="btn btn-sm btn-danger" data-item="Sinter_Scrap_Mag" onclick="as(this.dataset.item)">深度关联</button></td></tr>';
 H+='<tr class="cr"><td>混料工序返工(成分偏离)</td><td>返工</td><td>34.3</td><td>NCM811/12批</td><td>混料均匀性C.V.3.5%</td><td><button class="btn btn-sm btn-danger" data-item="Mix_Rework_Comp" onclick="as(this.dataset.item)">深度关联</button></td></tr>';
 H+='<tr class="cw"><td>成品复测(客户标准)</td><td>复测</td><td>10.1</td><td>NCM811/8批</td><td>一次检验合格率98.8%</td><td><button class="btn btn-sm">查看</button></td></tr>';
-H+='</tbody></table></div></div></div>';
-
-// TAB3
-H+='<div id="t3" class="tc"><div class="f"><label style="font-size:11px;color:var(--muted)">当前分析痛点:</label><select id="coqSel" onchange="as(this.value)" class="fs" style="flex:0 0 350px"><option value="Sinter_Scrap_Mag">烧结工序报废(磁物超标)</option><option value="Mix_Rework_Comp">混料工序返工(成分偏离)</option></select></div>';
-H+='<div class="ai-w" id="aiT3"><h4>🤖 AI关联性分析与改善意见</h4><p>报废成本与PMP合格率强负相关(R²=0.82)，与2#烧结炉返工率强正相关(R²=0.75)。<b>根因: 返工料引入磁物</b></p></div>';
-H+='<div class="card"><div class="ch2" style="color:var(--red)" id="tbTit">🔗 关联分析：烧结工序报废(磁物超标)</div>';
-H+='<div class="card-body"><div class="g2"><div class="card"><div class="card-header">报废成本vs过程磁物合格率(时间序列)</div><div class="card-body"><div class="ch"><canvas id="c4b"></canvas></div></div></div>';
-H+='<div class="card"><div class="card-header">报废成本vs2#烧结炉返工率(回归)</div><div class="card-body"><div class="ch"><canvas id="c5"></canvas></div></div></div></div></div></div></div>';
-
-// TAB4
-H+='<div id="t4" class="tc"><div class="g2"><div class="card"><div class="card-header">质量损失成本分析报告(自动生成)</div>';
-H+='<div class="card-body"><div class="rp"><h4 style="text-align:center">COQ分析周报-厦门基地(W42)</h4>';
-H+='<h4>1. 总体概览</h4><p>本周厦门基地总损失120.5万元，环比+15.2%。内部损失105.8万占87.8%。</p>';
-H+='<h4>2. 核心痛点与根因定位</h4><p><span id="rptR">烧结工序报废(磁物超标)占内部损失55.2%。强关联至2#烧结炉返工料及维修污染。</span></p>';
-H+='<h4>3. 改善意见与CAPA</h4><ul><li id="capa1"><b>[P0]</b> 暂停高磁物返工料投入，停机检修</li><li id="capa2"><b>[P1]</b> 建立返工料磁物前置检测流程</li></ul>';
-H+='<p style="text-align:right;font-size:11px;color:var(--muted)">品质专员(李明)/智能体辅助分析</p></div>';
-H+='<div class="ra"><button class="btn">✏️编辑</button><button class="btn btn-primary">⬇️PDF</button><button class="btn" style="color:var(--green);border-color:var(--green)">📨提交品管部经理</button></div></div></div>';
-H+='<div class="card"><div class="card-header">专项改善行动跟踪(CAPA)</div><div class="card-body"><div class="al2"><div class="al2i"><div class="ah2">COQ-A-001: 2#烧结炉返工料专项改善(P0)</div><div class="am">生产部王经理 | 计划:2025-10-23</div><span class="sb sp">待启动</span></div>';
-H+='<div class="al2i"><div class="ah2">COQ-A-002: 返工料磁物前置检测SOP(P1)</div><div class="am">技术部刘工 | 计划:2025-10-28</div><span class="sb sp">待启动</span></div>';
-H+='<div class="al2i"><div class="ah2">COQ-A-000: 外部客户投诉8D报告</div><div class="am">品质部李工 | 完成:2025-10-18</div><span class="sb sc">已完成</span></div></div></div></div></div></div>';
-
-document.getElementById('tc').innerHTML=H;
-drawC1();
-</script>
-</body>
-</html>
+H+='</tbody></table><div id="empty-table-xiyi-full-scene-7-1" style="display:none"></div></div></div></div>

@@ -54,6 +54,14 @@ select.form-control{cursor:pointer}
 .modal-f{padding:10px 18px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end}
 .empty{text-align:center;padding:30px;color:var(--text-muted);font-size:13px}
 </style>
+<!-- FIXED: P2-4 前端分页控件样式 -->
+.pagination{display:flex;justify-content:center;align-items:center;gap:4px;padding:12px 0}
+.pagination .page-btn{padding:4px 10px;border:1px solid var(--border-color);border-radius:4px;font-size:11px;cursor:pointer;color:var(--text-secondary);background:transparent;transition:all .15s}
+.pagination .page-btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.pagination .page-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
+.pagination .page-btn:disabled{opacity:0.3;cursor:default}
+.pagination .page-info{font-size:11px;color:var(--text-muted);margin:0 6px}
+
 </head>
 <body>
 <div class="layout">
@@ -143,27 +151,36 @@ function switchSubTab(name) {
 }
 
 // ─── 场景列表 ───
+// FIXED: P2-4 场景列表分页显示
+var _scenePage = 1;
+
 function renderSceneList() {
   const el = document.getElementById('sceneListContent');
   if (!_scenes.length) { el.innerHTML = '<div class="empty">暂无场景配置</div>'; return; }
   
-  // 加载步骤数
-  el.innerHTML = `<div class="card"><div class="card-h">场景配置 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${_scenes.length}个</span></div>
+  var pg = paginateItems(_scenes, _scenePage);
+  _scenePage = pg.page;
+  
+  el.innerHTML = `<div class="card"><div class="card-h">场景配置 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${_scenes.length}个，第${pg.page}/${pg.totalPages}页</span></div>
     <div class="card-b"><table><thead><tr>
       <th>编码</th><th>场景名称</th><th>分类</th><th>步骤</th><th>状态</th><th>操作</th>
     </tr></thead><tbody>
-    ${_scenes.map(s => `<tr>
+    ${pg.items.map(s => `<tr>
       <td style="color:var(--color-hold);font-weight:600">${s.scene_code}</td>
       <td>${s.scene_name}</td>
       <td><span class="tag tag-blue">${s.category||'—'}</span></td>
       <td>${s.step_count||7}步</td>
       <td><span class="tag tag-green">${s.status||'published'}</span></td>
       <td>
-        <button class="btn btn-outline btn-sm" onclick="editScene(${s.id})">📝 编辑</button><button class="btn btn-outline btn-sm" onclick="showStepManager(${s.id},'${s.scene_name}')" style="margin-left:4px">📋 步骤</button>
+        <button class="btn btn-outline btn-sm" onclick="editScene(${s.id})">📝 编辑</button><button class="btn btn-outline btn-sm" onclick="showStepManager(${s.id},'${s.scene_name.replace(/'/g, "\\'")}')" style="margin-left:4px">📋 步骤</button>
       </td>
     </tr>`).join('')}
-    </tbody></table></div></div>`;
+    </tbody></table><div id="scenePagination"></div></div></div>`;
+  
+  renderPagination('scenePagination', pg.page, pg.totalPages, 'switchScenePage');
 }
+
+function switchScenePage(p) { _scenePage = p; renderSceneList(); }
 
 // ─── 编辑场景（弹窗） ───
 function editScene(id) {
@@ -245,35 +262,61 @@ async function submitNewScene() {
 }
 
 // ─── 指标管理 ───
-async function loadIndicators() {
+async // FIXED: P2-4 指标列表分页
+var _indicatorPage = 1;
+var _allIndicators = [];
+
+function loadIndicators() {
   try {
     const r = await fetch(`${API}/indicators`).then(r=>r.json());
     if (r.code === 0) {
-      const inds = r.data.indicators || [];
-      document.getElementById('tabIndicators').innerHTML = `<div class="card"><div class="card-h">指标定义 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${inds.length}个</span></div>
-        <div class="card-b"><table><thead><tr><th>编码</th><th>名称</th><th>分类</th><th>计算逻辑</th><th>单位</th><th>阈值</th><th>操作</th></tr></thead><tbody>
-        ${inds.map(ind => `<tr><td style="color:var(--color-hold)">${ind.indicator_code}</td><td>${ind.indicator_name}</td>
-          <td>${ind.category_name||'—'}</td><td style="font-size:11px;color:var(--text-muted)">${(ind.calc_logic||'').slice(0,40)}</td>
-          <td>${ind.unit||''}</td><td>${ind.threshold_lower||0}~${ind.threshold_upper||'∞'}</td>
-          <td><button class="btn btn-outline btn-sm" onclick="editIndicator('${ind.indicator_code}','${ind.indicator_name}',${ind.threshold_lower||0},${ind.threshold_upper||0},'${ind.unit||''}','${ind.alert_level||'warning'}')">✏️</button></td></tr>`).join('')}
-        </tbody></table></div></div>`;
+      _allIndicators = r.data.indicators || [];
+      renderIndicatorList();
     }
   } catch(e) {}
 }
 
+function renderIndicatorList() {
+  var pg = paginateItems(_allIndicators, _indicatorPage);
+  _indicatorPage = pg.page;
+  document.getElementById('tabIndicators').innerHTML = `<div class="card"><div class="card-h">指标定义 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${_allIndicators.length}个，第${pg.page}/${pg.totalPages}页</span></div>
+    <div class="card-b"><table><thead><tr><th>编码</th><th>名称</th><th>分类</th><th>计算逻辑</th><th>单位</th><th>阈值</th><th>操作</th></tr></thead><tbody>
+    ${pg.items.map(ind => `<tr><td style="color:var(--color-hold)">${ind.indicator_code}</td><td>${ind.indicator_name}</td>
+      <td>${ind.category_name||'—'}</td><td style="font-size:11px;color:var(--text-muted)">${(ind.calc_logic||'').slice(0,40)}</td>
+      <td>${ind.unit||''}</td><td>${ind.threshold_lower||0}~${ind.threshold_upper||'∞'}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="editIndicator('${ind.indicator_code}','${ind.indicator_name}',${ind.threshold_lower||0},${ind.threshold_upper||0},'${ind.unit||''}','${ind.alert_level||'warning'}')">✏️</button></td></tr>`).join('')}
+    </tbody></table><div id="indicatorPagination"></div></div></div>`;
+  renderPagination('indicatorPagination', pg.page, pg.totalPages, 'switchIndicatorPage');
+}
+
+function switchIndicatorPage(p) { _indicatorPage = p; renderIndicatorList(); }
+
 // ─── 数据标准 ───
+// FIXED: P2-4 标准字段列表分页
+var _stdPage = 1;
+var _allStandards = [];
+
 async function loadStandards() {
   try {
     const r = await fetch(`${API}/standards`).then(r=>r.json());
     if (r.code === 0) {
-      const cols = r.data.standards || [];
-      document.getElementById('tabStandards').innerHTML = `<div class="card"><div class="card-h">标准字段 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${cols.length}个</span></div>
-        <div class="card-b"><table><thead><tr><th>标准编码</th><th>标准名称</th><th>数据类型</th><th>说明</th></tr></thead><tbody>
-        ${cols.map(c => `<tr><td style="color:var(--color-hold)">${c.std_code}</td><td>${c.std_name}</td><td>${c.data_type}</td><td>${c.description||'—'}</td></tr>`).join('')}
-        </tbody></table></div></div>`;
+      _allStandards = r.data.standards || [];
+      renderStandardList();
     }
   } catch(e) {}
 }
+
+function renderStandardList() {
+  var pg = paginateItems(_allStandards, _stdPage);
+  _stdPage = pg.page;
+  document.getElementById('tabStandards').innerHTML = `<div class="card"><div class="card-h">标准字段 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${_allStandards.length}个，第${pg.page}/${pg.totalPages}页</span></div>
+    <div class="card-b"><table><thead><tr><th>标准编码</th><th>标准名称</th><th>数据类型</th><th>说明</th></tr></thead><tbody>
+    ${pg.items.map(c => `<tr><td style="color:var(--color-hold)">${c.std_code}</td><td>${c.std_name}</td><td>${c.data_type}</td><td>${c.description||'—'}</td></tr>`).join('')}
+    </tbody></table><div id="stdPagination"></div></div></div>`;
+  renderPagination('stdPagination', pg.page, pg.totalPages, 'switchStdPage');
+}
+
+function switchStdPage(p) { _stdPage = p; renderStandardList(); }
 
 loadAll();
 </script>
@@ -383,6 +426,43 @@ async function addStep(sceneId) {
 }
 </script>
 
+
+<!-- FIXED: P2-4 前端分页帮助函数 -->
+<script>
+var PAGE_SIZE = 20;
+
+function paginateItems(items, page) {
+  var totalPages = Math.ceil(items.length / PAGE_SIZE) || 1;
+  page = Math.max(1, Math.min(page, totalPages));
+  var start = (page - 1) * PAGE_SIZE;
+  var end = Math.min(start + PAGE_SIZE, items.length);
+  var pageItems = items.slice(start, end);
+  return { items: pageItems, page: page, totalPages: totalPages, start: start, end: end, total: items.length };
+}
+
+function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  
+  var html = '<div class="pagination">';
+  html += '<button class="page-btn" onclick="'+onPageChange+'('+(currentPage-1)+')" '+(currentPage<=1?'disabled':'')+'>‹</button>';
+  
+  var startP = Math.max(1, currentPage - 2);
+  var endP = Math.min(totalPages, currentPage + 2);
+  
+  if (startP > 1) { html += '<button class="page-btn" onclick="'+onPageChange+'(1)">1</button>'; if (startP > 2) html += '<span class="page-info">...</span>'; }
+  for (var p = startP; p <= endP; p++) {
+    html += '<button class="page-btn '+(p===currentPage?'active':'')+'" onclick="'+onPageChange+'('+p+')">'+p+'</button>';
+  }
+  if (endP < totalPages) { if (endP < totalPages - 1) html += '<span class="page-info">...</span>'; html += '<button class="page-btn" onclick="'+onPageChange+'('+totalPages+')">'+totalPages+'</button>'; }
+  
+  html += '<button class="page-btn" onclick="'+onPageChange+'('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>›</button>';
+  html += '<span class="page-info">' + (currentPage) + '/' + totalPages + '</span>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+</script>
 </body>
 </html>
 
@@ -462,26 +542,39 @@ loadIndicators = async function() {
 </script>
 <script>
 // ═══ 规则管理 ═══
+// FIXED: P2-4 规则列表分页
+var _rulePage = 1;
+var _allRules = [];
+
 async function loadRules() {
   try {
     const r = await fetch(`${API}/rules`).then(r=>r.json());
     if (r.code !== 0) return;
-    const rules = r.data.rules || [];
-    document.getElementById('tabRules').innerHTML = `<div class="card"><div class="card-h">⚙️ 规则管理 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${rules.length}条规则</span></div>
-      <div class="card-b"><table><thead><tr><th>ID</th><th>场景</th><th>规则名称</th><th>类型</th><th>优先级</th><th>状态</th><th>操作</th></tr></thead><tbody>
-      ${rules.map(r => `<tr>
-        <td style="color:var(--color-hold)">${r.id}</td>
-        <td>${r.scene_name||'—'}</td>
-        <td>${r.rule_name}</td>
-        <td><span class="tag tag-${r.rule_type==='threshold'?'blue':r.rule_type==='judgment_tree'?'yellow':'green'}">${r.rule_type}</span></td>
-        <td>${r.priority}</td>
-        <td><span class="tag ${r.enabled?'tag-green':'tag-yellow'}">${r.enabled?'✅ 启用':'❌ 禁用'}</span></td>
-        <td><button class="btn btn-outline btn-sm" onclick="editRule(${r.id})">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteRule(${r.id})">🗑️</button></td>
-      </tr>`).join('')}
-      </tbody></table></div></div>`;
+    _allRules = r.data.rules || [];
+    renderRuleList();
   } catch(e) { document.getElementById('tabRules').innerHTML = '<div class="empty">加载失败: '+e.message+'</div>'; }
 }
+
+function renderRuleList() {
+  var pg = paginateItems(_allRules, _rulePage);
+  _rulePage = pg.page;
+  document.getElementById('tabRules').innerHTML = `<div class="card"><div class="card-h">⚙️ 规则管理 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${_allRules.length}条规则，第${pg.page}/${pg.totalPages}页</span></div>
+    <div class="card-b"><table><thead><tr><th>ID</th><th>场景</th><th>规则名称</th><th>类型</th><th>优先级</th><th>状态</th><th>操作</th></tr></thead><tbody>
+    ${pg.items.map(r => `<tr>
+      <td style="color:var(--color-hold)">${r.id}</td>
+      <td>${r.scene_name||'—'}</td>
+      <td>${r.rule_name}</td>
+      <td><span class="tag tag-${r.rule_type==='threshold'?'blue':r.rule_type==='judgment_tree'?'yellow':'green'}">${r.rule_type}</span></td>
+      <td>${r.priority}</td>
+      <td><span class="tag ${r.enabled?'tag-green':'tag-yellow'}">${r.enabled?'✅ 启用':'❌ 禁用'}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="editRule(${r.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRule(${r.id})">🗑️</button></td>
+    </tr>`).join('')}
+    </tbody></table><div id="rulePagination"></div></div></div>`;
+  renderPagination('rulePagination', pg.page, pg.totalPages, 'switchRulePage');
+}
+
+function switchRulePage(p) { _rulePage = p; renderRuleList(); }
 
 function editRule(id) {
   fetch(`${API}/rules`).then(r=>r.json()).then(d => {

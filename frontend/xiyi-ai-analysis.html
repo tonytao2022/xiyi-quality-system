@@ -28,6 +28,12 @@ pre.ai-content strong{color:var(--text-primary)}
 .analyze-btn-area{text-align:center;padding:40px}
 @media(max-width:768px){body{padding:12px}.meta-grid{grid-template-columns:1fr 1fr}}
 </style>
+<!-- FIXED: P1-2 空数据状态样式 -->
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px}
+.empty-state .icon{font-size:36px;margin-bottom:8px;display:block}
+.empty-state p{margin-bottom:6px}
+.empty-state .hint{font-size:11px;color:var(--text-muted);opacity:0.7}
+
 </head>
 <body>
 <div class="header">
@@ -71,11 +77,11 @@ pre.ai-content strong{color:var(--text-primary)}
       <span style="font-size:11px;color:var(--text-muted)" id="reportId"></span>
     </div>
     <div class="card-body">
-      <pre class="ai-content" id="aiReportContent">加载中...</pre>
+      <pre class="ai-content" id="aiReportContent">加载中...</pre><div id="empty-analysis" style="display:none"></div>
     </div>
   </div>
 
-  <div class="card" id="metricsCard" style="display:none">
+  <div class="card" id="metricsCard" style="display:none"><div id="empty-metrics" style="display:none"></div>
     <div class="card-header"><span>📈 场景指标数据</span></div>
     <div class="card-body">
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px" id="metricsTable">
@@ -354,6 +360,16 @@ function showError(msg) {
 }
 
 init();
+</script>
+
+<!-- FIXED: P1-2 空数据判断帮助函数 -->
+<script>
+function renderEmptyState(containerId, msg, hint) {
+  var el = document.getElementById(containerId);
+  if (el) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">📋</span><p>' + (msg||'暂无数据') + '</p><div class="hint">' + (hint||'当前没有可展示的数据，请检查筛选条件或稍后重试') + '</div></div>';
+  }
+}
 </script>
 </body>
 </html>
