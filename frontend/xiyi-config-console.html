@@ -242,11 +242,10 @@ async function submitNewScene() {
 }
 
 // ─── 指标管理 ───
-async // FIXED: P2-4 指标列表分页
 var _indicatorPage = 1;
 var _allIndicators = [];
 
-function loadIndicators() {
+async function loadIndicators() {
   try {
     const r = await fetch(`${API}/indicators`).then(r=>r.json());
     if (r.code === 0) {
