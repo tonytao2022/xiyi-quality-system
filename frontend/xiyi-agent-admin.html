@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="xiyi-theme.css">
+  <title>AI引擎管理 · 兮易AI大脑</title>
+<style>
+/* AI引擎管理 - 统一管理控制台 */
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.header .sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Tab导航 */
+.console-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0;flex-wrap:wrap}
+.console-tab{font-size:12px;padding:8px 16px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s}
+.console-tab:hover{color:#fff}
+.console-tab.active{color:#fff;border-bottom-color:var(--blue)}
+
+/* 工作流可视化 */
+.wf-container{display:flex;flex-direction:column;gap:0;padding:20px 0}
+.wf-step{display:flex;align-items:center;gap:12px;position:relative;padding:0 0 24px}
+.wf-step:last-child{padding-bottom:0}
+.wf-step::before{content:'';position:absolute;left:15px;top:32px;width:2px;height:calc(100% - 32px);background:var(--border)}
+.wf-step:last-child::before{display:none}
+.wf-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;position:relative;z-index:1}
+.wf-dot.query{background:rgba(59,130,246,0.15);color:var(--blue)}
+.wf-dot.ai{background:rgba(139,92,246,0.15);color:var(--purple)}
+.wf-dot.rule{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.wf-dot.decision{background:rgba(239,68,68,0.15);color:var(--red)}
+.wf-dot.manual{background:rgba(34,197,94,0.15);color:var(--green)}
+.wf-body{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px 14px}
+.wf-body .step-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.wf-body .step-detail{font-size:11px;color:var(--text2);display:flex;gap:10px}
+.wf-arrow{font-size:12px;color:var(--muted);text-align:center;padding:2px 0}
+
+/* 规则卡片 */
+.rule-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.rule-card:hover{border-color:var(--blue)}
+.rule-card .code{font-size:11px;color:var(--blue);margin-bottom:4px}
+.rule-card .name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.rule-card .expr{font-size:11px;color:var(--text2);line-height:1.4;font-family:monospace}
+.rule-card .meta{font-size:10px;color:var(--muted);margin-top:6px;display:flex;gap:8px}
+
+/* 弹窗表格内编辑 */
+.edit-area{width:100%;min-height:80px;padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;font-family:monospace;resize:vertical}
+
+/* 场景选择器 */
+.scene-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:rgba(59,130,246,0.1);color:var(--blue);margin:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🧠 AI引擎管理控制台</h1>
+    <div class="sub">提示词模板 · 工作流编排 · 规则配置 — 统一管理</div>
+  </div>
+  <div>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+  </div>
+</div>
+
+<div class="console-tabs">
+  <div class="console-tab active" onclick="switchConsoleTab('prompts',this)">💬 提示词模板</div>
+  <div class="console-tab" onclick="switchConsoleTab('workflows',this)">🔀 工作流编排</div>
+  <div class="console-tab" onclick="switchConsoleTab('rules',this)">⚙️ 规则配置</div>
+  <div class="console-tab" onclick="switchConsoleTab('overview',this)">📊 全景概览</div>
+</div>
+
+<!-- 提示词模板 -->
+<div id="cpPrompts" class="console-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><span style="font-size:14px;font-weight:600">所有提示词</span> <span id="ptCountBadge" class="badge badge-hold"></span></div>
+    <button class="btn btn-primary btn-sm" onclick="showAddPrompt()">➕ 新增</button>
+  </div>
+  <table style="width:100%">
+    <thead><tr><th>编码</th><th>场景</th><th>角色</th><th>描述</th><th>格式</th><th>温度</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody id="ptBody"></tbody>
+  </table>
+</div>
+
+<!-- 工作流编排 -->
+<div id="cpWorkflows" class="console-panel" style="display:none">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select id="wfSelector" class="form-control" style="width:200px" onchange="loadWorkflow(this.value)"></select>
+    <span id="wfStepsCount" style="font-size:12px;color:var(--muted);align-self:center"></span>
+  </div>
+  <div id="wfVisual" class="wf-container"><div class="empty">请选择一个工作流查看</div></div>
+</div>
+
+<!-- 规则配置 -->
+<div id="cpRules" class="console-panel" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><span style="font-size:14px;font-weight:600">全部规则</span> <span id="ruleCountBadge" class="badge badge-hold"></span></div>
+    <button class="btn btn-primary btn-sm" onclick="showAddRule()">➕ 新增规则</button>
+  </div>
+  <div id="ruleList"></div>
+</div>
+
+<!-- 全景概览 -->
+<div id="cpOverview" class="console-panel" style="display:none">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;" id="sceneOverview"></div>
+</div>
+
+<script>
+const API = '/api/v1/xiyi';
+let _scenes = [], _allPrompts = [], _allRules = [];
+
+// ── Tab切换 ──
+function switchConsoleTab(tab, el) {
+  document.querySelectorAll('.console-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.console-panel').forEach(p => p.style.display = 'none');
+  document.getElementById('cp' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = '';
+  if (tab === 'prompts' && !_allPrompts.length) loadPrompts();
+  if (tab === 'workflows') loadWorkflowList();
+  if (tab === 'rules' && !_allRules.length) loadRules();
+  if (tab === 'overview') loadOverview();
+}
+
+// ── 初始化 ──
+async function init() {
+  try {
+    const sr = await fetch(API + '/scenes').then(r=>r.json());
+    if (sr.code === 0) _scenes = sr.data.scenes || [];
+    loadPrompts();
+    loadRules();
+  } catch(e) {}
+}
+
+function getSceneName(id) { var s = _scenes.find(x => x.id === id); return s ? s.scene_name : '场景'+id; }
+
+// ══════ 提示词管理 ══════
+async function loadPrompts() {
+  try {
+    const r = await fetch(API + '/prompts').then(r=>r.json());
+    if (r.code !== 0) return;
+    _allPrompts = r.data.prompts || [];
+    renderPrompts();
+    document.getElementById('ptCountBadge').textContent = _allPrompts.length + '条';
+  } catch(e) { document.getElementById('ptBody').innerHTML = '<tr><td colspan="8" class="empty">加载失败</td></tr>'; }
+}
+
+function renderPrompts() {
+  document.getElementById('ptBody').innerHTML = _allPrompts.map(p => {
+    var sceneName = getSceneName(p.scene_id);
+    var fmt = p.output_format || 'markdown';
+    var roleLabel = {'quality_analyst':'品质分析师','sqe_expert':'SQE专家','business_expert':'业务专家'}[p.role] || p.role;
+    var active = p.is_active === 1 || p.is_active === true;
+    return '<tr><td style="color:var(--blue);font-size:12px">' + (p.template_code||'') + '</td>' +
+      '<td style="font-size:11px">' + sceneName.slice(0,20) + '</td>' +
+      '<td style="font-size:11px;color:var(--text2)">' + roleLabel + '</td>' +
+      '<td style="font-size:11px;color:var(--text2)">' + ((p.description||'').slice(0,24)) + '</td>' +
+      '<td style="font-size:10px">' + fmt + '</td>' +
+      '<td style="font-size:11px">' + (p.temperature||0.7) + '</td>' +
+      '<td><span class="' + (active ? 'badge badge-green' : 'badge badge-yellow') + '">' + (active ? '激活' : '停用') + '</span></td>' +
+      '<td><button class="btn btn-sm" onclick="editPrompt(' + p.id + ')" style="font-size:10px;padding:2px 8px">👁️</button>' +
+      ' <button class="btn btn-sm" onclick="deletePrompt(' + p.id + ')" style="font-size:10px;padding:2px 8px;color:var(--red)">🗑️</button></td></tr>';
+  }).join('');
+}
+
+function showAddPrompt() {
+  var html = '<div class="modal-overlay" id="promptModal">' +
+    '<div class="modal" style="width:680px"><div class="modal-h">➕ 新增提示词</div><div class="modal-b">' +
+    '<div class="form-group"><label>模板编码</label><input class="form-control" id="np_code" placeholder="FPY_DIAGNOSE"></div>' +
+    '<div class="form-group"><label>关联场景</label><select class="form-control" id="np_scene">' +
+    _scenes.map(s => '<option value="' + s.id + '">' + s.scene_name + '</option>').join('') + '</select></div>' +
+    '<div class="form-group"><label>角色</label><select class="form-control" id="np_role"><option value="quality_analyst">品质分析师</option><option value="sqe_expert">SQE专家</option><option value="business_expert">业务专家</option></select></div>' +
+    '<div class="form-group"><label>系统提示词（system_prompt）</label><textarea class="edit-area" id="np_sys" rows="4" placeholder="你是一位制造企业品质专员助理..."></textarea></div>' +
+    '<div class="form-group"><label>用户提示词模板（user_prompt，可用{scene_name}{metrics_data}变量）</label><textarea class="edit-area" id="np_usr" rows="6" placeholder="请对{scene_name}场景进行分析..."></textarea></div>' +
+    '<div class="form-group"><label>描述</label><input class="form-control" id="np_desc" placeholder="FPY一次合格率深度诊断"></div>' +
+    '<div style="display:flex;gap:8px"><div class="form-group" style="flex:1"><label>输出格式</label><select class="form-control" id="np_fmt"><option value="markdown">Markdown</option><option value="json">JSON</option><option value="text">纯文本</option></select></div>' +
+    '<div class="form-group" style="flex:1"><label>温度</label><input class="form-control" id="np_temp" value="0.7" type="number" step="0.1" min="0" max="1"></div></div>' +
+    '</div><div class="modal-f"><button class="btn" onclick="closeModal(\'promptModal\')">取消</button><button class="btn btn-primary" onclick="submitPrompt()">💾 保存</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function submitPrompt() {
+  var data = {
+    template_code: document.getElementById('np_code').value,
+    scene_id: parseInt(document.getElementById('np_scene').value),
+    role: document.getElementById('np_role').value,
+    system_prompt: document.getElementById('np_sys').value,
+    user_prompt: document.getElementById('np_usr').value,
+    description: document.getElementById('np_desc').value,
+    output_format: document.getElementById('np_fmt').value,
+    temperature: parseFloat(document.getElementById('np_temp').value)
+  };
+  if (!data.template_code) { alert('编码必填'); return; }
+  const r = await fetch(API + '/prompts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(r=>r.json());
+  if (r.code === 0) { closeModal('promptModal'); loadPrompts(); } else alert('❌ ' + (r.error||''));
+}
+
+function editPrompt(id) {
+  var p = _allPrompts.find(x => x.id === id);
+  if (!p) return;
+  var html = '<div class="modal-overlay" id="promptModal">' +
+    '<div class="modal" style="width:680px"><div class="modal-h">👁️ ' + p.template_code + '</div><div class="modal-b">' +
+    '<div class="form-group"><label>模板编码</label><input class="form-control" id="ep_code" value="' + (p.template_code||'') + '"></div>' +
+    '<div class="form-group"><label>关联场景</label><span class="scene-tag">' + getSceneName(p.scene_id) + '</span></div>' +
+    '<div class="form-group"><label>角色</label><input class="form-control" id="ep_role" value="' + (p.role||'') + '"></div>' +
+    '<div class="form-group"><label>系统提示词</label><textarea class="edit-area" id="ep_sys" rows="4">' + (p.system_prompt||'') + '</textarea></div>' +
+    '<div class="form-group"><label>用户提示词模板</label><textarea class="edit-area" id="ep_usr" rows="6">' + (p.user_prompt||'') + '</textarea></div>' +
+    '<div class="form-group"><label>描述</label><input class="form-control" id="ep_desc" value="' + (p.description||'') + '"></div>' +
+    '<div class="form-group"><label>是否激活</label><select class="form-control" id="ep_active"><option value="1"' + (p.is_active===1?' selected':'') + '>激活</option><option value="0"' + (p.is_active===0?' selected':'') + '>停用</option></select></div>' +
+    '</div><div class="modal-f"><button class="btn" onclick="closeModal(\'promptModal\')">关闭</button><button class="btn btn-primary" onclick="savePrompt(' + id + ')">💾 保存修改</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function savePrompt(id) {
+  var data = {
+    template_code: document.getElementById('ep_code').value,
+    role: document.getElementById('ep_role').value,
+    system_prompt: document.getElementById('ep_sys').value,
+    user_prompt: document.getElementById('ep_usr').value,
+    description: document.getElementById('ep_desc').value,
+    is_active: parseInt(document.getElementById('ep_active').value)
+  };
+  const r = await fetch(API + '/prompts/' + id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(r=>r.json());
+  if (r.code === 0) { closeModal('promptModal'); loadPrompts(); } else alert('❌ ' + (r.error||''));
+}
+
+async function deletePrompt(id) {
+  if (!confirm('确定删除此提示词？')) return;
+  const r = await fetch(API + '/prompts/' + id, {method:'DELETE'}).then(r=>r.json());
+  if (r.code === 0) loadPrompts(); else alert('❌');
+}
+
+// ══════ 工作流管理 ══════
+async function loadWorkflowList() {
+  try {
+    const r = await fetch(API + '/workflows').then(r=>r.json());
+    if (r.code !== 0) return;
+    var wfs = r.data.workflows || [];
+    var sel = document.getElementById('wfSelector');
+    sel.innerHTML = '<option value="">-- 选择工作流 --</option>' + wfs.map(w => '<option value="' + w + '">' + w + '</option>').join('');
+    if (wfs.length > 0) { sel.value = wfs[0]; loadWorkflow(wfs[0]); }
+  } catch(e) {}
+}
+
+async function loadWorkflow(code) {
+  if (!code) { document.getElementById('wfVisual').innerHTML = '<div class="empty">请选择一个工作流查看</div>'; return; }
+  try {
+    const r = await fetch(API + '/workflows?code=' + code).then(r=>r.json());
+    if (r.code !== 0) return;
+    var steps = r.data.steps || [];
+    document.getElementById('wfStepsCount').textContent = steps.length + '个步骤';
+    document.getElementById('wfVisual').innerHTML = steps.map(function(s, i){
+      var icons = {query:'🔍',ai_analysis:'🧠',rule_check:'⚖️',decision:'🔀',manual_input:'📝'};
+      var typeClass = s.step_type === 'query' ? 'query' : s.step_type === 'ai_analysis' ? 'ai' : s.step_type === 'rule_check' ? 'rule' : s.step_type === 'decision' ? 'decision' : 'manual';
+      var typeLabels = {query:'数据查询',ai_analysis:'AI分析',rule_check:'规则验证',decision:'决策分支',manual_input:'手动输入'};
+      var promptTag = s.prompt_template_code ? '<span class="scene-tag">📄 ' + s.prompt_template_code + '</span>' : '';
+      var toolTag = s.tool_code ? '<span class="scene-tag">🔧 ' + s.tool_code + '</span>' : '';
+      var arrow = i < steps.length-1 ? '<div class="wf-arrow">↓</div>' : '';
+      return '<div class="wf-step"><div class="wf-dot ' + typeClass + '">' + (icons[s.step_type]||'⚙️') + '</div>' +
+        '<div style="flex:1"><div class="wf-body"><div class="step-name">' + (i+1) + '. ' + s.step_name + '</div>' +
+        '<div class="step-detail"><span>' + (typeLabels[s.step_type]||s.step_type) + '</span>' + toolTag + promptTag + '</div></div>' + arrow + '</div></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+// ══════ 规则管理 ══════
+async function loadRules() {
+  try {
+    const r = await fetch(API + '/rules').then(r=>r.json());
+    if (r.code !== 0) return;
+    _allRules = r.data.rules || [];
+    renderRules();
+    document.getElementById('ruleCountBadge').textContent = _allRules.length + '条';
+  } catch(e) {}
+}
+
+function renderRules() {
+  document.getElementById('ruleList').innerHTML = _allRules.map(function(rule){
+    try {
+      var exprPre = typeof rule.rule_expr === 'object' ? JSON.stringify(rule.rule_expr, null, 1) : rule.rule_expr;
+      if (exprPre && exprPre.length > 180) exprPre = exprPre.slice(0, 180) + '...';
+    } catch(e) { exprPre = ''; }
+    var sceneName = getSceneName(rule.scene_id);
+    var typeIcon = {threshold:'📏',trend:'📈',correlation:'🔗',anomaly:'⚠️','judgment_tree':'🌲'}[rule.rule_type] || '⚙️';
+    var active = rule.enabled === 1 || rule.enabled === true;
+    return '<div class="rule-card" onclick="editRule(' + rule.id + ')"><div class="code">' + typeIcon + ' ' + rule.rule_code + ' <span style="color:var(--muted);font-weight:400">| ' + sceneName.slice(0,18) + '</span></div>' +
+      '<div class="name">' + rule.rule_name + '</div>' +
+      '<div class="expr">' + (typeof exprPre === 'string' ? exprPre.replace(/\\n/g, ' ') : '') + '</div>' +
+      '<div class="meta"><span>类型: ' + rule.rule_type + '</span><span>优先级: ' + (rule.priority||0) + '</span>' +
+      '<span class="' + (active ? 'badge badge-green' : 'badge badge-yellow') + '" style="font-size:10px;padding:1px 6px">' + (active ? '已启用' : '已停用') + '</span></div></div>';
+  }).join('');
+}
+
+function showAddRule() {
+  var html = '<div class="modal-overlay" id="ruleModal">' +
+    '<div class="modal" style="width:600px"><div class="modal-h">➕ 新增规则</div><div class="modal-b">' +
+    '<div class="form-group"><label>规则编码</label><input class="form-control" id="nr_code" placeholder="FPY_THRESHOLD"></div>' +
+    '<div class="form-group"><label>场景</label><select class="form-control" id="nr_scene">' +
+    _scenes.map(s => '<option value="' + s.id + '">' + s.scene_name + '</option>').join('') + '</select></div>' +
+    '<div class="form-group"><label>规则名称</label><input class="form-control" id="nr_name" placeholder="FPY阈值判定"></div>' +
+    '<div class="form-group"><label>规则类型</label><select class="form-control" id="nr_type"><option value="threshold">阈值(threshold)</option><option value="trend">趋势(trend)</option><option value="correlation">关联(correlation)</option><option value="anomaly">异常(anomaly)</option></select></div>' +
+    '<div class="form-group"><label>规则表达式(JSON)</label><textarea class="edit-area" id="nr_expr" rows="4" placeholder="{&quot;indicator&quot;:&quot;FPY_RATE&quot;,&quot;operator&quot;:&quot;lt&quot;,&quot;value&quot;:97.5}"></textarea></div>' +
+    '</div><div class="modal-f"><button class="btn" onclick="closeModal(\'ruleModal\')">取消</button><button class="btn btn-primary" onclick="submitRule()">💾 保存</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function submitRule() {
+  var data = {
+    rule_code: document.getElementById('nr_code').value,
+    scene_id: parseInt(document.getElementById('nr_scene').value),
+    rule_name: document.getElementById('nr_name').value,
+    rule_type: document.getElementById('nr_type').value
+  };
+  try { data.rule_expr = JSON.parse(document.getElementById('nr_expr').value); } catch(e) { data.rule_expr = {}; }
+  if (!data.rule_code) { alert('编码必填'); return; }
+  const r = await fetch(API + '/rules', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(r=>r.json());
+  if (r.code === 0) { closeModal('ruleModal'); loadRules(); } else alert('❌ ' + (r.error||''));
+}
+
+function editRule(id) {
+  var rule = _allRules.find(x => x.id === id);
+  if (!rule) return;
+  var exprStr = typeof rule.rule_expr === 'object' ? JSON.stringify(rule.rule_expr, null, 2) : rule.rule_expr;
+  var html = '<div class="modal-overlay" id="ruleModal">' +
+    '<div class="modal" style="width:600px"><div class="modal-h">⚙️ ' + rule.rule_code + ' — ' + rule.rule_name + '</div><div class="modal-b">' +
+    '<div class="form-group"><label>规则编码</label><input class="form-control" id="er_code" value="' + (rule.rule_code||'') + '"></div>' +
+    '<div class="form-group"><label>规则名称</label><input class="form-control" id="er_name" value="' + (rule.rule_name||'') + '"></div>' +
+    '<div class="form-group"><label>场景</label><span class="scene-tag">' + getSceneName(rule.scene_id) + '</span></div>' +
+    '<div class="form-group"><label>规则表达式(JSON)</label><textarea class="edit-area" id="er_expr" rows="6">' + (exprStr||'') + '</textarea></div>' +
+    '<div class="form-group"><label>优先级</label><input class="form-control" id="er_priority" type="number" value="' + (rule.priority||0) + '"></div>' +
+    '<div class="form-group"><label>状态</label><select class="form-control" id="er_enabled"><option value="1"' + (rule.enabled===1?' selected':'') + '>启用</option><option value="0"' + (rule.enabled!==1?' selected':'') + '>停用</option></select></div>' +
+    '</div><div class="modal-f"><button class="btn" onclick="closeModal(\'ruleModal\')">取消</button>' +
+    '<button class="btn" onclick="deleteRule(' + id + ')" style="color:var(--red)">🗑️ 删除</button>' +
+    '<button class="btn btn-primary" onclick="saveRule(' + id + ')">💾 保存</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function saveRule(id) {
+  var data = { rule_name: document.getElementById('er_name').value, priority: parseInt(document.getElementById('er_priority').value), enabled: parseInt(document.getElementById('er_enabled').value) };
+  try { data.rule_expr = JSON.parse(document.getElementById('er_expr').value); } catch(e) { data.rule_expr = document.getElementById('er_expr').value; }
+  const r = await fetch(API + '/rules/' + id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(r=>r.json());
+  if (r.code === 0) { closeModal('ruleModal'); loadRules(); } else alert('❌ ' + (r.error||''));
+}
+
+async function deleteRule(id) {
+  if (!confirm('确定删除此规则？')) return;
+  const r = await fetch(API + '/rules/' + id, {method:'DELETE'}).then(r=>r.json());
+  if (r.code === 0) { closeModal('ruleModal'); loadRules(); } else alert('❌');
+}
+
+// ══════ 全景概览 ══════
+async function loadOverview() {
+  try {
+    const [pr, rr, wr] = await Promise.all([
+      fetch(API + '/prompts').then(r=>r.json()),
+      fetch(API + '/rules').then(r=>r.json()),
+      fetch(API + '/workflows').then(r=>r.json())
+    ]);
+    var prompts = (pr.code === 0 ? pr.data.prompts || [] : []);
+    var rules = (rr.code === 0 ? rr.data.rules || [] : []);
+    var workflows = (wr.code === 0 ? wr.data.workflows || [] : []);
+    document.getElementById('sceneOverview').innerHTML = _scenes.map(function(s){
+      var p = prompts.filter(x => x.scene_id === s.id);
+      var r = rules.filter(x => x.scene_id === s.id);
+      var wfExists = workflows.some(w => w.indexOf(s.scene_code.split('_')[0]) >= 0);
+      var dangerR = r.filter(x => x.rule_expr && (typeof x.rule_expr === 'object' ? x.rule_expr.severity === 'danger' : x.rule_expr.indexOf('danger') > 0));
+      return '<div class="scene-card" onclick="switchConsoleTab(\'rules\',document.querySelectorAll(\'.console-tab\')[2])" style="cursor:pointer">' +
+        '<div class="icon" style="font-size:24px;margin-bottom:6px">' + getSceneIcon(s.category) + '</div>' +
+        '<div class="name">' + s.scene_name.slice(0,18) + '</div>' +
+        '<div class="desc" style="font-size:11px;color:var(--text2);margin:6px 0">' + (s.description||'').slice(0,60) + '</div>' +
+        '<div class="step-bar" style="display:flex;gap:6px;font-size:11px;color:var(--muted)">' +
+        '<span>📄 ' + p.length + '提示词</span>' +
+        '<span>⚙️ ' + r.length + '规则</span>' +
+        '<span>' + (dangerR.length ? '🔴' : '✅') + '</span>' +
+        '</div></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+function getSceneIcon(cat) {
+  var map = {'品质监控':'📈','过程分析':'🔍','库存预警':'⚠️','资产优化':'💰','供应商质量':'📦','过程品控':'⚙️','成本分析':'💹'};
+  return map[cat] || '📋';
+}
+
+// ══════ 工具 ══════
+function closeModal(id) { var el = document.getElementById(id); if (el) el.remove(); }
+
+init();
+</script>
+</body>
+</html>

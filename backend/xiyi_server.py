@@ -999,6 +999,13 @@ def update_prompt(pt_id):
             cur.execute("UPDATE ag_prompt_template SET " + ",".join(sets) + " WHERE id=%s", vals)
         return api_success({'message':'ok'})
 
+@app.route('/api/v1/xiyi/prompts/<int:pt_id>', methods=['DELETE'])
+@api_handler
+def delete_prompt(pt_id):
+    with get_cursor() as cur:
+        cur.execute("DELETE FROM ag_prompt_template WHERE id=%s", (pt_id,))
+        return api_success({'message':'ok'})
+
 # ── Phase 3: Tool Registry ──
 @app.route('/api/v1/xiyi/tools', methods=['GET'])
 @api_handler
