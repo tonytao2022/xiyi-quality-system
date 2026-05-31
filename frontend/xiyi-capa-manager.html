@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAPA管理 · 兮易AI大脑</title>
 <style>
-:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--color-safety:#8b5cf6;--radius:8px;--radius-lg:12px}
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--bg:#1a2235;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#cbd5e1;--text-muted:#94a3b8;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--color-safety:#8b5cf6;--radius:8px;--radius-lg:12px}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:20px}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
@@ -18,9 +18,9 @@ body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg)
 .plan-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--lg);padding:14px;cursor:pointer;transition:all .15s}
 .plan-card:hover{border-color:var(--color-hold)}
 .plan-card .code{font-size:11px;color:var(--color-hold);margin-bottom:4px}
-.plan-card .name{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.plan-card .name{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text-primary)}
 .plan-card .cause{font-size:12px;color:var(--text-secondary);margin-bottom:6px;line-height:1.5}
-.plan-card .meta{font-size:11px;color:var(--text-muted);display:flex;gap:10px}
+.plan-card .meta{font-size:11px;color:var(--text-secondary);display:flex;gap:10px}
 .tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600}
 .tag-high{background:rgba(239,68,68,0.15);color:var(--color-defect)}
 .tag-medium{background:rgba(245,158,11,0.15);color:var(--color-warning)}
@@ -48,9 +48,9 @@ body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg)
 .btn-yellow{background:transparent;border:1px solid var(--color-warning);color:var(--color-warning)}
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .modal{background:var(--bg);border:1px solid var(--border-color);border-radius:var(--lg);width:550px;max-width:92vw;max-height:85vh;overflow-y:auto}
-.modal-h{padding:14px 18px;border-bottom:1px solid var(--border-color);font-size:14px;font-weight:600}
-.modal-b{padding:14px 18px}
-.modal-f{padding:10px 18px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end}
+.modal-h{padding:14px 18px;border-bottom:1px solid var(--border-color);font-size:14px;font-weight:600;color:var(--text-primary)}
+.modal-b{padding:14px 18px;color:var(--text-primary)}
+.modal-f{padding:10px 18px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end;color:var(--text-primary)}
 .form-group{margin-bottom:10px}
 .form-group label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
 .form-control{width:100%;padding:7px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none}
