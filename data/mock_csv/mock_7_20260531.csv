@@ -1,7 +1,0 @@
-scene_id,mock_date,data_category,data_json
-7,2025-04-01,coq_monthly,"{""month"": ""2025-04"", ""sales_amount"": 11991, ""internal_loss"": 83, ""external_loss"": 31, ""appraisal_cost"": 66, ""prevention_cost"": 22, ""total_coq"": 202, ""coq_rate"": 1.68, ""trend"": ""up""}"
-7,2025-05-01,coq_monthly,"{""month"": ""2025-05"", ""sales_amount"": 11325, ""internal_loss"": 101, ""external_loss"": 33, ""appraisal_cost"": 43, ""prevention_cost"": 43, ""total_coq"": 220, ""coq_rate"": 1.94, ""trend"": ""up""}"
-7,2025-06-01,coq_monthly,"{""month"": ""2025-06"", ""sales_amount"": 10084, ""internal_loss"": 74, ""external_loss"": 23, ""appraisal_cost"": 58, ""prevention_cost"": 33, ""total_coq"": 188, ""coq_rate"": 1.86, ""trend"": ""up""}"
-7,2025-07-01,coq_monthly,"{""month"": ""2025-07"", ""sales_amount"": 8269, ""internal_loss"": 53, ""external_loss"": 48, ""appraisal_cost"": 30, ""prevention_cost"": 30, ""total_coq"": 161, ""coq_rate"": 1.95, ""trend"": ""up""}"
-7,2025-08-01,coq_monthly,"{""month"": ""2025-08"", ""sales_amount"": 8437, ""internal_loss"": 106, ""external_loss"": 57, ""appraisal_cost"": 59, ""prevention_cost"": 35, ""total_coq"": 257, ""coq_rate"": 3.05, ""trend"": ""up""}"
-7,2025-09-01,coq_monthly,"{""month"": ""2025-09"", ""sales_amount"": 10208, ""internal_loss"": 73, ""external_loss"": 37, ""appraisal_cost"": 48, ""prevention_cost"": 43, ""total_coq"": 201, ""coq_rate"": 1.97, ""trend"": ""up""}"

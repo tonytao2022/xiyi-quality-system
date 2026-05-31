@@ -1,4 +1,11 @@
-__pycache__/
+# 备份文件
+*.bak
+*.bak2
+
+# CSV数据（大文件）
+data/mock_csv/*.csv
+data/mock_csv/.gitkeep
+
+# 运行时文件
 *.pyc
-.DS_Store
-.env
+__pycache__/
