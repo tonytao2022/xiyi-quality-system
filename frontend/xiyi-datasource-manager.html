@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据源管理 · 兮易AI大脑</title>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
+.btn-primary{background:var(--blue);color:#fff;border:none}.btn-primary:hover{background:#2563eb}
+.btn-sm{font-size:11px;padding:3px 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-body{padding:12px 14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 8px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:11px;font-weight:600}
+td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.sb{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
+.sb-on{background:rgba(34,197,94,0.12);color:var(--green)}.sb-off{background:rgba(239,68,68,0.12);color:var(--red)}.sb-warn{background:rgba(245,158,11,0.12);color:var(--yellow)}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center}
+.modal.active{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;width:500px;max-height:80vh;overflow-y:auto}
+.modal-box h3{font-size:15px;margin-bottom:12px;color:var(--text)}
+.form-group{margin-bottom:10px}
+.form-group label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.form-group input,.form-group select{width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
+.form-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.f{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.fs{padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px}
+input[type=file]{padding:6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:auto}
+@media(max-width:768px){body{padding:12px}.modal-box{width:90%}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🔌 数据源管理</h1><div style="font-size:12px;color:var(--text2);margin-top:2px">Phase 1 · 数据治理基础</div></div>
+  <div><button class="btn btn-primary btn-sm" onclick="showModal('add')">➕ 新增数据源</button><a href="/xiyi-config-console.html" class="btn" style="margin-left:6px">⚙️ 配置台</a><a href="/xiyi-quality-workbench.html" class="btn">← 返回</a></div>
+</div>
+<div class="f">
+  <input type="file" id="csvFile" accept=".csv" style="padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px">
+  <button class="btn btn-sm btn-primary" onclick="importCsv()">📥 导入CSV</button>
+  <select id="sceneFilter" onchange="loadDatasources()" class="fs"><option value="">全部</option><option>MySQL</option><option>API</option><option>CSV</option></select>
+</div>
+
+<div class="card"><div class="card-header">数据源列表 <span id="dsCount" style="font-size:11px;color:var(--muted)">0</span></div>
+<div class="card-body np" style="padding:0">
+<table><thead><tr><th>编码</th><th>名称</th><th>类型</th><th>主机</th><th>端口</th><th>同步频率</th><th>状态</th><th>最近连接</th><th>操作</th></tr></thead>
+<tbody id="dsTable"></tbody></table></div></div>
+
+<div class="card"><div class="card-header">CSV导入历史</div><div class="card-body"><div id="syncLogs" style="font-size:12px;color:var(--muted)">暂无导入记录</div></div></div>
+
+<div class="modal" id="dsModal"><div class="modal-box">
+  <h3 id="modalTitle">新增数据源</h3>
+  <div class="form-group"><label>编码</label><input id="f_code" placeholder="如 FW_MOM_MYSQL"></div>
+  <div class="form-group"><label>名称</label><input id="f_name" placeholder="如 生产系统MOM数据库"></div>
+  <div class="form-group"><label>类型</label><select id="f_type"><option>MySQL</option><option>API</option><option>CSV</option><option>Redis</option></select></div>
+  <div class="form-group" id="hostGroup"><label>主机地址</label><input id="f_host" placeholder="127.0.0.1"></div>
+  <div class="form-group" id="portGroup"><label>端口</label><input id="f_port" type="number" value="3306"></div>
+  <div class="form-group" id="dbGroup"><label>数据库名</label><input id="f_db" placeholder="xiyi_quality"></div>
+  <div class="form-group"><label>同步频率</label><select id="f_sync"><option value="daily">每日</option><option value="hourly">每小时</option><option value="weekly">每周</option></select></div>
+  <div class="form-group"><label>重试次数</label><input id="f_retry" type="number" value="3"></div>
+  <div class="form-actions">
+    <button class="btn" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveDatasource()">保存</button>
+  </div>
+</div></div>
+
+<script>
+const API = '/api/v1/xiyi';
+var editId = null;
+
+async function loadDatasources() {
+  const r = await fetch(API + '/datasources').then(r=>r.json());
+  if (r.code !== 0) return;
+  const ds = r.data.datasources || [];
+  document.getElementById('dsCount').textContent = '(' + ds.length + ')';
+  const filter = document.getElementById('sceneFilter').value;
+  const filtered = filter ? ds.filter(d => d.source_type === filter) : ds;
+  document.getElementById('dsTable').innerHTML = filtered.map(d =>
+    '<tr><td>' + d.source_code + '</td><td>' + d.source_name + '</td><td>' + d.source_type + '</td>' +
+    '<td>' + (d.host||'-') + '</td><td>' + (d.port||'-') + '</td><td>' + (d.sync_frequency||'daily') + '</td>' +
+    '<td><span class="sb ' + (d.status==='active'?'sb-on':d.status==='error'?'sb-off':'sb-warn') + '">' + (d.status||'inactive') + '</span></td>' +
+    '<td style="font-size:10px">' + (d.last_connected||'-') + '</td>' +
+    '<td><button class="btn btn-sm" onclick="testConn(' + d.id + ')">测试</button> <button class="btn btn-sm btn-primary" onclick="editDs(' + d.id + ')">编辑</button></td></tr>'
+  ).join('');
+}
+
+async function testConn(id) {
+  const r = await fetch(API + '/datasources/' + id + '/test', {method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json());
+  alert(r.code===0 ? (r.data.connected ? '✅ 连接成功' : '❌ 失败: '+r.data.message) : '❌ '+r.error);
+  loadDatasources();
+}
+
+function showModal(mode) {
+  editId = null;
+  document.getElementById('dsModal').classList.add('active');
+  document.getElementById('modalTitle').textContent = mode === 'add' ? '新增数据源' : '编辑数据源';
+  if (mode !== 'add') return;
+  ['f_code','f_name','f_host','f_db'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f_port').value='3306';
+  document.getElementById('f_retry').value='3';
+}
+function closeModal() { document.getElementById('dsModal').classList.remove('active'); }
+
+async function saveDatasource() {
+  const body = {
+    source_code: document.getElementById('f_code').value,
+    source_name: document.getElementById('f_name').value,
+    source_type: document.getElementById('f_type').value,
+    host: document.getElementById('f_host').value,
+    port: parseInt(document.getElementById('f_port').value) || 3306,
+    db_name: document.getElementById('f_db').value,
+    sync_frequency: document.getElementById('f_sync').value,
+    retry_count: parseInt(document.getElementById('f_retry').value) || 3
+  };
+  const url = editId ? API + '/datasources/' + editId : API + '/datasources';
+  const method = editId ? 'PUT' : 'POST';
+  const r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}).then(r=>r.json());
+  if (r.code === 0) { closeModal(); loadDatasources(); }
+  else alert('❌ ' + (r.error||'保存失败'));
+}
+
+async function editDs(id) {
+  const r = await fetch(API + '/datasources/' + id).then(r=>r.json());
+  if (r.code !== 0) return;
+  const d = r.data.datasource;
+  editId = id;
+  document.getElementById('f_code').value = d.source_code || '';
+  document.getElementById('f_name').value = d.source_name || '';
+  document.getElementById('f_type').value = d.source_type || 'MySQL';
+  document.getElementById('f_host').value = d.host || '';
+  document.getElementById('f_port').value = d.port || 3306;
+  document.getElementById('f_db').value = d.db_name || '';
+  document.getElementById('f_sync').value = d.sync_frequency || 'daily';
+  document.getElementById('f_retry').value = d.retry_count || 3;
+  document.getElementById('modalTitle').textContent = '编辑数据源 - ' + d.source_name;
+  document.getElementById('dsModal').classList.add('active');
+}
+
+async function importCsv() {
+  const file = document.getElementById('csvFile').files[0];
+  if (!file) { alert('请选择CSV文件'); return; }
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('scene_id', '1');
+  const r = await fetch(API + '/csv-import', {method:'POST', body:fd}).then(r=>r.json());
+  alert(r.code===0 ? '✅ ' + r.data.message : '❌ ' + (r.error||'导入失败'));
+  loadSyncLogs();
+}
+
+async function loadSyncLogs() {
+  document.getElementById('syncLogs').innerHTML = 'CSV导入记录将在此显示';
+}
+loadDatasources();
+loadSyncLogs();
+</script>
+</body>
+</html>

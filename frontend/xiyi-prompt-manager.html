@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提示词管理 · 兮易AI大脑</title>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn-primary{background:var(--blue);color:#fff;border:none}.btn-sm{font-size:11px;padding:3px 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-body{padding:12px 14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 8px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:11px;font-weight:600}
+td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.sb{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
+.sb-on{background:rgba(34,197,94,0.12);color:var(--green)}.sb-off{background:rgba(239,68,68,0.12);color:var(--red)}
+textarea{width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;resize:vertical;font-family:monospace;line-height:1.5;outline:none}
+textarea:focus{border-color:var(--blue)}
+.prompt-preview{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--text2);white-space:pre-wrap;line-height:1.6}
+.cell-max{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:768px){body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>💬 提示词模板管理</h1><div style="font-size:12px;color:var(--text2);margin-top:2px">Phase 2 · AI分析提示词配置化</div></div>
+  <div><button class="btn btn-primary btn-sm" onclick="showAdd()">➕ 新增模板</button><a href="/xiyi-config-console.html" class="btn">⚙️ 配置台</a><a href="/xiyi-quality-workbench.html" class="btn">← 返回</a></div>
+</div>
+
+<div class="card"><div class="card-header">提示词模板列表 <span id="ptCount" style="font-size:11px;color:var(--muted)"></span></div>
+<div class="card-body np" style="padding:0">
+<table><thead><tr><th>编码</th><th>描述</th><th>场景</th><th>角色</th><th>系统提示</th><th>版本</th><th>操作</th></tr></thead>
+<tbody id="ptTable"></tbody></table></div></div>
+
+<div class="modal" id="ptModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center">
+<div class="modal-box" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;width:650px;max-height:85vh;overflow-y:auto">
+  <h3 id="modalTitle" style="font-size:15px;margin-bottom:12px;color:var(--text)">编辑提示词模板</h3>
+  <div class="fg" style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">编码</label><input id="f_code" style="width:100%;padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px"></div>
+  <div class="fg" style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">描述</label><input id="f_desc" style="width:100%;padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px"></div>
+  <div class="fg" style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">场景ID</label><input id="f_scene" type="number" style="width:100%;padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px"></div>
+  <div class="fg" style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">角色</label><input id="f_role" value="quality_analyst" style="width:100%;padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px"></div>
+  <div class="fg" style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">系统提示词</label><textarea id="f_sys" rows="3" placeholder="系统级提示词（设定AI角色和行为）"></textarea></div>
+  <div class="fg" style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">用户提示词模板</label><textarea id="f_user" rows="4" placeholder="用户提示词模板，支持{params}变量。如：请分析{scene_name}的数据：{metrics_data}"></textarea></div>
+  <div style="margin-bottom:8px"><label style="font-size:11px;color:var(--muted);margin-bottom:2px">预览</label><div class="prompt-preview" id="preview">点击保存后此处显示完整提示词</div></div>
+  <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+    <button class="btn" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" onclick="save()">保存</button>
+  </div>
+</div></div>
+
+<script>
+const API = '/api/v1/xiyi';
+var editId = null;
+
+async function load() {
+  const r = await fetch(API + '/prompts').then(r=>r.json());
+  if (r.code !== 0) return;
+  const pts = r.data.templates || [];
+  document.getElementById('ptCount').textContent = '(' + pts.length + ')';
+  var sceneNames = {1:'FPY',2:'磁物',3:'异常料',4:'呆滞',5:'IQC',6:'PMP',7:'COQ'};
+  document.getElementById('ptTable').innerHTML = pts.map(p =>
+    '<tr><td class="cell-max">' + p.template_code + '</td><td class="cell-max">' + (p.description||'') + '</td>' +
+    '<td>' + (sceneNames[p.scene_id]||p.scene_id||'-') + '</td><td>' + (p.role||'-') + '</td>' +
+    '<td class="cell-max">' + (p.system_prompt||'').slice(0,30) + '</td><td>v' + p.version + '</td>' +
+    '<td><button class="btn btn-sm btn-primary" onclick="edit(' + p.id + ')">编辑</button></td></tr>'
+  ).join('');
+}
+
+function showAdd() {
+  editId = null;
+  ['f_code','f_desc','f_sys','f_user'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f_role').value = 'quality_analyst';
+  document.getElementById('f_scene').value = '';
+  document.getElementById('modalTitle').textContent = '新增提示词模板';
+  document.getElementById('ptModal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('ptModal').style.display = 'none'; }
+
+async function edit(id) {
+  const r = await fetch(API + '/prompts/' + id).then(r=>r.json());
+  if (r.code !== 0) return;
+  const p = r.data.template;
+  editId = id;
+  document.getElementById('f_code').value = p.template_code || '';
+  document.getElementById('f_desc').value = p.description || '';
+  document.getElementById('f_scene').value = p.scene_id || '';
+  document.getElementById('f_role').value = p.role || 'quality_analyst';
+  document.getElementById('f_sys').value = p.system_prompt || '';
+  document.getElementById('f_user').value = p.user_prompt || '';
+  document.getElementById('modalTitle').textContent = '编辑 - ' + p.template_code;
+  document.getElementById('ptModal').style.display = 'flex';
+  updatePreview();
+}
+
+function updatePreview() {
+  var sys = document.getElementById('f_sys').value;
+  var user = document.getElementById('f_user').value;
+  document.getElementById('preview').textContent = '[系统] ' + sys + '\n[用户] ' + user;
+}
+
+async function save() {
+  var body = {
+    template_code: document.getElementById('f_code').value,
+    description: document.getElementById('f_desc').value,
+    scene_id: parseInt(document.getElementById('f_scene').value) || null,
+    role: document.getElementById('f_role').value,
+    system_prompt: document.getElementById('f_sys').value,
+    user_prompt: document.getElementById('f_user').value,
+  };
+  var url = API + '/prompts';
+  var method = 'POST';
+  if (editId) { url += '/' + editId; method = 'PUT'; }
+  var r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}).then(r=>r.json());
+  if (r.code === 0) { closeModal(); load(); }
+  else alert('❌ ' + (r.error||'保存失败'));
+}
+
+document.querySelector('#f_sys').addEventListener('input', updatePreview);
+document.querySelector('#f_user').addEventListener('input', updatePreview);
+load();
+</script>
+</body>
+</html>
