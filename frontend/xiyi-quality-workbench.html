@@ -352,7 +352,7 @@ async function loadAll() {
           var unit = ind.unit || '';
           return '<div class="kpi-card" onclick="showKpiDetail(\'' + ind.indicator_code + '\')">' +
             '<div class="kpi-label">' + ind.indicator_name + '</div>' +
-            '<div class="kpi-value" style="color:' + c + '">' + (ind.threshold_lower||'0') + '~' + (ind.threshold_upper||'∞') + '<span style="font-size:13px;color:var(--text-muted)"> ' + unit + '</span></div>' +
+            '<div class="kpi-value" style="color:' + c + '">' + (Number(ind.threshold_lower).toFixed(2)||'0') + '~' + (ind.threshold_upper?Number(ind.threshold_upper).toFixed(2):'∞') + '<span style="font-size:13px;color:var(--text-muted)"> ' + unit + '</span></div>' +
             '<div class="kpi-target">' + (ind.category_name||'') + '</div>' +
           '</div>';
         }).join('');
