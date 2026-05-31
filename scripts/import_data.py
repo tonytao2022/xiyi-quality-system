@@ -1,18 +1,30 @@
 #!/usr/bin/env python3
 """灌入品质专员场景基础数据"""
-import openpyxl, pymysql, json
-# P0-1 Hugo: 从环境变量读取MySQL密码,不再硬编码
-pwd = __import__('os').environ.get('XIYI_MYSQL_PASS', '') or \
+# FIXED: P2-2 统一日志格式,替换print
+import openpyxl, pymysql, json, os, logging
+
+logger = logging.getLogger('xiyi_import')
+if not logger.handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s',
+        handlers=[logging.StreamHandler()]
+    )
+# FIXED: P1-5 硬编码连接字符串改为环境变量读取,与xiyi_server.py一致
+MYSQL_USER = os.environ.get('XIYI_MYSQL_USER', 'debian-sys-maint')
+MYSQL_PASS = os.environ.get('XIYI_MYSQL_PASS', '') or \
     [l.split('=')[1].strip() for l in open('/etc/mysql/debian.cnf') if 'password' in l][0]
+MYSQL_DB = os.environ.get('XIYI_MYSQL_DB', 'xiyi_quality')
+MYSQL_HOST = os.environ.get('XIYI_MYSQL_HOST', '127.0.0.1')
 wb = openpyxl.load_workbook("/root/.openclaw/media/qqbot/downloads/智能体应用需求表-品质（含数据源）_1780132027174_6e3b24.xlsx", data_only=True)
-conn = pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',password=pwd,database='xiyi_quality',charset='utf8mb4')
+conn = pymysql.connect(host=MYSQL_HOST, port=3306, user=MYSQL_USER, password=MYSQL_PASS, database=MYSQL_DB, charset='utf8mb4')
 cur = conn.cursor()
 
 # P0-4 Hugo: 用DELETE+事务包裹,避免TRUNCATE外键顺序问题
 cur.execute("START TRANSACTION")
 for t in ['ap_analysis_step_log','ap_analysis_instance','ap_capa_task_track','ap_capa_task','ap_capa_plan','ap_scene_ds_binding','ap_scene_step','ap_scene_report_tpl','ap_analysis_model','ap_scene_config','dg_indicator_snapshot','dg_derived_indicator','dg_indicator_atom','dg_indicator_category','dg_data_standard','dg_standard_column','ds_mapping_rule','ds_column_metadata','ds_table_metadata','ds_source_connection','ds_source_heartbeat','ds_sync_log','ds_mock_data','sys_config','vw_alert_record','dg_quality_check_log','dg_quality_check_rule']:
     try: cur.execute(f"DELETE FROM {t}")
-    except Exception as _e: print(f"  WARN: DELETE {t}: {_e}")
+    except Exception as _e: logger.warning(f"  WARN: DELETE {t}: {_e}")
 cur.execute("COMMIT")
 
 scenes = [
@@ -26,7 +38,7 @@ scenes = [
 ]
 for s in scenes:
     cur.execute("INSERT INTO ap_scene_config(id,scene_code,scene_name,role_type,category,icon,description) VALUES(%s,%s,%s,%s,%s,%s,%s)",s)
-print(f"场景配置: {len(scenes)}")
+logger.info(f"场景配置: {len(scenes)}")
 
 step_types = [('definition','问题定义与数据','明确质量问题的具体现象'),('analysis','现象分析与定位','分析质检数据趋势和分布'),('correlation','4M1E关联分析','人机料法环测六维度分析'),('verification','核心根因验证','数据交叉验证锁定根因'),('attribution','能力短板归因','识别品质管控体系薄弱环节'),('solution','解决方案CAPA','制定纠正与预防措施'),('tracking','任务落地跟踪','跟踪执行进度验证改善效果')]
 sid = 1
@@ -35,12 +47,12 @@ for scid in range(1,8):
         cur.execute("INSERT INTO ap_scene_step(id,scene_id,step_code,step_name,step_type,sort_order,description) VALUES(%s,%s,%s,%s,%s,%s,%s)",
             (sid,scid,f"QUAL_{scid:02d}_STEP_{seq:02d}",name,st,seq,desc))
         sid += 1
-print(f"场景步骤: {sid-1}")
+logger.info(f"场景步骤: {sid-1}")
 
 cats = [(1,'QUALITY_PRODUCT','产品品质指标',0),(2,'QUALITY_PROCESS','过程品质指标',0),(3,'QUALITY_COST','质量成本指标',0),(4,'QUALITY_SUPPLY','供应链品质指标',0)]
 for c in cats:
     cur.execute("INSERT INTO dg_indicator_category(id,category_code,category_name,parent_id) VALUES(%s,%s,%s,%s)",c)
-print(f"指标分类: {len(cats)}")
+logger.info(f"指标分类: {len(cats)}")
 
 indicators = [
     ('FPY_RATE','在线一次交验合格率',1,'合格品数量/总检验数量*100%',1,'avg','%',97.0,0,'danger'),
@@ -54,7 +66,7 @@ indicators = [
 for i,(code,name,cid,logic,stbl,agg,unit,up,low,level) in enumerate(indicators,1):
     cur.execute("INSERT INTO dg_indicator_atom(id,indicator_code,indicator_name,category_id,calc_logic,source_table_id,aggregation,unit,threshold_upper,threshold_lower,alert_level) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (i,code,name,cid,logic,stbl,agg,unit,up,low,level))
-print(f"原子指标: {len(indicators)}")
+logger.info(f"原子指标: {len(indicators)}")
 
 std_cols = [
     ('QUAL_INSPECT_RESULT','检验结果','varchar',10,json.dumps({'PASS':'合格','FAIL':'不合格','REWORK':'返工'}),None),
@@ -66,8 +78,8 @@ std_cols = [
 ]
 for i,(code,name,dtype,length,enum_dict,desc) in enumerate(std_cols,1):
     cur.execute("INSERT INTO dg_standard_column(id,std_code,std_name,data_type,data_length,enum_dict,description) VALUES(%s,%s,%s,%s,%s,%s,%s)",(i,code,name,dtype,length,enum_dict,desc))
-print(f"标准字段: {len(std_cols)}")
+logger.info(f"标准字段: {len(std_cols)}")
 
 conn.commit()
 cur.close(); conn.close()
-print("DONE")
+logger.info("DONE")

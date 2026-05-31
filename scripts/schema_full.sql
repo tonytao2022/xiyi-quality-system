@@ -654,4 +654,27 @@ CREATE TABLE sys_news (
   INDEX idx_time (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='新闻/消息';
 
+-- P1-1: 级联删除 (追加ON DELETE CASCADE)
+ALTER TABLE ap_scene_step DROP FOREIGN KEY IF EXISTS fk_scene_step_scene;
+ALTER TABLE ap_scene_step ADD CONSTRAINT fk_scene_step_scene FOREIGN KEY (scene_id) REFERENCES ap_scene_config(id) ON DELETE CASCADE;
+
+ALTER TABLE ap_capa_task DROP FOREIGN KEY IF EXISTS fk_capa_task_plan;
+ALTER TABLE ap_capa_task ADD CONSTRAINT fk_capa_task_plan FOREIGN KEY (plan_id) REFERENCES ap_capa_plan(id) ON DELETE CASCADE;
+
+ALTER TABLE ap_capa_task_track DROP FOREIGN KEY IF EXISTS fk_capa_task_track_task;
+ALTER TABLE ap_capa_task_track ADD CONSTRAINT fk_capa_task_track_task FOREIGN KEY (task_id) REFERENCES ap_capa_task(id) ON DELETE CASCADE;
+
+ALTER TABLE ds_column_metadata DROP FOREIGN KEY IF EXISTS fk_col_meta_table;
+ALTER TABLE ds_column_metadata ADD CONSTRAINT fk_col_meta_table FOREIGN KEY (table_id) REFERENCES ds_table_metadata(id) ON DELETE CASCADE;
+
+ALTER TABLE ds_mapping_rule DROP FOREIGN KEY IF EXISTS fk_map_rule_col;
+ALTER TABLE ds_mapping_rule ADD CONSTRAINT fk_map_rule_col FOREIGN KEY (source_column_id) REFERENCES ds_column_metadata(id) ON DELETE CASCADE;
+
+ALTER TABLE ap_scene_ds_binding DROP FOREIGN KEY IF EXISTS fk_scene_ds_scene;
+ALTER TABLE ap_scene_ds_binding ADD CONSTRAINT fk_scene_ds_scene FOREIGN KEY (scene_id) REFERENCES ap_scene_config(id) ON DELETE CASCADE;
+
+-- P1-3: 补充ds_source_connection字段 (前端已使用)
+ALTER TABLE ds_source_connection ADD COLUMN sync_frequency VARCHAR(32) DEFAULT 'daily' COMMENT '同步频率';
+ALTER TABLE ds_source_connection ADD COLUMN retry_count INT DEFAULT 3 COMMENT '重试次数';
+
 

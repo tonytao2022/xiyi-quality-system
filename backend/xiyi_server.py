@@ -93,7 +93,9 @@ def get_cursor():
 
 # ─── Flask ───
 app = Flask(__name__)
-CORS(app)
+# FIXED: P1-4 CORS白名单加固
+ALLOWED_ORIGINS = os.environ.get('XIYI_CORS_ORIGINS', 'http://localhost').split(',')
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # ─── API鉴权 (FIXED: P0-1 添加require_api_key装饰器) ───
 def require_api_key(f):

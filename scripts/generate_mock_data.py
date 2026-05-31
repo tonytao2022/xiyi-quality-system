@@ -1,11 +1,36 @@
 #!/usr/bin/env python3
 """生成模拟质检数据 — 展现四层架构中的采集层能力"""
-import pymysql, json, random, math
+# FIXED: P2-2 统一日志格式,替换print
+import pymysql, json, random, math, logging, os, csv
 from datetime import datetime, timedelta, date
 random.seed(42)
 
+logger = logging.getLogger('xiyi_generate')
+if not logger.handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s',
+        handlers=[logging.StreamHandler()]
+    )
+
+# P2-3: CSV导出目录
+CSV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'mock_csv')
+os.makedirs(CSV_DIR, exist_ok=True)
+
+def export_to_csv(scene_id, rows, category_label):
+    """将场景数据导出为CSV文件"""
+    today_str = date.today().strftime('%Y%m%d')
+    filename = f'mock_{scene_id}_{today_str}.csv'
+    filepath = os.path.join(CSV_DIR, filename)
+    with open(filepath, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['scene_id', 'mock_date', 'data_category', 'data_json'])
+        for row in rows:
+            writer.writerow(row)
+    logger.info(f"  [CSV] {filename} ({category_label}, {len(rows)}条)")
+
 # P0-1 Hugo: 从环境变量读取MySQL密码
-pwd = __import__('os').environ.get('XIYI_MYSQL_PASS', '') or \
+pwd = os.environ.get('XIYI_MYSQL_PASS', '') or \
     [l.split('=')[1].strip() for l in open('/etc/mysql/debian.cnf') if 'password' in l][0]
 conn = pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',password=pwd,database='xiyi_quality')
 cur = conn.cursor()
@@ -17,6 +42,8 @@ cur.execute("DELETE FROM ds_mock_data WHERE is_mock=1")
 cur.execute("COMMIT")
 
 mock_count = 0
+# P2-3: 收集每场景CSV行
+csv_rows_by_scene = {i: [] for i in range(1, 8)}
 
 # ===== 场景1: FPY合格率管控 =====
 # 模拟30天各产线的FPY数据
@@ -43,8 +70,9 @@ for day in range(30):
         # FIXED: P0-7 - 设置is_mock=1标识模拟数据
         cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(1,%s,'fpy_daily',%s,1)",
             (d, json.dumps(data, ensure_ascii=False)))
+        csv_rows_by_scene[1].append((1, str(d), 'fpy_daily', json.dumps(data, ensure_ascii=False)))
         mock_count += 1
-print(f"场景1 FPY合格率: {mock_count}条 (累计)")
+logger.info(f"场景1 FPY合格率: {mock_count}条 (累计)")
 
 # ===== 场景2: 磁物健康地图 =====
 for day in range(30):
@@ -63,8 +91,9 @@ for day in range(30):
         }
         cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(2,%s,'mag_health',%s,1)",
             (d, json.dumps(data, ensure_ascii=False)))
+        csv_rows_by_scene[2].append((2, str(d), 'mag_health', json.dumps(data, ensure_ascii=False)))
         mock_count += 1
-print(f"场景2 磁物健康: {mock_count}条 (累计)")
+logger.info(f"场景2 磁物健康: {mock_count}条 (累计)")
 
 # ===== 场景3: 异常料跟踪 =====
 for batch in range(20):
@@ -82,8 +111,9 @@ for batch in range(20):
     }
     cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(3,%s,'abnormal_stock',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
+    csv_rows_by_scene[3].append((3, str(d), 'abnormal_stock', json.dumps(data, ensure_ascii=False)))
     mock_count += 1
-print(f"场景3 异常料: {mock_count}条 (累计)")
+logger.info(f"场景3 异常料: {mock_count}条 (累计)")
 
 # ===== 场景4: 呆滞库存 =====
 for item in range(15):
@@ -102,8 +132,9 @@ for item in range(15):
     data['total_value'] = round(data['qty_kg'] * data['unit_price'], 2)
     cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(4,%s,'dead_stock',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
+    csv_rows_by_scene[4].append((4, str(d), 'dead_stock', json.dumps(data, ensure_ascii=False)))
     mock_count += 1
-print(f"场景4 呆滞库存: {mock_count}条 (累计)")
+logger.info(f"场景4 呆滞库存: {mock_count}条 (累计)")
 
 # ===== 场景5: IQC来料检验 =====
 for insp in range(50):
@@ -127,8 +158,9 @@ for insp in range(50):
         data['disposition'] = random.choice(['退货','让步接收','挑选使用','报废'])
     cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(5,%s,'iqc_record',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
+    csv_rows_by_scene[5].append((5, str(d), 'iqc_record', json.dumps(data, ensure_ascii=False)))
     mock_count += 1
-print(f"场景5 IQC: {mock_count}条 (累计)")
+logger.info(f"场景5 IQC: {mock_count}条 (累计)")
 
 # ===== 场景6: PMP过程监控 =====
 for day in range(30):
@@ -149,8 +181,9 @@ for day in range(30):
         data['output_qty'] = int(data['input_qty'] * data['fpy'] / 100)
         cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(6,%s,'pmp_fpy',%s,1)",
             (d, json.dumps(data, ensure_ascii=False)))
+        csv_rows_by_scene[6].append((6, str(d), 'pmp_fpy', json.dumps(data, ensure_ascii=False)))
         mock_count += 1
-print(f"场景6 PMP: {mock_count}条 (累计)")
+logger.info(f"场景6 PMP: {mock_count}条 (累计)")
 
 # ===== 场景7: COQ质量成本 =====
 for month in range(6):
@@ -174,9 +207,18 @@ for month in range(6):
     data['coq_rate'] = round(data['total_coq'] / data['sales_amount'] * 100, 2)
     cur.execute("INSERT INTO ds_mock_data(scene_id,mock_date,data_category,data_json,is_mock) VALUES(7,%s,'coq_monthly',%s,1)",
         (d, json.dumps(data, ensure_ascii=False)))
+    csv_rows_by_scene[7].append((7, str(d), 'coq_monthly', json.dumps(data, ensure_ascii=False)))
     mock_count += 1
-print(f"场景7 COQ: {mock_count}条 (累计)")
+logger.info(f"场景7 COQ: {mock_count}条 (累计)")
 
 conn.commit()
 cur.close(); conn.close()
-print(f"\n🏁 全部完成! 共生成 {mock_count} 条模拟质检数据")
+
+# P2-3: 导出CSV
+logger.info(f"📁 导出CSV到 {CSV_DIR}/")
+scene_names = {1:'FPY合格率',2:'磁物健康',3:'异常料',4:'呆滞库存',5:'IQC',6:'PMP',7:'COQ'}
+for sid, rows in csv_rows_by_scene.items():
+    if rows:
+        export_to_csv(sid, rows, scene_names.get(sid, f'场景{sid}'))
+
+logger.info(f"🏁 全部完成! 共生成 {mock_count} 条模拟质检数据")
