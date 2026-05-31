@@ -876,328 +876,166 @@ def delete_rule(rule_id):
         return api_success({'message': '已删除'})
 
 
-# ═══════════════════════════════════════════════════════════
-# Phase 1: 数据源管理API
-# ═══════════════════════════════════════════════════════════
 
-@app.route("/api/v1/xiyi/datasources", methods=["GET"])
+# ── Phase 1: 数据源管理 ──
+@app.route('/api/v1/xiyi/datasources', methods=['GET'])
 @api_handler
 def list_datasources():
-    """数据源列表"""
     with get_cursor() as cur:
         cur.execute("SELECT * FROM ds_source_connection ORDER BY id")
-        rows = [dict(r) for r in cur.fetchall()]
-        return api_success({"datasources": rows})
+        return api_success({'datasources': [dict(r) for r in cur.fetchall()]})
 
-
-@app.route("/api/v1/xiyi/datasources/<int:ds_id>", methods=["GET"])
-@api_handler
-def get_datasource(ds_id):
-    """数据源详情"""
-    with get_cursor() as cur:
-        cur.execute("SELECT * FROM ds_source_connection WHERE id=%s", (ds_id,))
-        row = cur.fetchone()
-        if not row:
-            return api_error("数据源不存在", 404)
-        return api_success({"datasource": dict(row)})
-
-
-@app.route("/api/v1/xiyi/datasources", methods=["POST"])
+@app.route('/api/v1/xiyi/datasources', methods=['POST'])
 @api_handler
 def create_datasource():
-    """新增数据源"""
     data = request.get_json()
     with get_cursor() as cur:
-        cur.execute(
-            "INSERT INTO ds_source_connection (source_code,source_name,source_type,host,port,db_name,config_json,sync_frequency,retry_count) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-            (data["source_code"], data["source_name"], data.get("source_type","MySQL"),
-             data.get("host",""), data.get("port",3306), data.get("db_name",""),
-             json.dumps(data.get("config",{})), data.get("sync_frequency","daily"), data.get("retry_count",3)))
-        return api_success({"id": cur.lastrowid, "message": "创建成功"})
+        cur.execute("INSERT INTO ds_source_connection (source_code,source_name,source_type,host,port,db_name,config_json,sync_frequency,retry_count) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", (data['source_code'], data['source_name'], data.get('source_type','MySQL'), data.get('host',''), data.get('port',3306), data.get('db_name',''), json.dumps(data.get('config',{})), data.get('sync_frequency','daily'), data.get('retry_count',3)))
+        return api_success({'id': cur.lastrowid, 'message':'ok'})
 
-
-@app.route("/api/v1/xiyi/datasources/<int:ds_id>", methods=["PUT"])
+@app.route('/api/v1/xiyi/datasources/<int:ds_id>', methods=['GET'])
 @api_handler
-def update_datasource(ds_id):
-    """更新数据源"""
-    data = request.get_json()
-    with get_cursor() as cur:
-        fields = []
-        for f in ["source_code","source_name","source_type","host","port","db_name","sync_frequency","retry_count","status"]:
-            if f in data:
-                fields.append(f"{f}=%s")
-        if "config" in data:
-            fields.append("config_json=%s")
-            data["config_json"] = json.dumps(data["config"])
-        if fields:
-            params = [data.get(f.split("=")[0], data[f.split("=")[0]]) for f in fields]
-            params.append(ds_id)
-            cur.execute(f"UPDATE ds_source_connection SET {",".join(fields)} WHERE id=%s", params)
-        return api_success({"message": "更新成功"})
-
-
-@app.route("/api/v1/xiyi/datasources/<int:ds_id>/test", methods=["POST"])
-@api_handler
-def test_datasource(ds_id):
-    """测试数据源连接"""
-    import pymysql
-    from datetime import datetime
+def get_datasource(ds_id):
     with get_cursor() as cur:
         cur.execute("SELECT * FROM ds_source_connection WHERE id=%s", (ds_id,))
-        ds = cur.fetchone()
-        if not ds:
-            return api_error("数据源不存在", 404)
-    try:
-        if ds["source_type"] == "MySQL":
-            test_conn = pymysql.connect(host=ds["host"], port=int(ds["port"]), user="root", password="", db=ds["db_name"], connect_timeout=5)
-            test_conn.close()
-            result, msg = True, "连接成功"
-        else:
-            result, msg = True, "连接测试已通过(模拟)"
-    except Exception as e:
-        result, msg = False, str(e)
-    with get_cursor() as cu:
-        cu.execute("UPDATE ds_source_connection SET status=%s, last_connected=%s WHERE id=%s",
-            ("active" if result else "error", datetime.now(), ds_id))
-    return api_success({"connected": result, "message": msg})
+        r = cur.fetchone()
+        if not r: return api_error('not found', 404)
+        return api_success({'datasource': dict(r)})
 
-
-@app.route("/api/v1/xiyi/datasources/<int:ds_id>/sync-logs", methods=["GET"])
+@app.route('/api/v1/xiyi/datasources/<int:ds_id>', methods=['PUT'])
 @api_handler
-def list_sync_logs(ds_id):
-    """同步日志"""
-    limit = request.args.get("limit", 20, type=int)
+def update_datasource(ds_id):
+    data = request.get_json()
     with get_cursor() as cur:
-        cur.execute("SELECT * FROM ds_sync_log WHERE table_id IN (SELECT id FROM ds_table_metadata WHERE source_id=%s) ORDER BY created_at DESC LIMIT %s", (ds_id, limit))
-        return api_success({"logs": [dict(r) for r in cur.fetchall()]})
+        for f in ['source_code','source_name','source_type','host','port','db_name','sync_frequency','retry_count','status']:
+            if f in data: cur.execute(f"UPDATE ds_source_connection SET {f}=%s WHERE id=%s", (data[f], ds_id))
+        return api_success({'message':'ok'})
 
-
-@app.route("/api/v1/xiyi/csv-import", methods=["POST"])
+@app.route('/api/v1/xiyi/csv-import', methods=['POST'])
 @api_handler
 def csv_import():
-    """CSV数据导入"""
-    if "file" not in request.files:
-        return api_error("缺少文件")
     import csv, io
-    file = request.files["file"]
-    scene_id = request.form.get("scene_id", 1, type=int)
-    content = file.read().decode("utf-8")
-    reader = csv.DictReader(io.StringIO(content))
-    rows = []
-    for row in reader:
-        rows.append(row)
-    if not rows:
-        return api_error("CSV文件为空或无有效数据")
+    if 'file' not in request.files: return api_error('no file')
+    f = request.files['file']
+    scene_id = request.form.get('scene_id', 1, type=int)
+    reader = csv.DictReader(io.StringIO(f.read().decode('utf-8')))
+    rows = [r for r in reader]
+    if not rows: return api_error('empty csv')
     with get_cursor() as cur:
         for row in rows:
-            cur.execute(
-                "INSERT INTO ds_mock_data (scene_id, mock_date, data_json) VALUES (%s, %s, %s)",
-                (scene_id, row.get("trade_date", row.get("date", "")), json.dumps(row)))
-    logger.info(f"CSV导入完成: {len(rows)} 条记录, scene_id={scene_id}")
-    return api_success({"imported": len(rows), "message": f"成功导入{len(rows)}条记录"})
+            cur.execute("INSERT INTO ds_mock_data (scene_id,mock_date,data_json) VALUES (%s,%s,%s)", (scene_id, row.get('trade_date',row.get('date','')), json.dumps(row)))
+    return api_success({'imported': len(rows), 'message': f'{len(rows)}条导入成功'})
 
-
-
-# Phase 2: 提示词模板管理API
-
-@app.route("/api/v1/xiyi/prompts", methods=["GET"])
-
+# ── Phase 2: 提示词模板 ──
+@app.route('/api/v1/xiyi/prompts', methods=['GET'])
 @api_handler
-
 def list_prompts():
-
-    """提示词模板列表"""
-
     with get_cursor() as cur:
+        cur.execute("SELECT * FROM ag_prompt_template WHERE is_active=1 ORDER BY scene_id,id")
+        return api_success({'templates': [dict(r) for r in cur.fetchall()]})
 
-        cur.execute("SELECT * FROM ag_prompt_template WHERE is_active=1 ORDER BY scene_id, id")
-
-        return api_success({"templates": [dict(r) for r in cur.fetchall()]})
-
-
-
-
-
-@app.route("/api/v1/xiyi/prompts/<int:pt_id>", methods=["GET"])
-
+@app.route('/api/v1/xiyi/prompts', methods=['POST'])
 @api_handler
-
-def get_prompt(pt_id):
-
-    """提示词详情"""
-
-    with get_cursor() as cur:
-
-        cur.execute("SELECT * FROM ag_prompt_template WHERE id=%s", (pt_id,))
-
-        row = cur.fetchone()
-
-        if not row: return api_error("模板不存在", 404)
-
-        return api_success({"template": dict(row)})
-
-
-
-
-
-@app.route("/api/v1/xiyi/prompts", methods=["POST"])
-
-@api_handler
-
 def create_prompt():
-
-    """新增提示词"""
-
     data = request.get_json()
-
     with get_cursor() as cur:
+        cur.execute("INSERT INTO ag_prompt_template (template_code,scene_id,role,system_prompt,user_prompt,output_format,temperature,model,description) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", (data['template_code'], data.get('scene_id'), data.get('role','quality_analyst'), data.get('system_prompt',''), data.get('user_prompt',''), data.get('output_format','markdown'), data.get('temperature',0.7), data.get('model','deepseek-chat'), data.get('description','')))
+        return api_success({'id': cur.lastrowid, 'message':'ok'})
 
-        cur.execute(
-
-            "INSERT INTO ag_prompt_template (template_code,scene_id,step_id,role,system_prompt,user_prompt,output_format,temperature,model,description) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-
-            (data["template_code"], data.get("scene_id"), data.get("step_id"),
-
-             data.get("role","quality_analyst"), data.get("system_prompt",""),
-
-             data.get("user_prompt",""), data.get("output_format","markdown"),
-
-             data.get("temperature",0.7), data.get("model","deepseek-chat"), data.get("description","")))
-
-        return api_success({"id": cur.lastrowid, "message": "创建成功"})
-
-
-
-
-
-@app.route("/api/v1/xiyi/prompts/<int:pt_id>", methods=["PUT"])
-
+@app.route('/api/v1/xiyi/prompts/<int:pt_id>', methods=['GET'])
 @api_handler
+def get_prompt(pt_id):
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM ag_prompt_template WHERE id=%s", (pt_id,))
+        r = cur.fetchone()
+        if not r: return api_error('not found', 404)
+        return api_success({'template': dict(r)})
 
+@app.route('/api/v1/xiyi/prompts/<int:pt_id>', methods=['PUT'])
+@api_handler
 def update_prompt(pt_id):
-
-    """更新提示词"""
-
     data = request.get_json()
-
     with get_cursor() as cur:
+        sets = [f"{f}=%s" for f in ['template_code','scene_id','role','system_prompt','user_prompt','description','is_active'] if f in data]
+        if sets:
+            vals = [data[s.split('=')[0]] for s in sets]; vals.append(pt_id)
+            cur.execute("UPDATE ag_prompt_template SET " + ",".join(sets) + " WHERE id=%s", vals)
+        return api_success({'message':'ok'})
 
-        fields = []
-
-        for f in ["template_code","scene_id","step_id","role","system_prompt","user_prompt","output_format","temperature","model","description","is_active"]:
-
-            if f in data:
-
-                fields.append(f"{f}=%s")
-
-        if fields:
-
-            vals = [data[f.split("=")[0]] for f in fields]
-
-            vals.append(pt_id)
-
-            cur.execute(f"UPDATE ag_prompt_template SET {",".join(fields)} WHERE id=%s", vals)
-
-        return api_success({"message": "更新成功"})
-
-
-
-
-
-# Phase 3: Tool Registry管理API
-
-@app.route("/api/v1/xiyi/tools", methods=["GET"])
-
+# ── Phase 3: Tool Registry ──
+@app.route('/api/v1/xiyi/tools', methods=['GET'])
 @api_handler
-
 def list_tools():
-
-    """Tool列表"""
-
     with get_cursor() as cur:
+        cur.execute("SELECT * FROM ag_tool_registry WHERE is_active=1 ORDER BY tool_type,id")
+        return api_success({'tools': [dict(r) for r in cur.fetchall()]})
 
-        cur.execute("SELECT * FROM ag_tool_registry WHERE is_active=1 ORDER BY tool_type, id")
-
-        return api_success({"tools": [dict(r) for r in cur.fetchall()]})
-
-
-
-
-
-@app.route("/api/v1/xiyi/tools/<int:tid>", methods=["PUT"])
-
+# ── Phase 5: 记忆系统 ──
+@app.route('/api/v1/xiyi/memory', methods=['GET'])
 @api_handler
-
-def update_tool(tid):
-
-    """更新Tool"""
-
-    data = request.get_json()
-
+def list_memories():
+    scene_id = request.args.get('scene_id', type=int)
+    mtype = request.args.get('type', '')
     with get_cursor() as cur:
+        sql = "SELECT * FROM ag_memory_store"; params = []
+        if scene_id: sql += " WHERE scene_id=%s"; params.append(scene_id)
+        if mtype: sql += (" AND" if scene_id else " WHERE") + " memory_type=%s"; params.append(mtype)
+        cur.execute(sql+" ORDER BY id DESC LIMIT 20", params)
+        return api_success({'memories': [dict(r) for r in cur.fetchall()]})
 
-        for f in ["tool_name","api_endpoint","tool_type","is_agent_tool","is_active","input_schema","output_schema","description"]:
-
-            if f in data:
-
-                v = json.dumps(data[f]) if isinstance(data[f], dict) else data[f]
-
-                cur.execute(f"UPDATE ag_tool_registry SET {f}=%s WHERE id=%s", (v, tid))
-
-        return api_success({"message": "更新成功"})
-
-
-
-
-
-@app.route("/api/v1/xiyi/tools/execute", methods=["POST"])
-
+@app.route('/api/v1/xiyi/memory', methods=['POST'])
 @api_handler
-
-def execute_tool():
-
-    """执行Tool（Agent调用入口）"""
-
+def save_memory():
     data = request.get_json()
-
-    tool_code = data.get("tool_code", "")
-
-    params = data.get("params", {})
-
-    trace_id = data.get("trace_id", "")
-
     with get_cursor() as cur:
+        cur.execute("INSERT INTO ag_memory_store (trace_id,memory_type,memory_key,memory_value,scene_id,session_id,is_persistent) VALUES (%s,%s,%s,%s,%s,%s,%s)", (data.get('trace_id',''), data.get('memory_type','observation'), data.get('memory_key',''), json.dumps(data.get('memory_value',{})), data.get('scene_id'), data.get('session_id'), data.get('is_persistent',0)))
+        return api_success({'id': cur.lastrowid, 'message':'ok'})
 
-        cur.execute("SELECT * FROM ag_tool_registry WHERE tool_code=%s AND is_active=1", (tool_code,))
+# ── Phase 6: 知识库 ──
+@app.route('/api/v1/xiyi/knowledge', methods=['GET'])
+@api_handler
+def list_knowledge():
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM ag_knowledge_base WHERE is_active=1 ORDER BY id DESC")
+        return api_success({'knowledge': [dict(r) for r in cur.fetchall()]})
 
-        tool = cur.fetchone()
+@app.route('/api/v1/xiyi/knowledge', methods=['POST'])
+@api_handler
+def create_knowledge():
+    data = request.get_json()
+    with get_cursor() as cur:
+        cur.execute("INSERT INTO ag_knowledge_base (kb_code,kb_type,title,content,tags,scene_id) VALUES (%s,%s,%s,%s,%s,%s)", (data['kb_code'], data.get('kb_type','standard'), data.get('title',''), data.get('content',''), json.dumps(data.get('tags',[])), data.get('scene_id')))
+        return api_success({'id': cur.lastrowid, 'message':'ok'})
 
-        if not tool:
+# ── Phase 8: 工作流 ──
+@app.route('/api/v1/xiyi/workflows', methods=['GET'])
+@api_handler
+def list_workflows():
+    wc = request.args.get('code', '')
+    with get_cursor() as cur:
+        if wc:
+            cur.execute("SELECT * FROM ag_workflow_step WHERE workflow_code=%s AND is_active=1 ORDER BY step_order", (wc,))
+            return api_success({'steps': [dict(r) for r in cur.fetchall()]})
+        cur.execute("SELECT DISTINCT workflow_code FROM ag_workflow_step WHERE is_active=1")
+        return api_success({'workflows': [r['workflow_code'] for r in cur.fetchall()]})
 
-            return api_error(f"Tool {tool_code} 不存在或已禁用")
+@app.route('/api/v1/xiyi/workflows/execute', methods=['POST'])
+@api_handler
+def execute_workflow():
+    data = request.get_json()
+    wc = data.get('workflow_code', '')
+    if not wc: return api_error('no workflow_code')
+    with get_cursor() as cur:
+        cur.execute("SELECT COUNT(*) as c FROM ag_workflow_step WHERE workflow_code=%s AND is_active=1", (wc,))
+        return api_success({'workflow': wc, 'steps_count': cur.fetchone()['c'], 'message':'ok'})
 
-        # 记录Tool调用
-
-        cur.execute(
-
-            "INSERT INTO ag_tool_call_log (trace_id, parent_span_id, tool_name, input_params, status, called_at) VALUES (%s,%s,%s,%s,%s,NOW())",
-
-            (trace_id, "tool_" + tool_code, tool["tool_name"], json.dumps(params), "running"))
-
-        # 返回Tool信息供Agent调度
-
-        return api_success({
-
-            "tool": dict(tool),
-
-            "trace_id": trace_id,
-
-            "message": f"Tool {tool_code} 已提交执行"
-
-        })
-
-
-
+# ── Phase 9: 数据血缘 ──
+@app.route('/api/v1/xiyi/lineage', methods=['GET'])
+@api_handler
+def list_lineage():
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM ds_data_lineage ORDER BY target_indicator")
+        return api_success({'lineage': [dict(r) for r in cur.fetchall()]})
 
 if __name__ == '__main__':
     logger.info("Starting Xiyi AI Brain API on port 8890...")
