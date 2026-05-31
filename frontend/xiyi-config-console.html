@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="xiyi-theme.css">
+  <link rel="stylesheet" href="xiyi-theme.css?v=3">
   <title>系统配置 · 兮易AI大脑</title>
 <style>
 /* config-console 特有样式 */
@@ -26,14 +26,21 @@
 .tag-green{background:rgba(34,197,94,0.1);color:var(--green)}
 .tag-red{background:rgba(239,68,68,0.1);color:var(--red)}
 .tag-yellow{background:rgba(245,158,11,0.1);color:var(--yellow)}
-</style>
-<!-- FIXED: P2-4 前端分页控件样式 -->
+/* FIXED: P2-4 分页样式 */
 .pagination{display:flex;justify-content:center;align-items:center;gap:4px;padding:12px 0}
-.pagination .page-btn{padding:4px 10px;border:1px solid var(--border-color);border-radius:4px;font-size:11px;cursor:pointer;color:var(--text-secondary);background:transparent;transition:all .15s}
-.pagination .page-btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
-.pagination .page-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
+.pagination .page-btn{padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:11px;cursor:pointer;color:var(--text2);background:transparent;transition:all .15s}
+.pagination .page-btn:hover{border-color:var(--blue);color:var(--blue)}
+.pagination .page-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .pagination .page-btn:disabled{opacity:0.3;cursor:default}
-.pagination .page-info{font-size:11px;color:var(--text-muted);margin:0 6px}
+.pagination .page-info{font-size:11px;color:var(--muted);margin:0 6px}
+/* P2-4 分页样式 */
+.pagination{display:flex;justify-content:center;align-items:center;gap:4px;padding:12px 0}
+.pagination .page-btn{padding:4px 10px;border:1px solid var(--border);border-radius:4px;font-size:11px;cursor:pointer;color:var(--text2);background:transparent;transition:all .15s}
+.pagination .page-btn:hover{border-color:var(--blue);color:var(--blue)}
+.pagination .page-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.pagination .page-btn:disabled{opacity:0.3;cursor:default}
+.pagination .page-info{font-size:11px;color:var(--muted);margin:0 6px}
+</style>
 
 </head>
 <body>
