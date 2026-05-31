@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IQC指标详情 · 兮易AI大脑</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-body{padding:14px 16px}.np{padding:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.st{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;transition:border-color .2s}
+.st:hover{border-color:var(--blue)}.st .l{font-size:11px;color:var(--muted);margin-bottom:6px}
+.st .v{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.st .t{font-size:11px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid rgba(30,45,74,0.3)}
+.cht{width:100%;height:320px;padding:4px 0}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 10px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:10px;font-weight:600}
+td{padding:6px 10px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+@media(max-width:768px){.stats,.g2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🚚 来料检验合格率 (IQC) - 详情</h1><div style="font-size:13px;color:var(--text2);margin-top:4px">品质专员 · 供应商来料质量监控</div></div>
+  <div><a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a></div>
+</div>
+
+<div id="content"></div>
+
+<script>
+var H = '';
+
+H += '<div class="stats">' +
+  '<div class="st"><div class="l">本周IQC合格率</div><div class="v" style="color:var(--yellow)">94.2%</div><div class="t">▼ 1.8% vs 上周 (目标≥95%)</div></div>' +
+  '<div class="st"><div class="l">不合格批次数</div><div class="v" style="color:var(--red)">8批</div><div class="t">▲ 3批 vs 上周</div></div>' +
+  '<div class="st"><div class="l">供应商审核率</div><div class="v" style="color:var(--yellow)">68%</div><div class="t">年度目标85%</div></div>' +
+'</div>';
+
+// 趋势图
+H += '<div class="card"><div class="card-header">IQC合格率趋势 (近30天)<span style="font-size:11px;color:var(--muted)">连续两周下降</span></div><div class="card-body"><div class="cht"><canvas id="trendChart"></canvas></div></div></div>';
+
+// 供应商对比+不合格分布
+H += '<div class="g2"><div class="card"><div class="card-header">Top5供应商合格率(月度)</div><div class="card-body"><div class="cht"><canvas id="supplierChart"></canvas></div></div></div>';
+H += '<div class="card"><div class="card-header">不合格原因结构分析</div><div class="card-body"><div class="cht"><canvas id="defectChart"></canvas></div></div></div></div>';
+
+// 不合格明细
+H += '<div class="card"><div class="card-header">不合格批次明细 (本周)</div><div class="card-body np"><table><thead><tr><th>批次号</th><th>供应商</th><th>物料</th><th>检验项</th><th>检验值</th><th>判定</th></tr></thead><tbody>' +
+  '<tr style="background:rgba(239,68,68,0.04)"><td>RM-A-20251020</td><td>供应商A</td><td>钴酸锂</td><td>粒度D50</td><td style="color:var(--red)">12.8μm</td><td><span style="color:var(--red);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.12)">不合格</span></td></tr>' +
+  '<tr style="background:rgba(239,68,68,0.04)"><td>RM-B-20251018</td><td>供应商B</td><td>碳酸锂</td><td>Co含量</td><td style="color:var(--red)">58.2%</td><td><span style="color:var(--red);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.12)">不合格</span></td></tr>' +
+  '<tr style="background:rgba(245,158,11,0.04)"><td>RM-C-20251015</td><td>供应商C</td><td>氢氧化锂</td><td>水分</td><td>0.12%</td><td><span style="color:var(--yellow);font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.12)">合格(OOT)</span></td></tr>' +
+'</tbody></table></div></div>';
+
+// 分解维度
+H += '<div class="card"><div class="card-header">关联分解维度与数据来源</div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">分解维度</div>供应商/物料类型/检验项目/时间周期</div>' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">数据来源</div>MOM/LIMS/ERP</div>' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">负责人</div>SQE/品质技术经理</div>' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">更新频率</div>每日(到货即检)</div>' +
+'</div></div></div>';
+
+document.getElementById('content').innerHTML = H;
+
+setTimeout(function(){
+  // IQC趋势
+  var ctx = document.getElementById('trendChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line', data: {
+        labels: Array.from({length:30},function(_,i){return '10/'+(i+1)}),
+        datasets: [{
+          label: 'IQC合格率(%)',
+          data: [95.5,95.8,94.2,93.5,94.0,94.8,95.2,96.0,95.5,94.8,94.0,93.2,93.8,94.5,95.0,95.8,95.2,94.5,93.8,93.0,93.5,94.2,94.8,95.5,94.8,94.0,93.5,94.2,94.8,95.0],
+          borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)',
+          tension: 0.4, fill: true, pointRadius: 2
+        },{
+          label: '目标 95%',
+          data: Array(30).fill(95),
+          borderColor: '#22c55e', borderWidth: 2, borderDash: [5,5],
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 10 } } },
+        scales: { y: { min: 92, max: 97, grid: { color: 'rgba(30,45,74,0.3)' } }, x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } } }
+      }
+    });
+  }
+
+  // 供应商柱状图
+  var ctx2 = document.getElementById('supplierChart');
+  if (ctx2) {
+    new Chart(ctx2, {
+      type: 'bar', data: {
+        labels: ['供应商A','供应商B','供应商C','供应商D','供应商E'],
+        datasets: [{
+          label: '合格率(%)', data: [92,94.5,99,98.5,100],
+          backgroundColor: ['#ef4444','#f59e0b','#3b82f6','#22c55e','#22c55e']
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { min: 88, max: 102, grid: { color: 'rgba(30,45,74,0.3)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  // 不合格结构
+  var ctx3 = document.getElementById('defectChart');
+  if (ctx3) {
+    new Chart(ctx3, {
+      type: 'bar', data: {
+        labels: ['粒度超标','成分偏差','水分超标','磁性物超标','包装破损','其他'],
+        datasets: [{
+          data: [32,25,18,15,7,3],
+          backgroundColor: ['#ef4444','#ef4444','#f59e0b','#f59e0b','#22c55e','#64748b']
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(30,45,74,0.3)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+}, 100);
+</script>
+</body>
+</html>

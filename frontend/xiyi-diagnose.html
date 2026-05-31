@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>根因诊断 · 兮易AI大脑</title>
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.7;padding:20px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:8px}
+.header h1{font-size:18px;color:#fff}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--radius);font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border-color);color:var(--text-secondary);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-primary{background:var(--color-hold);color:#fff;border:none}
+.btn-primary:hover{background:#2563eb}
+.wizard{margin-bottom:20px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);overflow:hidden}
+.wizard-header{padding:14px 18px;border-bottom:1px solid var(--border-color);font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.steps{display:flex;padding:12px 16px;gap:4px;overflow-x:auto}
+.step-item{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:20px;font-size:12px;white-space:nowrap;background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;border:1px solid transparent;transition:all .2s}
+.step-item:hover{border-color:var(--color-hold)}
+.step-item.active{background:rgba(59,130,246,0.15);color:var(--color-hold);border-color:var(--color-hold)}
+.step-item .num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:rgba(59,130,246,0.2);color:var(--color-hold);flex-shrink:0}
+.step-item.active .num{background:var(--color-hold);color:#fff}
+.step-item.done{background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:var(--color-bear)}
+.step-item.done .num{background:var(--color-bear);color:#fff}
+.content-area{padding:16px 18px}
+.content-area h2{font-size:16px;margin-bottom:12px}
+.content-area h3{font-size:14px;margin:12px 0 8px;color:var(--text-secondary)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px}
+.card .label{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.card .val{font-size:18px;font-weight:700}
+.card .desc{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.m1e-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.factor{padding:8px 10px;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius);font-size:12px;color:var(--text-secondary)}
+.step-panel{display:none}
+.step-panel.active{display:block}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+th{padding:6px 8px;border-bottom:2px solid var(--border-color);color:var(--text-muted);text-align:left;font-size:11px}
+td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.4);color:var(--text-secondary)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.loading{text-align:center;padding:40px;color:var(--text-muted)}
+@media(max-width:768px){.grid-2,.m1e-grid{grid-template-columns:1fr}.steps{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1 id="pageTitle">🔍 加载中...</h1>
+    <div style="font-size:13px;color:var(--text-secondary);margin-top:4px" id="sceneDesc"></div>
+  </div>
+  <div>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+  </div>
+</div>
+<div class="wizard">
+  <div class="wizard-header">
+    <span>⚙️ AI根因诊断向导</span>
+    <span style="font-size:11px;color:var(--text-muted)" id="stepCounter">加载步骤中...</span>
+  </div>
+  <div class="steps" id="stepTabs"></div>
+</div>
+<div id="stepContent">
+  <div class="loading" id="loadingMsg">📡 正在加载场景数据...</div>
+</div>
+<script>
+var API='/api/v1/xiyi',_sceneId=parseInt(new URLSearchParams(location.search).get('scene'))||1,_traceId=new URLSearchParams(location.search).get('trace')||'',_sceneName='',_steps=[];
+var STEP_META=[{icon:'📋',name:'问题定义与数据'},{icon:'📈',name:'现象分析与定位'},{icon:'🔍',name:'4M1E关联分析'},{icon:'🎯',name:'核心根因验证'},{icon:'📉',name:'能力短板归因'},{icon:'📝',name:'解决方案CAPA'},{icon:'📊',name:'任务落地跟踪'}];
+var DEMO={step1:{summary:'AI智能体已启动FPY异常诊断流程。首先明确问题范围，并自动集成和检验所需的全景数据。',problem:{kpi:'在线一次检验合格率(FPY)',current:'97.5%',target:'99.0%',gap:'-1.5%',timeframe:'2025年10月1日-10月10日',scope:'LCO(高压实钴酸锂)产线B'},dataSources:[{sys:'MOM/MES',desc:'生产过程参数、设备状态、产量数据',s:'ok'},{sys:'LIMS',desc:'成品检验结果、原料IQC数据',s:'ok'},{sys:'SCADA',desc:'设备维保记录、报警日志',s:'ok'},{sys:'第三方平台',desc:'原料批次信息、供应商数据',s:'warn',w:'部分批次同步延迟'}]},
+step2:{summary:'异常主要集中在【电化学性能(克容量偏低)】和【理化指标(粒度D50偏大)】，与【2#烧结炉】关联性最强。',p:['克容量偏低','粒度D50偏大','ICP成分波动','磁物超标','水分超标','其他'],pv:[40,30,15,10,3,2],s:[{d:'设备(烧结工序)',i:'2#烧结炉(Sinter-02)',p:'65%',t:'使用2#烧结炉批次FPY仅95.2%，低于其他产线(均值98.8%)'},{d:'班次',i:'白班(甲组)',p:'45%',t:'甲组操作期间克容量偏低问题发生频率较高'},{d:'原料批次(前驱体)',i:'RM-P-20251001',p:'30%',t:'该批次原料投入后粒度D50出现上漂趋势'}]},
+step3:{summary:'对人机料法环五维度深度关联分析，识别潜在根本原因假设。',f:[{m:'👤人',f1:'新员工技能熟练度不足',l:'弱',d:'甲组近期2名新员工，培训记录完整'},{m:'👤人',f1:'操作员未按SOP投料顺序',l:'强',d:'MES记录甲组张三10月8日存在投料顺序颠倒'},{m:'⚙️机',f1:'2#烧结炉温控系统波动',l:'严重',d:'DCS显示Zone 2温度频繁触及上限955℃'},{m:'⚙️机',f1:'除磁设备效能下降',l:'弱',d:'设备保养记录正常'},{m:'🧪料',f1:'前驱体批次粒度分布异常',l:'强',d:'IQC显示该批次D90偏大，烧结不充分'},{m:'🧪料',f1:'碳酸锂水分超标',l:'弱',d:'IQC水分检测合格'},{m:'📋法',f1:'烧结工艺参数设定不合理',l:'中',d:'SOP版本V3.2沿用6个月需评估'},{m:'🌡️环',f1:'车间温湿度波动',l:'弱',d:'环境监控显示温湿度稳定'}]},
+step4:{summary:'通过统计学方法和历史数据回溯，对强关联因素验证确认核心根因。',v:[{h:'2#烧结炉温度波动导致克容量偏低',m:'相关性与回归分析',r:'✅通过',c:'温度与克容量显著负相关R²=0.78，>953℃克容量<180mAh/g'},{h:'前驱体批次粒度异常导致成品D50偏大',m:'假设检验T-test',r:'✅通过',c:'使用该批次原料成品D50均值显著大于历史均值P<0.01'},{h:'操作员未按SOP投料顺序影响性能',m:'历史数据对比',r:'⚠️不充分',c:'投料顺序颠倒对FPY影响不显著'}],rc:['主因:2#烧结炉温控系统老化导致温度偏高(设备因素)','次因:前驱体原料批次RM-P-20251001质量波动(物料因素)']},
+step5:{summary:'本次FPY异常暴露了【设备健康管理(EHM)】和【供应商质量管理(SQM)】方面的能力短板。',m:[{c:'主因:烧结炉温控系统老化',cap:'3.1设备健康管理EHM',s:45,st:'严重短板',f1:'缺乏对关键设备预测性维护PdM机制'},{c:'次因:前驱体原料批次质量波动',cap:'2.1供应商质量管理SQM',s:55,st:'存在短板',f1:'对供应商质量监控前移不足'}]},
+step6:{summary:'针对已确认根因和能力短板，推荐纠正措施CA和预防措施PA。',a:[{t:'CA纠正',p:'P0',d1:'立即对2#烧结炉温控系统检修校准',o:'设备部',dl:'3天'},{t:'CA纠正',p:'P1',d1:'隔离复核RM-P-20251001批次在制品',o:'品质部/生产部',dl:'2天'},{t:'PA预防',p:'P1',d1:'建立烧结炉温控系统实时SPC监控和PdM',o:'技术部/IT部',dl:'1个月',b:'降低设备质量异常30%'},{t:'PA预防',p:'P2',d1:'强化前驱体供应商质量审核CPK管控',o:'SQE/采购部',dl:'3个月',b:'提升原料一致性'}]},
+step7:{summary:'已将CAPA转化为可执行的任务，请确认并分配责任人，系统自动跟踪进度。',t:[{t1:'检修校准2#烧结炉温控系统',a:'设备部张工',dl:'2026-06-06',s:'进行中'},{t1:'隔离复核RM-P-20251001批次在制品',a:'品质专员',dl:'2026-06-03',s:'进行中'},{t1:'建立SPC温控预警系统',a:'技术部/IT部',dl:'2026-06-30',s:'待开始'},{t1:'供应商质量审核与CPK推动',a:'SQE/采购部',dl:'2026-08-31',s:'待开始'},{t1:'2#线操作工工艺培训',a:'培训专员',dl:'2026-06-15',s:'待开始'}]}};
+
+async function init(){try{var sr=await fetch(API+'/scenes/'+_sceneId).then(r=>r.json());if(sr.code!==0){fillStatic();return;}
+var sc=sr.data.scene;_sceneName=sc.scene_name||'';document.getElementById('pageTitle').textContent='🔍 '+_sceneName+' — 根因诊断';document.getElementById('sceneDesc').textContent=(sc.description||'').slice(0,120);
+var sr2=await fetch(API+'/scenes/'+_sceneId+'/steps').then(r=>r.json());_steps=sr2.code===0?sr2.data.steps||[]:[];buildWizard(Math.max(_steps.length,7));
+if(_sceneId==1){fillStep(1);}else{await loadAPIStep1();}var lm=document.getElementById('loadingMsg');if(lm)lm.style.display='none';if(_traceId)loadTrace();else if(_sceneId==1&&!document.querySelector('#step2 .loading')){fillStep(2);}
+}catch(e){fillStatic();}}
+
+function fillStatic(){document.getElementById('pageTitle').textContent='🔍在线一次交验合格率管控—根因诊断(演示)';document.getElementById('sceneDesc').textContent='集成MOM/MES/LIMS/SCADA数据全景分析';buildWizard(7);var lm=document.getElementById('loadingMsg');if(lm)lm.style.display='none';fillStep(1);}
+
+function buildWizard(n){var th='',ch='';for(var i=0;i<n;i++){var j=i+1,sn=(_steps[i]&&_steps[i].step_name)||STEP_META[i].name;th+='<div class="step-item'+(i===0?' active':'')+'" data-step="'+j+'" onclick="switchStep('+j+')"><span class="num">'+j+'</span>'+sn+'</div>';ch+='<div class="step-panel'+(i===0?' active':'')+'" id="step'+j+'"><div class="content-area"><div class="loading">📡加载'+sn+'数据...</div></div></div>';}
+document.getElementById('stepTabs').innerHTML=th;document.getElementById('stepContent').innerHTML=ch;document.getElementById('stepCounter').textContent='步骤1 / '+n;}
+
+function fillStep(n){var el=document.getElementById('step'+n);if(!el||!el.querySelector('.loading'))return;var s=DEMO['step'+n];if(!s)return;el.innerHTML=R(n,s);}
+
+function R(n,s){var H=function(t){return t||''}
+switch(n){
+case 1:return '<div class="content-area"><h2>📋问题定义与数据</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">AI诊断摘要</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div><div class="grid-2"><div class="card"><div class="label">分析指标</div><div class="val">'+H(s.problem.kpi)+'</div><div class="desc">'+H(s.problem.timeframe)+'</div></div><div class="card"><div class="label">当前值/目标值/差距</div><div class="val" style="color:var(--color-defect)">'+H(s.problem.current)+'</div><div class="desc">目标:'+H(s.problem.target)+' | 差距:'+H(s.problem.gap)+'</div></div><div class="card"><div class="label">分析范围</div><div class="val">'+H(s.problem.scope)+'</div><div class="desc">产线/产品范围界定</div></div><div class="card"><div class="label">下一阶段</div><div class="val" style="color:var(--color-hold)">现象分析</div><div class="desc">切换到步骤2查看详细分析</div></div></div><h3>📡数据集成状态</h3><div class="grid-2">'+s.dataSources.map(function(x){var ic=x.s==='ok'?'✅':'⚠️',c1=x.s==='ok'?'var(--color-bear)':'var(--color-warning)';return '<div class="card" style="display:flex;align-items:center;gap:10px"><div style="font-size:20px;color:'+c1+'">'+ic+'</div><div><div style="font-weight:600;font-size:13px">'+x.sys+'</div><div style="font-size:11px;color:var(--text-muted)">'+x.desc+(x.w?' <span style="color:var(--color-warning)">('+x.w+')</span>':'')+'</div></div></div>';}).join('')+'</div></div>';
+case 2:return '<div class="content-area"><h2>📈现象分析与定位</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">分析摘要</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div><h3>📊不合格项目柏拉图</h3><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:16px;margin-bottom:12px"><div style="display:flex;gap:6px;flex-wrap:wrap">'+s.p.map(function(l,i){var v=s.pv[i];return '<div style="flex:1;min-width:60px;text-align:center"><div style="height:80px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:4px"><div style="width:30px;height:'+(v*2)+'px;border-radius:4px 4px 0 0;background:'+(i<2?'var(--color-defect)':i<4?'var(--color-warning)':'var(--border-color)')+'"></div></div><div style="font-size:10px;color:var(--text-muted)">'+l+'</div><div style="font-size:11px;font-weight:600">'+v+'%</div></div>';}).join('')+'</div></div><h3>🎯分层分析与关联定位</h3>'+s.s.map(function(x){var c1=parseFloat(x.p)>50?'var(--color-defect)':'var(--color-warning)';return '<div style="background:var(--bg-secondary);border-left:4px solid '+c1+';border-radius:var(--radius);padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:13px">'+x.d+'</span><span style="font-size:12px;color:'+c1+';font-weight:600">贡献度:'+x.p+'</span></div><div style="font-size:12px"><strong>Top 1关联项:</strong> '+x.i+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+x.t+'</div></div>';}).join('')+'</div>';
+case 3:return '<div class="content-area"><h2>🔍4M1E关联分析</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">分析摘要</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div><div class="m1e-grid">'+s.f.map(function(f){var lc=f.l==='严重'?'var(--color-defect)':f.l==='强'?'var(--color-warning)':'var(--color-bear)';return '<div class="factor"><span style="font-size:11px">'+f.m+'</span><div style="font-weight:600;font-size:12px;margin:2px 0">'+f.f1+'</div><span style="font-size:10px;padding:1px 6px;border-radius:4px;background:'+lc+'20;color:'+lc+'">'+f.l+'</span><div style="font-size:11px;color:var(--text-muted);margin-top:4px">'+f.d+'</div></div>';}).join('')+'</div></div>';
+case 4:return '<div class="content-area"><h2>🎯核心根因验证</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">AI验证摘要</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div><h3>📋验证结果</h3>'+s.v.map(function(x){var rc=x.r.indexOf('通过')>=0?'var(--color-bear)':'var(--color-warning)';return '<div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:13px">'+x.h+'</span><span style="font-size:12px;color:'+rc+';font-weight:600">'+x.r+'</span></div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">方法:'+x.m+'</div><div style="font-size:12px;color:var(--text-secondary)">结论:'+x.c+'</div></div>';}).join('')+'<div style="background:var(--bg-card);border:1px solid var(--color-warning);border-radius:var(--radius);padding:14px;margin-top:12px"><div style="font-size:12px;color:var(--color-defect);font-weight:600;margin-bottom:6px">✅最终根因判定</div>'+s.rc.map(function(r){return '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">'+r+'</div>';}).join('')+'</div></div>';
+case 5:return '<div class="content-area"><h2>📉能力短板归因</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">管理归因摘要</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div>'+s.m.map(function(x){var sc=x.s<50?'var(--color-defect)':'var(--color-warning)';return '<div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:8px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">根因:'+x.c+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px">'+x.cap+'</span><span style="font-size:11px;padding:2px 8px;border-radius:8px;background:'+sc+'20;color:'+sc+'">评分'+x.s+'·'+x.st+'</span></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+x.f1+'</div></div>';}).join('')+'</div>';
+case 6:return '<div class="content-area"><h2>📝解决方案CAPA</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">AI推荐方案</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div>'+s.a.map(function(x){var pc=x.p==='P0'?'var(--color-defect)':x.p==='P1'?'var(--color-warning)':'var(--color-hold)';return '<div style="background:var(--bg-secondary);border-left:4px solid '+pc+';border-radius:var(--radius);padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:11px;padding:2px 8px;border-radius:6px;background:'+pc+'20;color:'+pc+';font-weight:600">'+x.p+'·'+x.t+'</span><span style="font-size:11px;color:var(--text-muted)">'+x.o+'·'+x.dl+'</span></div><div style="font-size:13px;color:var(--text-secondary)">'+x.d1+'</div>'+(x.b?'<div style="font-size:11px;color:var(--color-bear);margin-top:4px">预期收益:'+x.b+'</div>':'')+'</div>';}).join('')+'</div>';
+case 7:return '<div class="content-area"><h2>📊任务落地跟踪</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:12px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">任务跟踪摘要</div><div style="font-size:13px;color:var(--text-secondary)">'+H(s.summary)+'</div></div><table><tr><th>任务</th><th>责任人</th><th>截止日</th><th>状态</th></tr>'+s.t.map(function(x){var sc=x.s==='进行中'?'var(--color-warning)':'var(--text-muted)';return '<tr><td style="font-weight:500">'+x.t1+'</td><td>'+x.a+'</td><td>'+x.dl+'</td><td><span style="color:'+sc+'">'+x.s+'</span></td></tr>';}).join('')+'</table></div>';
+}}
+
+function switchStep(n){document.querySelectorAll('.step-item').forEach(function(e){e.classList.remove('active')});var t=document.querySelector('.step-item[data-step="'+n+'"]');if(t)t.classList.add('active');document.querySelectorAll('.step-panel').forEach(function(e){e.classList.remove('active')});var p=document.getElementById('step'+n);if(p)p.classList.add('active');document.getElementById('stepCounter').textContent='步骤 '+n+' / 7';for(var i=1;i<n;i++){var e=document.querySelector('.step-item[data-step="'+i+'"]');if(e)e.classList.add('done')}if(p&&p.querySelector('.loading')&&_sceneId==1&&DEMO['step'+n]){fillStep(n)}}
+
+async function loadAPIStep1(){try{var kr=await fetch(API+'/mock/kpi').then(r=>r.json());var mr=await fetch(API+'/mock/'+_sceneId+'?limit=10').then(r=>r.json());var kps=kr.code===0?kr.data.kpis||[]:[];var rows=mr.code===0?mr.data.rows||[]:[];var el=document.getElementById('step1');if(!el)return;el.innerHTML='<div class="content-area"><h2>📋问题定义与数据</h2><div class="grid-2">'+kps.map(function(k){return '<div class="card"><div class="label">'+k.name+'</div><div class="val" style="color:var(--color-'+(k.level==='danger'?'defect':k.level==='warning'?'warning':'bear')+')">'+k.value+'</div><div class="desc">目标:'+k.target+'</div></div>';}).join('')+'</div><h3>📊最新'+rows.length+'条数据</h3><table><tr><th>日期</th><th>产线</th><th>FPY%</th><th>检验数</th><th>不良数</th><th>不良类型</th></tr>'+rows.slice(0,10).map(function(r){var d=r.data||{},f=d.fpy||'-',c=f<97?'color:var(--color-defect)':f<98.5?'color:var(--color-warning)':'';return '<tr><td>'+(r.mock_date||'-')+'</td><td>'+(d.line_name||'-')+'</td><td style="'+c+'">'+f+'</td><td>'+(d.total||'-')+'</td><td>'+(d.defect||'-')+'</td><td>'+(d.defect_type||'-')+'</td></tr>';}).join('')+'</table></div>';}catch(e){var el=document.getElementById('step1');if(el)el.innerHTML='<div class="content-area"><h2>📋问题定义与数据</h2><div style="color:var(--color-defect)">数据加载失败:'+e.message+'</div></div>';}}
+
+async function loadTrace(){if(!_traceId)return;try{var tr=await fetch(API+'/analysis/trace/'+_traceId).then(r=>r.json());if(tr.code===0){var task=tr.data.task||{},result=task.result||'';if(typeof result==='string'){try{result=JSON.parse(result)}catch(e){}}if(result&&result.ai_analysis){var aiText=result.ai_analysis||'';var hasAlarm=result.has_alarm||false;
+// 在顶部显示AI分析结果横幅
+var banner=document.createElement('div');banner.style.cssText='background:var(--bg-card);border:1px solid '+(hasAlarm?'var(--color-warning)':'var(--color-bear)')+';border-radius:var(--radius-lg);padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px';banner.innerHTML='<div style="font-size:24px">'+(hasAlarm?'⚠️':'✅')+'</div><div><div style="font-weight:600;font-size:14px;color:var(--text-primary)">'+(hasAlarm?'AI分析:检测到异常指标,建议查看步骤2-4的详细分析':'AI分析:未检测到异常指标,品质状况良好')+'</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">traceId:'+_traceId+' | 点击步骤导航查看详细报告</div></div>';var header=document.querySelector('.header');if(header)header.parentNode.insertBefore(banner,header.nextSibling);
+// 填充步骤2:AI分析报告
+var el=document.getElementById('step2');if(el)el.innerHTML='<div class="content-area"><h2>🤖AI分析报告</h2><div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:16px;font-size:13px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.7">'+aiText.replace(/\n/g,'<br>').replace(/(\d+\.)/g,'<br><strong>$1</strong>').replace(/\[.*?\]/g,function(m){return '<span style="color:var(--color-hold)">'+m+'</span>'})+'</div></div>';if(!document.querySelector('.step-item.active')||document.querySelector('.step-item.active').getAttribute('data-step')!='2'){switchStep(2)}}else{var el=document.getElementById('step2');if(el)el.innerHTML='<div class="content-area"><h2>🤖AI分析报告</h2><div style="color:var(--text-muted);padding:20px;text-align:center">暂无AI分析结果</div></div>'}}else{var el=document.getElementById('step2');if(el)el.innerHTML='<div class="content-area"><h2>🤖AI分析报告</h2><div style="color:var(--color-defect);padding:20px">加载分析报告失败:'+(tr.error||'未知错误')+'</div></div>'}}catch(e){var el=document.getElementById('step2');if(el)el.innerHTML='<div class="content-area"><h2>🤖AI分析报告</h2><div style="color:var(--color-defect);padding:20px">加载异常:'+e.message+'</div></div>'}}
+init();
+</script>
+</body>
+</html>

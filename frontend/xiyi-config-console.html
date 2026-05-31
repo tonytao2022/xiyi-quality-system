@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>系统配置 · 兮易AI大脑</title>
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--color-safety:#8b5cf6;--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:200px;min-width:200px;background:var(--bg-secondary);border-right:1px solid var(--border-color);position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sidebar .logo{padding:18px 16px;border-bottom:1px solid var(--border-color);font-size:13px;font-weight:700;color:#fff}
+.sidebar .logo span{font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
+.nav-item{display:flex;align-items:center;padding:10px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:all .15s;border-left:3px solid transparent;gap:8px}
+.nav-item:hover{background:var(--bg-card);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,0.08);color:var(--color-hold);border-left-color:var(--color-hold)}
+.main{margin-left:200px;padding:20px 24px;flex:1}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.header h1{font-size:18px;color:#fff}
+.header .badge{font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(59,130,246,0.1);color:var(--color-hold)}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--lg);margin-bottom:16px}
+.card-h{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border-color);font-size:13px;font-weight:600}
+.card-b{padding:14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:7px 8px;border-bottom:2px solid var(--border-color);color:var(--text-muted);font-weight:600;text-align:left;font-size:11px}
+td{padding:6px 8px;border-bottom:1px solid rgba(30,45,74,0.5);color:var(--text-secondary)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--radius);font-size:12px;cursor:pointer;transition:all .15s;border:none}
+.btn-primary{background:var(--color-hold);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-outline{background:transparent;border:1px solid var(--border-color);color:var(--text-secondary)}
+.btn-outline:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn-danger{background:transparent;border:1px solid var(--color-defect);color:var(--color-defect)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.tag{display:inline-block;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.tag-green{background:rgba(34,197,94,0.15);color:var(--color-bear)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--color-hold)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--color-warning)}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--color-defect)}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{padding:7px 16px;background:transparent;border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text-secondary);cursor:pointer;font-size:12px}
+.tab-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
+.form-group{margin-bottom:12px}
+.form-group label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
+.form-control{width:100%;padding:7px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text);font-size:12px;outline:none}
+.form-control:focus{border-color:var(--color-hold)}
+select.form-control{cursor:pointer}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal{background:var(--bg);border:1px solid var(--border-color);border-radius:var(--lg);width:500px;max-width:90vw;max-height:85vh;overflow-y:auto}
+.modal-h{padding:14px 18px;border-bottom:1px solid var(--border-color);font-size:14px;font-weight:600}
+.modal-b{padding:14px 18px}
+.modal-f{padding:10px 18px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end}
+.empty{text-align:center;padding:30px;color:var(--text-muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">🏭 兮易AI大脑<span>系统配置台</span></div>
+    <div class="nav-item active" onclick="switchTab('scenes')">📋 场景配置</div>
+    <div class="nav-item" onclick="switchTab('indicators')">📊 指标管理</div>
+    <div class="nav-item" onclick="switchTab('standards')">📐 数据标准</div>
+    <div class="nav-item" onclick="switchTab('rules')">⚙️ 规则管理</div>
+    <div class="nav-item" onclick="switchTab('datasources')">🔗 数据源</div>
+    <div style="border-top:1px solid var(--border-color);margin:8px 12px 0;"></div>
+    <a class="nav-item" href="/xiyi-quality-workbench.html" style="font-size:12px;cursor:pointer;text-decoration:none;display:flex">
+      <span style="margin-right:8px">←</span> 返回工作台
+    </a>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1 id="pageTitle">📋 场景配置管理</h1>
+      <div class="badge" id="apiBadge">检查连接...</div>
+    </div>
+
+    <!-- 场景配置 -->
+    <div id="tabScenes">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchSubTab('list')">场景列表</button>
+        <button class="tab-btn" onclick="switchSubTab('add')">➕ 新建场景</button>
+      </div>
+      <div id="sceneListContent"></div>
+      <div id="sceneFormContent" style="display:none"></div>
+    </div>
+
+    <!-- 指标管理 -->
+    <div id="tabIndicators" style="display:none"></div>
+
+    <!-- 数据标准 -->
+    <div id="tabStandards" style="display:none"></div>
+
+    <!-- 数据源 -->
+    <div id="tabDatasources" style="display:none"></div>
+    <div id="tabRules" style="display:none"></div>
+  </main>
+</div>
+
+<script>
+const API = '/api/v1/xiyi';
+let _scenes = [];
+
+async function loadAll() {
+  document.getElementById('apiBadge').textContent = '🔄 连接中...';
+  try {
+    const sr = await fetch(`${API}/scenes`).then(r=>r.json());
+    if (sr.code === 0) {
+      _scenes = sr.data.scenes || [];
+      renderSceneList();
+      document.getElementById('apiBadge').textContent = '✅ 已连接';
+    }
+    // 加载指标
+    loadIndicators();
+    // 加载标准字段
+    loadStandards();
+  } catch(e) {
+    document.getElementById('apiBadge').textContent = '❌ ' + e.message;
+  }
+}
+
+// ─── Tab切换 ───
+function switchTab(name) {
+  document.querySelectorAll('.main > [id^=tab]').forEach(el => el.style.display = 'none');
+  const el = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (el) el.style.display = '';
+  document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
+  const titles = {scenes:'📋 场景配置管理', indicators:'📊 指标管理', standards:'📐 数据标准管理', rules:'⚙️ 规则管理', datasources:'🔗 数据源管理'};
+  document.getElementById('pageTitle').textContent = titles[name] || '系统配置';
+  const idx = ['scenes','indicators','standards','datasources'].indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.sidebar .nav-item')[idx].classList.add('active');
+  if (name === 'rules') loadRules();
+}
+
+function switchSubTab(name) {
+  document.getElementById('sceneListContent').style.display = name === 'list' ? '' : 'none';
+  document.getElementById('sceneFormContent').style.display = name === 'add' ? '' : 'none';
+  document.querySelectorAll('#tabScenes .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#tabScenes .tab-btn')[name==='list'?0:1].classList.add('active');
+  if (name === 'add') renderSceneForm();
+  else renderSceneList();
+}
+
+// ─── 场景列表 ───
+function renderSceneList() {
+  const el = document.getElementById('sceneListContent');
+  if (!_scenes.length) { el.innerHTML = '<div class="empty">暂无场景配置</div>'; return; }
+  
+  // 加载步骤数
+  el.innerHTML = `<div class="card"><div class="card-h">场景配置 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${_scenes.length}个</span></div>
+    <div class="card-b"><table><thead><tr>
+      <th>编码</th><th>场景名称</th><th>分类</th><th>步骤</th><th>状态</th><th>操作</th>
+    </tr></thead><tbody>
+    ${_scenes.map(s => `<tr>
+      <td style="color:var(--color-hold);font-weight:600">${s.scene_code}</td>
+      <td>${s.scene_name}</td>
+      <td><span class="tag tag-blue">${s.category||'—'}</span></td>
+      <td>${s.step_count||7}步</td>
+      <td><span class="tag tag-green">${s.status||'published'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="editScene(${s.id})">📝 编辑</button><button class="btn btn-outline btn-sm" onclick="showStepManager(${s.id},'${s.scene_name}')" style="margin-left:4px">📋 步骤</button>
+      </td>
+    </tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+// ─── 编辑场景（弹窗） ───
+function editScene(id) {
+  const s = _scenes.find(x => x.id === id);
+  if (!s) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-h">📝 编辑场景 — ${s.scene_code}</div>
+    <div class="modal-b">
+      <div class="form-group"><label>场景名称</label><input class="form-control" id="e_name" value="${s.scene_name}"></div>
+      <div class="form-group"><label>分类</label><input class="form-control" id="e_cat" value="${s.category||''}"></div>
+      <div class="form-group"><label>描述</label><textarea class="form-control" id="e_desc" rows="3">${s.description||''}</textarea></div>
+      <div class="form-group"><label>状态</label>
+        <select class="form-control" id="e_status"><option ${s.status==='published'?'selected':''}>published</option>
+        <option ${s.status==='draft'?'selected':''}>draft</option><option ${s.status==='deprecated'?'selected':''}>deprecated</option></select></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit(${s.id})">💾 保存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function saveEdit(id) {
+  const name = document.getElementById('e_name').value;
+  const cat = document.getElementById('e_cat').value;
+  const desc = document.getElementById('e_desc').value;
+  const status = document.getElementById('e_status').value;
+  try {
+    const r = await fetch(`${API}/scenes/${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({scene_name:name, category:cat, description:desc, status})
+    }).then(r=>r.json());
+    if (r.code === 0) {
+      document.querySelector('.modal-overlay')?.remove();
+      loadAll();
+    } else alert('保存失败: ' + (r.error||''));
+  } catch(e) { alert('请求失败: ' + e.message); }
+}
+
+// ─── 新建场景 ───
+function renderSceneForm() {
+  const el = document.getElementById('sceneFormContent');
+  el.style.display = '';
+  el.innerHTML = `<div class="card" style="max-width:600px">
+    <div class="card-h">➕ 新建场景</div>
+    <div class="card-b">
+      <div class="form-group"><label>场景编码</label><input class="form-control" id="f_code" placeholder="QUAL_08"></div>
+      <div class="form-group"><label>场景名称</label><input class="form-control" id="f_name" placeholder="新场景名称"></div>
+      <div class="form-group"><label>分类</label><input class="form-control" id="f_cat" placeholder="品质监控/过程分析/库存预警..."></div>
+      <div class="form-group"><label>描述</label><textarea class="form-control" id="f_desc" rows="3" placeholder="描述这个场景要解决的问题..."></textarea></div>
+      <button class="btn btn-primary" onclick="submitNewScene()" style="margin-top:4px">✅ 创建场景</button>
+    </div>
+  </div>`;
+}
+
+async function submitNewScene() {
+  const code = document.getElementById('f_code').value;
+  const name = document.getElementById('f_name').value;
+  const cat = document.getElementById('f_cat').value;
+  const desc = document.getElementById('f_desc').value;
+  if (!code || !name) { alert('编码和名称不能为空'); return; }
+  try {
+    const r = await fetch(`${API}/scenes`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({scene_code:code, scene_name:name, category:cat, description:desc, role_type:'quality'})
+    }).then(r=>r.json());
+    if (r.code === 0) {
+      alert('✅ 场景创建成功！默认7步流程已添加。');
+      switchSubTab('list');
+      loadAll();
+    } else alert('❌ ' + (r.error||'创建失败'));
+  } catch(e) { alert('❌ ' + e.message); }
+}
+
+// ─── 指标管理 ───
+async function loadIndicators() {
+  try {
+    const r = await fetch(`${API}/indicators`).then(r=>r.json());
+    if (r.code === 0) {
+      const inds = r.data.indicators || [];
+      document.getElementById('tabIndicators').innerHTML = `<div class="card"><div class="card-h">指标定义 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${inds.length}个</span></div>
+        <div class="card-b"><table><thead><tr><th>编码</th><th>名称</th><th>分类</th><th>计算逻辑</th><th>单位</th><th>阈值</th><th>操作</th></tr></thead><tbody>
+        ${inds.map(ind => `<tr><td style="color:var(--color-hold)">${ind.indicator_code}</td><td>${ind.indicator_name}</td>
+          <td>${ind.category_name||'—'}</td><td style="font-size:11px;color:var(--text-muted)">${(ind.calc_logic||'').slice(0,40)}</td>
+          <td>${ind.unit||''}</td><td>${ind.threshold_lower||0}~${ind.threshold_upper||'∞'}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="editIndicator('${ind.indicator_code}','${ind.indicator_name}',${ind.threshold_lower||0},${ind.threshold_upper||0},'${ind.unit||''}','${ind.alert_level||'warning'}')">✏️</button></td></tr>`).join('')}
+        </tbody></table></div></div>`;
+    }
+  } catch(e) {}
+}
+
+// ─── 数据标准 ───
+async function loadStandards() {
+  try {
+    const r = await fetch(`${API}/standards`).then(r=>r.json());
+    if (r.code === 0) {
+      const cols = r.data.standards || [];
+      document.getElementById('tabStandards').innerHTML = `<div class="card"><div class="card-h">标准字段 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${cols.length}个</span></div>
+        <div class="card-b"><table><thead><tr><th>标准编码</th><th>标准名称</th><th>数据类型</th><th>说明</th></tr></thead><tbody>
+        ${cols.map(c => `<tr><td style="color:var(--color-hold)">${c.std_code}</td><td>${c.std_name}</td><td>${c.data_type}</td><td>${c.description||'—'}</td></tr>`).join('')}
+        </tbody></table></div></div>`;
+    }
+  } catch(e) {}
+}
+
+loadAll();
+</script>
+
+<script>
+// ═══ 步骤管理 ═══
+async function showStepManager(sceneId, sceneName) {
+  const r = await fetch(`${API}/scenes/${sceneId}/steps`).then(r=>r.json());
+  if (r.code !== 0) return;
+  const steps = r.data.steps || [];
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  
+  let html = `<div class="modal" style="width:600px">
+    <div class="modal-h">📋 七步流程管理 — ${sceneName}</div>
+    <div class="modal-b">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">拖拽调整顺序，或编辑步骤属性</div>
+      <div id="stepList">`;
+  
+  steps.forEach((s, i) => {
+    html += `<div class="step-card" data-id="${s.id}" style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:10px;margin-bottom:6px;cursor:grab">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--color-hold);font-weight:600">${s.sort_order}.</span>
+          <span style="font-size:13px;color:var(--text)">${s.step_name}</span>
+          <span style="font-size:10px;color:var(--text-muted);background:var(--bg-card);padding:1px 6px;border-radius:4px">${s.step_type}</span>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editStepName(${s.id},'${s.step_name}','${s.step_type}')">✏️</button>
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();moveStep(${sceneId},${s.id},'up',${steps.length})" ${i===0?'disabled':''}>↑</button>
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();moveStep(${sceneId},${s.id},'down',${steps.length})" ${i===steps.length-1?'disabled':''}>↓</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteStepConfirm(${sceneId},${s.id},'${s.step_name}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  
+  html += `</div>
+      <button class="btn btn-outline btn-sm" onclick="addStep(${sceneId})" style="margin-top:8px">＋ 添加步骤</button>
+    </div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">关闭</button></div>
+  </div>`;
+  
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+}
+
+async function moveStep(sceneId, stepId, direction, total) {
+  const r = await fetch(`${API}/scenes/${sceneId}/steps`).then(r=>r.json());
+  if (r.code !== 0) return;
+  const steps = r.data.steps || [];
+  const idx = steps.findIndex(s => s.id === stepId);
+  if (idx < 0) return;
+  const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (newIdx < 0 || newIdx >= steps.length) return;
+  
+  // 交换sort_order
+  const stepIds = steps.map(s => s.id);
+  [stepIds[idx], stepIds[newIdx]] = [stepIds[newIdx], stepIds[idx]];
+  
+  const rr = await fetch(`${API}/scenes/${sceneId}/steps/reorder`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({step_ids: stepIds})
+  }).then(r=>r.json());
+  
+  if (rr.code === 0) {
+    document.querySelector('.modal-overlay')?.remove();
+    showStepManager(sceneId, steps[0]?.step_name + '等');
+  }
+}
+
+function editStepName(stepId, name, type) {
+  const newName = prompt('步骤名称:', name);
+  if (!newName || newName === name) return;
+  fetch(`${API}/steps/${stepId}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({step_name: newName})
+  }).then(r=>r.json()).then(d => {
+    if (d.code === 0) document.querySelector('.modal-overlay')?.remove();
+  });
+}
+
+function deleteStepConfirm(sceneId, stepId, name) {
+  if (!confirm('确认删除步骤「' + name + '」？')) return;
+  fetch(`${API}/steps/${stepId}`, {method: 'DELETE'})
+    .then(r=>r.json()).then(d => {
+      if (d.code === 0) {
+        document.querySelector('.modal-overlay')?.remove();
+        showStepManager(sceneId, name.replace(/^步骤./,'') + '等');
+      }
+    });
+}
+
+async function addStep(sceneId) {
+  const name = prompt('新步骤名称:');
+  if (!name) return;
+  const rr = await fetch(`${API}/scenes/${sceneId}/steps`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({step_name: name, step_type: 'analysis'})
+  }).then(r=>r.json());
+  if (rr.code === 0) {
+    document.querySelector('.modal-overlay')?.remove();
+    showStepManager(sceneId, '');
+  }
+}
+</script>
+
+</body>
+</html>
+
+<script>
+// ═══ 指标编辑 ═══
+async function editIndicator(indCode, indName, curLower, curUpper, curUnit, curLevel) {
+  const r = await fetch(`${API}/indicators`).then(r=>r.json());
+  if (r.code !== 0) return;
+  const ind = (r.data.indicators || []).find(i => i.indicator_code === indCode);
+  if (!ind) return;
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-h">📝 编辑指标 — ${ind.indicator_name}</div>
+    <div class="modal-b">
+      <div class="form-group"><label>指标名称</label><input class="form-control" id="ei_name" value="${ind.indicator_name}"></div>
+      <div class="form-group"><label>下限阈值</label><input class="form-control" id="ei_lower" type="number" step="0.1" value="${ind.threshold_lower||0}"></div>
+      <div class="form-group"><label>上限阈值</label><input class="form-control" id="ei_upper" type="number" step="0.1" value="${ind.threshold_upper||0}"></div>
+      <div class="form-group"><label>单位</label><input class="form-control" id="ei_unit" value="${ind.unit||''}"></div>
+      <div class="form-group"><label>告警级别</label>
+        <select class="form-control" id="ei_level">
+          <option ${ind.alert_level==='danger'?'selected':''}>danger</option>
+          <option ${ind.alert_level==='warning'?'selected':''}>warning</option>
+          <option ${ind.alert_level==='success'?'selected':''}>success</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
+      <button class="btn btn-primary" onclick="saveIndicator('${indCode}')">💾 保存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function saveIndicator(code) {
+  const name = document.getElementById('ei_name').value;
+  const lower = parseFloat(document.getElementById('ei_lower').value) || 0;
+  const upper = parseFloat(document.getElementById('ei_upper').value) || 0;
+  const unit = document.getElementById('ei_unit').value;
+  const level = document.getElementById('ei_level').value;
+  try {
+    const r = await fetch(`${API}/indicators/${code}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({indicator_name:name, threshold_lower:lower, threshold_upper:upper, unit:unit, alert_level:level})
+    }).then(r=>r.json());
+    if (r.code === 0) {
+      document.querySelector('.modal-overlay')?.remove();
+      loadIndicators();
+    } else alert('❌ ' + (r.error||''));
+  } catch(e) { alert('❌ ' + e.message); }
+}
+
+// 在指标表格加载完成后，为每行追加编辑按钮
+const _origLoadInd = loadIndicators;
+loadIndicators = async function() {
+  await _origLoadInd();
+  // 给表格添加操作列
+  setTimeout(() => {
+    const indTable = document.querySelector('#tabIndicators table');
+    if (!indTable) return;
+    const header = indTable.querySelector('thead tr');
+    if (!header || (header.cells.length > 0 && header.cells[header.cells.length-1].textContent.includes('操作'))) return;
+    header.insertAdjacentHTML('beforeend', '<th>操作</th>');
+    indTable.querySelectorAll('tbody tr').forEach(tr => {
+      const code = tr.cells[0]?.textContent.trim();
+      const name = tr.cells[1]?.textContent.trim();
+      if (code) {
+        tr.insertAdjacentHTML('beforeend', `<td><button class="btn btn-outline btn-sm" onclick="editIndicator('${code}','${name}',0,0,'','')">✏️</button></td>`);
+      }
+    });
+  }, 200);
+};
+</script>
+<script>
+// ═══ 规则管理 ═══
+async function loadRules() {
+  try {
+    const r = await fetch(`${API}/rules`).then(r=>r.json());
+    if (r.code !== 0) return;
+    const rules = r.data.rules || [];
+    document.getElementById('tabRules').innerHTML = `<div class="card"><div class="card-h">⚙️ 规则管理 <span style="font-size:11px;color:var(--text-muted);font-weight:400">共${rules.length}条规则</span></div>
+      <div class="card-b"><table><thead><tr><th>ID</th><th>场景</th><th>规则名称</th><th>类型</th><th>优先级</th><th>状态</th><th>操作</th></tr></thead><tbody>
+      ${rules.map(r => `<tr>
+        <td style="color:var(--color-hold)">${r.id}</td>
+        <td>${r.scene_name||'—'}</td>
+        <td>${r.rule_name}</td>
+        <td><span class="tag tag-${r.rule_type==='threshold'?'blue':r.rule_type==='judgment_tree'?'yellow':'green'}">${r.rule_type}</span></td>
+        <td>${r.priority}</td>
+        <td><span class="tag ${r.enabled?'tag-green':'tag-yellow'}">${r.enabled?'✅ 启用':'❌ 禁用'}</span></td>
+        <td><button class="btn btn-outline btn-sm" onclick="editRule(${r.id})">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRule(${r.id})">🗑️</button></td>
+      </tr>`).join('')}
+      </tbody></table></div></div>`;
+  } catch(e) { document.getElementById('tabRules').innerHTML = '<div class="empty">加载失败: '+e.message+'</div>'; }
+}
+
+function editRule(id) {
+  fetch(`${API}/rules`).then(r=>r.json()).then(d => {
+    const rule = (d.data.rules||[]).find(r => r.id === id);
+    if (!rule) return;
+    const expr = typeof rule.rule_expr === 'string' ? rule.rule_expr : JSON.stringify(rule.rule_expr, null, 2);
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+    overlay.innerHTML = `<div class="modal"><div class="modal-h">📝 编辑规则 — ${rule.rule_name}</div>
+      <div class="modal-b">
+        <div class="form-group"><label>规则名称</label><input class="form-control" id="er_name" value="${rule.rule_name}"></div>
+        <div class="form-group"><label>优先级</label><input class="form-control" id="er_pri" type="number" value="${rule.priority}"></div>
+        <div class="form-group"><label>状态</label><select class="form-control" id="er_enabled"><option ${rule.enabled?'selected':''} value="1">启用</option><option ${!rule.enabled?'selected':''} value="0">禁用</option></select></div>
+        <div class="form-group"><label>规则表达式(JSON)</label><textarea class="form-control" id="er_expr" rows="6">${expr}</textarea></div>
+      </div>
+      <div class="modal-f">
+        <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="btn btn-primary" onclick="saveRule(${id})">💾 保存</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+  });
+}
+
+async function saveRule(id) {
+  const name = document.getElementById('er_name').value;
+  const pri = parseInt(document.getElementById('er_pri').value) || 0;
+  const enabled = parseInt(document.getElementById('er_enabled').value);
+  let expr;
+  try { expr = JSON.parse(document.getElementById('er_expr').value); } catch(e) { alert('JSON格式错误'); return; }
+  const r = await fetch(`${API}/rules/${id}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({rule_name:name, priority:pri, enabled:enabled, rule_expr:expr})
+  }).then(r=>r.json());
+  if (r.code === 0) { document.querySelector('.modal-overlay')?.remove(); loadRules(); }
+  else alert('❌ '+(r.error||''));
+}
+
+async function deleteRule(id) {
+  if (!confirm('确认删除这条规则？')) return;
+  const r = await fetch(`${API}/rules/${id}`, {method:'DELETE'}).then(r=>r.json());
+  if (r.code === 0) loadRules();
+  else alert('❌ '+(r.error||''));
+}
+
+// 劫持loadAll加载规则
+const _origLoadAll = loadAll;
+loadAll = function() { _origLoadAll(); loadRules(); };
+</script>

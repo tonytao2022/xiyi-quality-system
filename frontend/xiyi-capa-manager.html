@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPA管理 · 兮易AI大脑</title>
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--color-safety:#8b5cf6;--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:20px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.header h1{font-size:18px;color:#fff}
+.header .badge{font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(59,130,246,0.1);color:var(--color-hold)}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--lg);margin-bottom:16px}
+.card-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border-color);font-size:14px;font-weight:600}
+.card-b{padding:14px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-bottom:20px}
+.plan-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--lg);padding:14px;cursor:pointer;transition:all .15s}
+.plan-card:hover{border-color:var(--color-hold)}
+.plan-card .code{font-size:11px;color:var(--color-hold);margin-bottom:4px}
+.plan-card .name{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.plan-card .cause{font-size:12px;color:var(--text-secondary);margin-bottom:6px;line-height:1.5}
+.plan-card .meta{font-size:11px;color:var(--text-muted);display:flex;gap:10px}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600}
+.tag-high{background:rgba(239,68,68,0.15);color:var(--color-defect)}
+.tag-medium{background:rgba(245,158,11,0.15);color:var(--color-warning)}
+.tag-low{background:rgba(34,197,94,0.15);color:var(--color-bear)}
+.tag-open{background:rgba(59,130,246,0.15);color:var(--color-hold)}
+.tag-done{background:rgba(34,197,94,0.15);color:var(--color-bear)}
+.tag-inprog{background:rgba(245,158,11,0.15);color:var(--color-warning)}
+.task-item{padding:8px 0;border-bottom:1px solid rgba(30,45,74,0.4);display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.task-item:last-child{border-bottom:none}
+.task-item .info{flex:1}
+.task-item .info .tname{color:var(--text)}
+.task-item .info .tmeta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.empty{text-align:center;padding:40px;color:var(--text-muted);font-size:13px}
+.track-item{padding:6px 0;border-bottom:1px solid rgba(30,45,74,0.3);font-size:12px;display:flex;gap:8px}
+.track-item .tt{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--bg-secondary);color:var(--text-muted);white-space:nowrap}
+.track-item .tc{color:var(--text-secondary)}
+.btn{padding:6px 14px;border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+.btn-primary{background:var(--color-hold);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-outline{background:transparent;border:1px solid var(--border-color);color:var(--text-secondary)}
+.btn-outline:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn-green{background:var(--color-bear);color:#fff}
+.btn-green:hover{background:#16a34a}
+.btn-yellow{background:transparent;border:1px solid var(--color-warning);color:var(--color-warning)}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal{background:var(--bg);border:1px solid var(--border-color);border-radius:var(--lg);width:550px;max-width:92vw;max-height:85vh;overflow-y:auto}
+.modal-h{padding:14px 18px;border-bottom:1px solid var(--border-color);font-size:14px;font-weight:600}
+.modal-b{padding:14px 18px}
+.modal-f{padding:10px 18px;border-top:1px solid var(--border-color);display:flex;gap:8px;justify-content:flex-end}
+.form-group{margin-bottom:10px}
+.form-group label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
+.form-control{width:100%;padding:7px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text);font-size:13px;outline:none}
+.form-control:focus{border-color:var(--color-hold)}
+select.form-control{cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🔄 CAPA管理 — 纠正与预防措施</h1>
+    <div class="badge" id="apiBadge">检查连接...</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/xiyi-quality-workbench.html" class="btn btn-outline">← 返回工作台</a>
+    <button class="btn btn-outline" onclick="loadCAPA()">🔄 刷新</button>
+    <button class="btn btn-primary" onclick="showNewPlanForm()">＋ 新建方案</button>
+  </div>
+</div>
+
+<div id="capaList" class="grid"></div>
+
+<!-- 方案详情弹窗 -->
+<div id="planDetail" style="display:none"></div>
+
+<script>
+const API = '/api/v1/xiyi';
+
+async function loadCAPA() {
+  document.getElementById('apiBadge').textContent = '🔄 加载中...';
+  try {
+    const r = await fetch(`${API}/capa/plans`).then(r=>r.json());
+    if (r.code === 0) {
+      const plans = r.data.plans || [];
+      if (!plans.length) {
+        document.getElementById('capaList').innerHTML = '<div class="empty">暂无CAPA方案，点击"新建方案"创建</div>';
+      } else {
+        document.getElementById('capaList').innerHTML = plans.map(p => `
+          <div class="plan-card" onclick="showPlanDetail(${p.id})">
+            <div class="code">${p.plan_code}</div>
+            <div class="name">${p.title||'CAPA方案'}</div>
+            <div class="cause">${(p.root_cause||'').length>60 ? (p.root_cause||'').slice(0,60)+'...' : p.root_cause||''}</div>
+            <div class="meta">
+              <span class="tag tag-${p.priority==='high'?'high':p.priority==='medium'?'medium':'low'}">${p.priority||'medium'}</span>
+              <span>${p.created_by||'admin'}</span>
+              <span>${p.created_at ? p.created_at.slice(0,10) : ''}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+      document.getElementById('apiBadge').textContent = `✅ ${plans.length}个方案`;
+    }
+  } catch(e) {
+    document.getElementById('apiBadge').textContent = '❌ ' + e.message;
+  }
+}
+
+async function showPlanDetail(planId) {
+  const r = await fetch(`${API}/capa/plans/${planId}`).then(r=>r.json());
+  if (r.code !== 0) return;
+  const p = r.data.plan || {};
+  const tasks = r.data.tasks || [];
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-h">📋 ${p.plan_code} — ${p.title||''}</div>
+    <div class="modal-b">
+      <div class="form-group"><label>根因分析</label><div style="font-size:13px;color:var(--text-secondary);padding:6px;background:var(--bg-secondary);border-radius:var(--radius)">${p.root_cause||'—'}</div></div>
+      <div class="form-group"><label>改善方案</label><div style="font-size:13px;color:var(--text-secondary);padding:6px;background:var(--bg-secondary);border-radius:var(--radius)">${p.plan_content||'—'}</div></div>
+      <div style="border-top:1px solid var(--border-color);padding-top:10px;margin-top:10px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">📝 任务分解 (${tasks.length})</div>
+        ${tasks.length ? tasks.map(t => `
+          <div class="task-item">
+            <div class="info">
+              <div class="tname">${t.title}</div>
+              <div class="tmeta">${t.assignee||'未指定'} · ${t.deadline||'无截止日'} · ${t.track_count||0}次跟踪</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <span class="tag tag-${t.status==='done'?'done':t.status==='in_progress'?'inprog':'open'}">${t.status||'open'}</span>
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showTrackForm(${t.id},'${t.title}')">📝 跟踪</button>
+            </div>
+          </div>
+        `).join('') : '<div class="empty">暂未分配任务</div>'}
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showNewTaskForm(${planId})" style="margin-top:8px">＋ 添加任务</button>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn btn-outline" onclick="this.closest(\\'.modal-overlay\\').remove()">关闭</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+// 新建方案弹窗
+function showNewPlanForm() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-h">📝 新建CAPA方案</div>
+    <div class="modal-b">
+      <div class="form-group"><label>方案编码</label><input class="form-control" id="np_code" placeholder="CAPA-YYYYMMDD-XXX"></div>
+      <div class="form-group"><label>标题</label><input class="form-control" id="np_title" placeholder="FPY异常改善方案"></div>
+      <div class="form-group"><label>根因分析</label><textarea class="form-control" id="np_cause" rows="2"></textarea></div>
+      <div class="form-group"><label>改善方案</label><textarea class="form-control" id="np_content" rows="3"></textarea></div>
+      <div class="form-group"><label>优先级</label><select class="form-control" id="np_priority"><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>
+      <button class="btn btn-primary" onclick="submitNewPlan()">💾 创建</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitNewPlan() {
+  const code = document.getElementById('np_code').value;
+  const title = document.getElementById('np_title').value;
+  const cause = document.getElementById('np_cause').value;
+  const content = document.getElementById('np_content').value;
+  const priority = document.getElementById('np_priority').value;
+  if (!code || !title) { alert('编码和标题必填'); return; }
+  const r = await fetch(`${API}/capa/plans`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({plan_code:code, title, root_cause:cause, plan_content:content, priority})
+  }).then(r=>r.json());
+  if (r.code === 0) {
+    document.querySelector('.modal-overlay')?.remove();
+    loadCAPA();
+  } else alert('❌ ' + (r.error||''));
+}
+
+// 新任务弹窗
+function showNewTaskForm(planId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-h">📝 添加任务</div>
+    <div class="modal-b">
+      <div class="form-group"><label>任务编码</label><input class="form-control" id="nt_code" placeholder="TASK-XXX"></div>
+      <div class="form-group"><label>任务名称</label><input class="form-control" id="nt_title"></div>
+      <div class="form-group"><label>责任人</label><input class="form-control" id="nt_assignee"></div>
+      <div class="form-group"><label>截止日期</label><input class="form-control" id="nt_deadline" type="date"></div>
+      <div class="form-group"><label>交付物</label><textarea class="form-control" id="nt_deliverables" rows="2"></textarea></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>
+      <button class="btn btn-primary" onclick="submitNewTask(${planId})">💾 添加</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitNewTask(planId) {
+  const code = document.getElementById('nt_code').value;
+  const title = document.getElementById('nt_title').value;
+  if (!code || !title) { alert('编码和名称必填'); return; }
+  const r = await fetch(`${API}/capa/tasks`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({plan_id:planId, task_code:code, title, assignee:document.getElementById('nt_assignee').value, deadline:document.getElementById('nt_deadline').value, deliverables:document.getElementById('nt_deliverables').value})
+  }).then(r=>r.json());
+  if (r.code === 0) {
+    document.querySelector('.modal-overlay')?.remove();
+    // 刷新方案详情
+    const detailEl = document.querySelector('.modal[style*="z-index:9999"]');
+    if (detailEl) detailEl.closest('.modal-overlay').remove();
+    showPlanDetail(planId);
+  } else alert('❌ ' + (r.error||''));
+}
+
+// 任务跟踪弹窗
+function showTrackForm(taskId, taskTitle) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-h">📝 任务跟踪 — ${taskTitle}</div>
+    <div class="modal-b">
+      <div class="form-group"><label>跟踪类型</label>
+        <select class="form-control" id="tr_type"><option value="progress">进度更新</option><option value="status_update">状态变更</option><option value="verification">验证结果</option></select></div>
+      <div class="form-group"><label>跟踪内容</label><textarea class="form-control" id="tr_content" rows="3" placeholder="描述当前进展..."></textarea></div>
+      <div class="form-group"><label>验证人</label><input class="form-control" id="tr_verifier" placeholder="(可选)"></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-outline" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>
+      <button class="btn btn-primary" onclick="submitTrack(${taskId})">💾 提交跟踪</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitTrack(taskId) {
+  const content = document.getElementById('tr_content').value;
+  if (!content) { alert('跟踪内容不能为空'); return; }
+  const r = await fetch(`${API}/capa/tasks/${taskId}/track`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({track_type:document.getElementById('tr_type').value, content, verifier:document.getElementById('tr_verifier').value})
+  }).then(r=>r.json());
+  if (r.code === 0) {
+    document.querySelector('.modal-overlay')?.remove();
+    alert('✅ 跟踪记录已添加');
+  } else alert('❌ ' + (r.error||''));
+}
+
+loadCAPA();
+</script>
+</body>
+</html>

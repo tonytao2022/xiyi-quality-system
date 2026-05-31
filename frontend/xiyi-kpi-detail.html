@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>指标详情 · 兮易AI大脑</title>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px;--lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.header .badge{font-size:11px;padding:3px 12px;border-radius:8px;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;transition:border-color .2s}
+.card:hover{border-color:rgba(59,130,246,0.15)}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:var(--text)}
+.card-body{padding:14px 16px}
+.triple{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.triple .st{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;transition:border-color .2s}
+.triple .st:hover{border-color:var(--blue)}
+.triple .st .l{font-size:11px;color:var(--muted);margin-bottom:6px}
+.triple .st .v{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.triple .st .t{font-size:11px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid rgba(30,45,74,0.3)}
+.chart-box{width:100%;height:320px;padding:4px 0;position:relative}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 10px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:10px;font-weight:600}
+td{padding:6px 10px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.dims{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.dims .it{padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2)}
+.dims .it .dl{font-size:10px;color:var(--muted);margin-bottom:2px}
+@media(max-width:768px){.triple,.grid-2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1 id="pageTitle">📊 指标详情</h1>
+    <div style="font-size:13px;color:var(--text2);margin-top:4px" id="pageSubtitle">品质专员 · 核心指标</div>
+  </div>
+  <div>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+  </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+// 从URL读取参数
+var params = new URLSearchParams(location.search);
+var kpiName = params.get('name') || '磁物检验异常数变化率';
+var kpiVal = params.get('value') || '+15';
+var kpiTarget = params.get('target') || '0';
+var kpiUnit = params.get('unit') || '%';
+var kpiLevel = params.get('level') || 'danger';
+var kpiIdx = params.get('idx') || '1';
+
+document.getElementById('pageTitle').textContent = '📊 ' + kpiName + ' - 详情';
+document.getElementById('pageSubtitle').textContent = '品质专员 · 核心指标 · ' + kpiName;
+
+// KPI颜色
+var defColor = kpiLevel === 'danger' ? '#ef4444' : kpiLevel === 'warning' ? '#f59e0b' : '#22c55e';
+
+// 近12周磁物异常数模拟数据
+var chartLabels = ['W31','W32','W33','W34','W35','W36','W37','W38','W39','W40','W41','W42'];
+var chartData = [12,15,14,18,20,22,25,28,30,35,40,42];
+
+// 渲染
+var H = '';
+
+// 三栏核心数据
+H += '<div class="triple">' +
+  '<div class="st"><div class="l">当前值</div><div class="v" style="color:' + defColor + '">' + (kpiVal.indexOf('%') >= 0 ? kpiVal : kpiVal + kpiUnit) + '</div><div class="t">环比 +5%</div></div>' +
+  '<div class="st"><div class="l">目标值</div><div class="v" style="color:var(--green)">' + (kpiTarget.indexOf('%') >= 0 ? kpiTarget : kpiTarget + kpiUnit) + '</div><div class="t">目标：无波动</div></div>' +
+  '<div class="st"><div class="l">设备异常分布</div><div class="v" style="font-size:22px">2#烧结炉</div><div class="t" style="color:var(--red)">贡献 85% 不合格</div></div>' +
+'</div>';
+
+// 历史趋势图
+H += '<div class="card"><div class="card-header">磁物检验异常数趋势 (近12周)<span style="font-size:11px;color:var(--muted)">模拟数据显示持续上升趋势</span></div><div class="card-body"><div class="chart-box"><canvas id="trendChart"></canvas></div></div></div>';
+
+// 设备分解
+H += '<div class="card"><div class="card-header">关联分解维度与数据来源</div><div class="card-body">' +
+  '<div class="dims">' +
+    '<div class="it"><div class="dl">分解维度</div>生产线/工序、物料批次、供应商、时间周期</div>' +
+    '<div class="it"><div class="dl">数据来源</div>MOM/MES系统、IQC系统、ERP</div>' +
+    '<div class="it"><div class="dl">数据负责人</div>品质技术经理</div>' +
+    '<div class="it"><div class="dl">更新频率</div>每日更新(MOM实时)</div>' +
+  '</div></div></div>';
+
+// 设备明细
+H += '<div class="card"><div class="card-header">本周磁物异常设备明细 (Top 5)</div><div class="card-body np"><table><thead><tr><th>设备</th><th>工序</th><th>异常次数</th><th>占比</th><th>趋势</th></tr></thead><tbody>' +
+  '<tr style="background:rgba(239,68,68,0.04)"><td>2#烧结炉 (Sinter-02)</td><td>烧结</td><td style="color:var(--red)">12</td><td>29%</td><td>↑ 上升</td></tr>' +
+  '<tr style="background:rgba(239,68,68,0.04)"><td>1#烧结炉 (Sinter-01)</td><td>烧结</td><td style="color:var(--red)">8</td><td>19%</td><td>↑ 上升</td></tr>' +
+  '<tr style="background:rgba(245,158,11,0.04)"><td>除磁器 (MagSep-05)</td><td>除磁</td><td style="color:var(--yellow)">6</td><td>14%</td><td>→ 持平</td></tr>' +
+  '<tr><td>混合机 (Mixer-02)</td><td>混合</td><td>5</td><td>12%</td><td>→ 持平</td></tr>' +
+  '<tr><td>粉碎机 (Crusher-01)</td><td>粉碎</td><td>3</td><td>7%</td><td>↓ 下降</td></tr>' +
+'</tbody></table></div></div>';
+
+document.getElementById('content').innerHTML = H;
+
+// 绘制趋势图
+setTimeout(function(){
+  var ctx = document.getElementById('trendChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: '磁物异常数 (次/周)',
+        data: chartData,
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.08)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: chartData.map(function(v){ return v > 30 ? '#ef4444' : v > 20 ? '#f59e0b' : '#22c55e'; }),
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 10, padding: 10 } }
+      },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: '次数' }, grid: { color: 'rgba(30,45,74,0.3)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}, 100);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</body>
+</html>

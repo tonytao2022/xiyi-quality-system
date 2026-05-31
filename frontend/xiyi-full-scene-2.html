@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>磁物健康 · 全景数据分析 · 兮易AI大脑</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px;--lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
+.btn-primary{background:var(--blue);color:#fff;border:none}.btn-primary:hover{background:#2563eb}
+.btn-sm{font-size:11px;padding:3px 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:var(--text)}
+.card-body{padding:14px 16px}.card-body.nopad{padding:0}
+.fpy-tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;flex-wrap:wrap}
+.fpy-tab-item{padding:6px 16px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text2);transition:all .2s;white-space:nowrap}
+.fpy-tab-item:hover{background:rgba(59,130,246,0.06);color:var(--text)}
+.fpy-tab-item.active{background:rgba(59,130,246,0.12);color:var(--blue)}
+.fpy-tab-content{display:none;padding-top:14px}.fpy-tab-content.active{display:block}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.kpi-card .kpil{font-size:11px;color:var(--muted);margin-bottom:4px}
+.kpi-card .kpiv{font-size:24px;font-weight:700}
+.kpi-card .kpit{font-size:11px;color:var(--muted);margin-top:4px}
+.chart-box{width:100%;height:340px;padding:4px 0;position:relative}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 10px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:11px;font-weight:600}
+td{padding:6px 10px;border-bottom:1px solid rgba(30,45,74,0.25);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.ai-box{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:12px 16px;margin-bottom:12px}
+.ai-box h4{font-size:14px;color:var(--blue);margin-bottom:4px}
+.ai-box p{font-size:13px;color:var(--text2);line-height:1.7}
+.corr-hd{font-size:14px;font-weight:600;padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;color:var(--text)}
+.report-preview{font-size:13px;color:var(--text2);line-height:1.8}
+.report-preview h4{font-size:15px;color:var(--text);margin:12px 0 6px}
+.report-preview ul{padding-left:18px;margin:4px 0}
+.report-preview li{margin-bottom:3px}
+.report-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border)}
+.al{padding:4px 0}.al-item{padding:10px 0;border-bottom:1px solid var(--border)}.al-item:last-child{border-bottom:none}
+.al-item .al-h{font-size:13px;font-weight:600;color:var(--text)}.al-item .al-m{font-size:11px;color:var(--muted);margin:2px 0}
+.sb{display:inline-block;font-size:10px;padding:2px 10px;border-radius:8px;font-weight:600}
+.sb-ip{background:rgba(59,130,246,0.12);color:var(--blue)}.sb-pd{background:rgba(245,158,11,0.12);color:var(--yellow)}.sb-cp{background:rgba(34,197,94,0.12);color:var(--green)}
+.badge-d{background:rgba(239,68,68,0.12);color:var(--red)}.badge-w{background:rgba(245,158,11,0.12);color:var(--yellow)}.badge-h{background:rgba(34,197,94,0.12);color:var(--green)}
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filters select{padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none}
+/* 设备地图 */
+.mm{padding:8px 0}.mma{margin-bottom:10px}
+.mma-t{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
+.mm-g{display:flex;gap:8px;flex-wrap:wrap}
+.mm-n{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;cursor:pointer;transition:all .2s;min-width:70px}
+.mm-n:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.mm-d{border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.06)}
+.mm-w{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.06)}
+.mm-h{border-color:rgba(34,197,94,0.3)}
+.mm-nn{font-size:11px;color:var(--text2)}.mm-nv{font-size:18px;font-weight:700;margin-top:2px}
+@media(max-width:768px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>🧲 磁物健康地图指标监控 (MHM) · 全景数据分析平台</h1>
+    <div style="font-size:13px;color:var(--text2);margin-top:4px">🤖 智能体角色定位：全景数据分析师 (磁物专项) — 自动数据集成与设备维保关联分析</div>
+  </div>
+  <div>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+  </div>
+</div>
+
+<div class="fpy-tabs">
+  <div class="fpy-tab-item active" data-tab="t1" onclick="sw('t1')">📊 1. 磁物分级统计</div>
+  <div class="fpy-tab-item" data-tab="t2" onclick="sw('t2')">🗺️ 2. 健康地图与设备排行</div>
+  <div class="fpy-tab-item" data-tab="t3" onclick="sw('t3');setTimeout(function(){drawChart4();},100)">🔧 3. 设备维保关联分析</div>
+  <div class="fpy-tab-item" data-tab="t4" onclick="sw('t4')">📝 4. 分析报告与改善</div>
+</div>
+
+<div id="tc">
+<!--==== Tab1 磁物分级统计 ====-->
+<div id="t1" class="fpy-tab-content active">
+<div class="filters">
+<select><option>本周(W41)</option><option>上周(W40)</option><option>本月</option></select>
+<select><option>所有系列</option><option>NCM811</option><option>LCO</option></select>
+<button class="btn btn-primary btn-sm">🔄 刷新数据(MOM/LIMS)</button>
+</div>
+<div class="ai-box"><h4>🤖 数据集成状态</h4><p>智能体已自动完成本周(W41) MOM/MES生产数据与LIMS磁物检验结果的全面提取与汇总。</p></div>
+<div class="grid-4">
+<div class="kpi-card"><div class="kpil">本周平均磁物总量(Avg PPM)</div><div class="kpiv" style="color:var(--yellow)">35.2</div><div class="kpit">▲ 5.1 vs W40</div></div>
+<div class="kpi-card"><div class="kpil">磁物超标(>50ppm)批次占比</div><div class="kpiv" style="color:var(--red)">8.5%</div><div class="kpit">▲ 2.5% vs W40</div></div>
+<div class="kpi-card"><div class="kpil">Fe元素平均水平(PPM)</div><div class="kpiv">20.1</div><div class="kpit">▲ 1.5 vs W40</div></div>
+<div class="kpi-card"><div class="kpil">Ni/Cr元素平均水平(PPM)</div><div class="kpiv">15.1</div><div class="kpit">▲ 3.6 vs W40</div></div>
+</div>
+<div class="grid-2">
+<div class="card"><div class="card-header">磁物总量趋势分析(近12周)</div><div class="card-body"><div class="chart-box"><canvas id="c1"></canvas></div></div></div>
+<div class="card"><div class="card-header">本周磁物分级统计(对比上周)</div><div class="card-body"><div class="chart-box"><canvas id="c2"></canvas></div></div></div>
+</div>
+</div>
+
+<!--==== Tab2 健康地图与设备排行 ====-->
+<div id="t2" class="fpy-tab-content">
+<div class="ai-box"><h4>🤖 AI风险识别摘要</h4><p>根据本周数据，识别出<strong>2台高风险设备</strong>(PPM>50)和<strong>2台需关注设备</strong>(PPM>35)，主要集中在烧结和粉碎工序。</p></div>
+<div class="grid-2">
+<div class="card"><div class="card-header">磁物健康地图(设备布局可视化)<span style="font-size:11px"><span class="sb sb-cp" style="margin-right:4px">健康</span><span class="sb sb-pd" style="margin-right:4px">需关注</span><span class="sb badge-d">高风险</span></span></div>
+<div class="card-body"><div class="mm">
+<div class="mma"><div class="mma-t">前驱体混合 工序</div><div class="mm-g">
+<div class="mm-n mm-h"><div class="mm-nn">Mixer-01</div><div class="mm-nv" style="color:var(--green)">25</div></div>
+<div class="mm-n mm-w"><div class="mm-nn">Mixer-02</div><div class="mm-nv" style="color:var(--yellow)">38</div></div>
+</div></div>
+<div class="mma"><div class="mma-t">烧结 工序</div><div class="mm-g">
+<div class="mm-n mm-h"><div class="mm-nn">Sinter-01</div><div class="mm-nv" style="color:var(--green)">30</div></div>
+<div class="mm-n mm-d" onclick="ae('Sinter-02',58)"><div class="mm-nn">Sinter-02</div><div class="mm-nv" style="color:var(--red)">58</div></div>
+<div class="mm-n mm-w"><div class="mm-nn">Sinter-03</div><div class="mm-nv" style="color:var(--yellow)">45</div></div>
+</div></div>
+<div class="mma"><div class="mma-t">粉碎与除磁 工序</div><div class="mm-g">
+<div class="mm-n mm-h"><div class="mm-nn">Crusher-01</div><div class="mm-nv" style="color:var(--green)">28</div></div>
+<div class="mm-n mm-d" onclick="ae('Crusher-02',52)"><div class="mm-nn">Crusher-02</div><div class="mm-nv" style="color:var(--red)">52</div></div>
+<div class="mm-n mm-h"><div class="mm-nn">MagSep-01</div><div class="mm-nv" style="color:var(--green)">15</div></div>
+</div></div>
+</div></div></div>
+<div class="card"><div class="card-header">设备磁物贡献度分析(柏拉图)</div><div class="card-body"><div class="chart-box" style="height:380px"><canvas id="c3"></canvas></div></div></div>
+</div>
+<div class="card"><div class="card-header">Top 5 高磁物设备排行榜</div>
+<div class="card-body nopad"><table><thead><tr><th>排名</th><th>设备</th><th>工序</th><th>平均磁物(PPM)</th><th>超标占比</th><th>状态</th><th>操作</th></tr></thead>
+<tbody>
+<tr style="background:rgba(239,68,68,0.04)"><td>1</td><td>Sinter-02</td><td>烧结</td><td style="color:var(--red)">58</td><td>11.6%</td><td><span class="sb badge-d">高风险</span></td><td><button class="btn btn-sm btn-primary" onclick="ae('Sinter-02',58)">关联分析</button></td></tr>
+<tr style="background:rgba(239,68,68,0.04)"><td>2</td><td>Crusher-02</td><td>粉碎</td><td style="color:var(--red)">52</td><td>10.4%</td><td><span class="sb badge-d">高风险</span></td><td><button class="btn btn-sm btn-primary" onclick="ae('Crusher-02',52)">关联分析</button></td></tr>
+<tr style="background:rgba(245,158,11,0.04)"><td>3</td><td>Sinter-03</td><td>烧结</td><td style="color:var(--yellow)">45</td><td>9.0%</td><td><span class="sb badge-w">需关注</span></td><td><button class="btn btn-sm btn-primary" onclick="ae('Sinter-03',45)">关联分析</button></td></tr>
+<tr style="background:rgba(245,158,11,0.04)"><td>4</td><td>Mixer-02</td><td>混合</td><td style="color:var(--yellow)">38</td><td>7.6%</td><td><span class="sb badge-w">需关注</span></td><td><button class="btn btn-sm btn-primary" onclick="ae('Mixer-02',38)">关联分析</button></td></tr>
+<tr><td>5</td><td>Sinter-01</td><td>烧结</td><td>30</td><td>6.0%</td><td><span class="sb badge-h">健康</span></td><td><button class="btn btn-sm">查看</button></td></tr>
+</tbody></table></div></div>
+</div>
+
+<!--==== Tab3 设备维保关联分析 ====-->
+<div id="t3" class="fpy-tab-content">
+<div class="filters">
+<label style="font-size:12px;color:var(--muted)">当前分析设备:</label>
+<select id="eq" onchange="ce()" style="padding:5px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px">
+<option value="Sinter-02|58">Sinter-02 (烧结炉)</option>
+<option value="Crusher-02|52">Crusher-02 (粉碎机)</option>
+</select>
+</div>
+<div class="ai-box"><h4>🤖 AI关联性分析结论</h4><p id="aiT">【Sinter-02】10月9日的非计划维修(内壁耐火材料修复)与磁物激增存在强关联(相关系数0.85)。</p></div>
+<div class="card"><div class="corr-hd" style="color:var(--red)">🔧 1. 设备维修/保养记录关联(MES集成)</div>
+<div class="card-body nopad"><table><thead><tr><th>时间</th><th>事件类型</th><th>描述</th><th>执行人</th><th>关联度</th></tr></thead>
+<tbody id="eam">
+<tr style="background:rgba(239,68,68,0.04)"><td>2025-10-09 14:00</td><td>非计划维修</td><td>内壁耐火材料局部脱落修复</td><td>设备部张工</td><td style="color:var(--red)">0.85(强关联)</td></tr>
+<tr><td>2025-10-01 08:00</td><td>季度保养</td><td>加热元件检查与清洁</td><td>设备部李工</td><td>0.21(弱关联)</td></tr>
+</tbody></table></div></div>
+<div class="card"><div class="corr-hd" style="color:var(--yellow)">🧪 2. 产品复测记录关联(LIMS集成)</div>
+<div class="card-body nopad"><table><thead><tr><th>批次号</th><th>时间</th><th>初测(PPM)</th><th>复测(PPM)</th><th>结论</th></tr></thead>
+<tbody id="rt">
+<tr style="background:rgba(245,158,11,0.04)"><td>LCO-W41-005</td><td>10/10 10:00</td><td>65</td><td>58</td><td style="color:var(--yellow)">确认超标(改善不明显)</td></tr>
+<tr style="background:rgba(239,68,68,0.04)"><td>LCO-W40-012(维修后首批)</td><td>10/09 18:00</td><td>72</td><td>N/A</td><td style="color:var(--red)">确认超标</td></tr>
+</tbody></table></div></div>
+<div class="card"><div class="card-header">📈 3. 时间序列关联分析图(维修事件影响)</div>
+<div class="card-body"><div class="chart-box"><canvas id="c4"></canvas></div></div></div>
+</div>
+
+<!--==== Tab4 分析报告与改善 ====-->
+<div id="t4" class="fpy-tab-content">
+<div class="grid-2">
+<div class="card"><div class="card-header">磁物健康地图分析报告(W41周报预览)</div>
+<div class="card-body"><div class="report-preview">
+<h4 style="text-align:center">磁物监控周报(2025年 W41)</h4>
+<h4>1. 总体概览</h4><p>本周平均磁物总量35.2 PPM，环比上周上升5.1 PPM。超标(>50ppm)批次占比8.5%，呈上升趋势，需重点关注。</p>
+<h4>2. 高风险设备定位</h4><p>通过磁物健康地图和贡献度柏拉图分析，定位出两台高风险设备：</p>
+<ul><li><strong>Sinter-02(2#烧结炉):</strong> 平均磁物58 PPM，贡献度约35%。</li><li><strong>Crusher-02(2#粉碎机):</strong> 平均磁物52 PPM，贡献度约30%。</li></ul>
+<h4>3. 关联性分析与根因</h4>
+<ul><li><strong>Sinter-02:</strong> 强关联至10月9日的非计划维修(内壁耐火材料修复)，维修过程引入外部污染物。</li><li><strong>Crusher-02:</strong> 强关联至10月5日的研磨介质更换，新批次介质磁物水平偏高。</li></ul>
+<h4>4. 建议的改善措施(CAPA)</h4>
+<ul><li><strong>[P0]</strong> 立即对Sinter-02进行停机深度清洁，执行FAI。</li><li><strong>[P1]</strong> 复核新批次研磨介质(ZRM-1005)的IQC数据。</li><li><strong>[P2]</strong> 强化设备维修后的清洁SOP和验收流程。</li></ul>
+<p style="text-align:right;color:var(--muted);font-size:12px">分析人：品质专员(李明) / 智能体辅助分析</p>
+</div>
+<div class="report-actions">
+<button class="btn">✏️ 编辑报告</button>
+<button class="btn btn-primary">⬇️ 导出PDF</button>
+<button class="btn" style="color:var(--green);border-color:var(--green)">📨 提交审批</button>
+</div></div></div>
+<div class="card"><div class="card-header">磁物改善专项跟踪</div>
+<div class="card-body"><div class="al">
+<div class="al-item"><div class="al-h">MHM-A-081: Sinter-02停机清洁与FAI</div><div class="al-m">设备部张工 | 计划: 2025-10-12</div><span class="sb sb-pd">待启动(P0)</span></div>
+<div class="al-item"><div class="al-h">MHM-A-082: 研磨介质ZRM-1005复核</div><div class="al-m">技术部刘经理 | 计划: 2025-10-15</div><span class="sb sb-pd">待启动(P1)</span></div>
+<div class="al-item"><div class="al-h">MHM-A-075: 除磁器效能提升改造</div><div class="al-m">设备部李工 | 完成: 2025-10-05</div><span class="sb sb-cp">已完成</span></div>
+</div></div></div>
+</div>
+</div>
+</div>
+
+<script>
+Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='rgba(30,45,74,0.5)';
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+var cH={};
+
+function sw(t){document.querySelectorAll('.fpy-tab-item').forEach(function(e){e.classList.toggle('active',e.dataset.tab===t)});
+document.querySelectorAll('.fpy-tab-content').forEach(function(e){e.classList.toggle('active',e.id===t)});setTimeout(function(){drawAll();},100);}
+
+function ae(n,v){var s=document.getElementById('eq');if(s)s.value=n+'|'+v;ce();sw('t3');setTimeout(function(){drawChart4();},200);}
+
+function ce(){var s=document.getElementById('eq');if(!s)return;
+var p=s.value.split('|'),n=p[0],v=p[1],si=n.includes('Sinter');
+document.getElementById('aiT').innerHTML=si?'【'+n+'】10月9日非计划维修(内壁修复)与磁物激增存在强关联(相关系数0.85)。':'【'+n+'】10月5日研磨介质更换与磁物水平上升有关(相关系数0.78)。';
+document.getElementById('eam').innerHTML=si?'<tr style="background:rgba(239,68,68,0.04)"><td>2025-10-09 14:00</td><td>非计划维修</td><td>内壁耐火材料局部脱落修复</td><td>设备部张工</td><td style="color:var(--red)">0.85(强关联)</td></tr><tr><td>2025-10-01 08:00</td><td>季度保养</td><td>加热元件检查与清洁</td><td>设备部李工</td><td>0.21(弱关联)</td></tr>':'<tr style="background:rgba(239,68,68,0.04)"><td>2025-10-05 10:00</td><td>耗材更换</td><td>研磨介质更换(批次ZRM-1005)</td><td>生产部王班长</td><td style="color:var(--red)">0.78(强关联)</td></tr>';
+document.getElementById('rt').innerHTML=si?'<tr style="background:rgba(245,158,11,0.04)"><td>LCO-W41-005</td><td>10/10 10:00</td><td>65</td><td>58</td><td style="color:var(--yellow)">确认超标(改善不明显)</td></tr><tr style="background:rgba(239,68,68,0.04)"><td>LCO-W40-012</td><td>10/09 18:00</td><td>72</td><td>N/A</td><td style="color:var(--red)">确认超标</td></tr>':'<tr style="background:rgba(245,158,11,0.04)"><td>NCM-W40-008</td><td>10/05 15:00</td><td>55</td><td>52</td><td style="color:var(--yellow)">确认超标</td></tr>';
+drawChart4();}
+
+function drawAll(){Object.keys(cH).forEach(function(k){if(cH[k])cH[k].destroy()});cH={};
+drawChart1();drawChart2();drawChart3();drawChart4();}
+
+function drawChart1(){var e=document.getElementById('c1');if(!e)return;
+cH.c1=new Chart(e,{type:'line',data:{labels:Array.from({length:12},function(_,i){return 'W'+(30+i)}),
+datasets:[{label:'平均磁物(PPM)',data:[25.1,28.5,26.2,30.5,29.8,31.2,28.0,29.5,30.8,30.1,35.2,34.8],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:0.4,fill:true},
+{label:'UCL 50 PPM',data:Array(12).fill(50),borderColor:'#ef4444',borderWidth:2,borderDash:[5,5],pointRadius:0}]},
+options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{min:0,max:60,title:{display:true,text:'PPM'}}}}})}
+
+function drawChart2(){var e=document.getElementById('c2');if(!e)return;
+var lb=['0-10ppm','10-20ppm','20-30ppm','30-40ppm','40-50ppm','>50ppm'];
+cH.c2=new Chart(e,{type:'bar',data:{labels:lb,datasets:[{label:'上周(W40)%',data:[15,30,25,15,10,5],backgroundColor:'#64748b'},
+{label:'本周(W41)%',data:[10,25,20,20,15,10],backgroundColor:lb.map(function(_,i){return i===5?'#ef4444':'#3b82f6'})}]},
+options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,title:{display:true,text:'批次占比(%)'}}}}})}
+
+function drawChart3(){var e=document.getElementById('c3');if(!e)return;
+var lb=['Sinter-02','Crusher-02','Mixer-02','Sinter-03','Crusher-01','其他'],da=[35,30,15,10,5,5],cum=0,cd=da.map(function(v){cum+=v;return cum});
+cH.c3=new Chart(e,{type:'bar',data:{labels:lb,datasets:[{label:'贡献度(%)',data:da,backgroundColor:'#3b82f6',yAxisID:'y'},
+{label:'累计贡献度(%)',data:cd,type:'line',borderColor:'#ef4444',tension:0.3,yAxisID:'y1'}]},
+options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+scales:{y:{position:'left',title:{display:true,text:'%'},max:100,beginAtZero:true},
+y1:{position:'right',grid:{drawOnChartArea:false},min:0,max:100}}}})}
+
+function drawChart4(){var e=document.getElementById('c4');if(!e)return;
+var s=document.getElementById('eq'),is=s?s.value.includes('Sinter'):true;
+var lb=is?['10/5','10/6','10/7','10/8','10/9','10/10','10/11']:['10/2','10/3','10/4','10/5','10/6','10/7','10/8'];
+var da=is?[30,32,28,35,72,65,58]:[30,32,28,55,52,48,50],ei=is?4:3;
+if(cH.c4){cH.c4.destroy();delete cH.c4}
+cH.c4=new Chart(e,{type:'line',data:{labels:lb,datasets:[{label:'磁物水平(PPM)',data:da,borderColor:'#3b82f6',tension:0.2,
+pointBackgroundColor:lb.map(function(_,i){return i>=ei?'#ef4444':'#3b82f6'}),
+pointRadius:lb.map(function(_,i){return i===ei?8:5})}]},
+options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{min:0,max:80,title:{display:true,text:'PPM'}}}},
+plugins:[{id:'evt',afterDraw:function(ch){var x=ch.scales.x.getPixelForValue(ei);
+if(x&&x>0&&x<ch.width){var cx=ch.ctx;cx.save();cx.beginPath();cx.moveTo(x,ch.scales.y.top);cx.lineTo(x,ch.scales.y.bottom);
+cx.lineWidth=2;cx.strokeStyle='#ef4444';cx.setLineDash([5,5]);cx.stroke();
+cx.fillStyle='#ef4444';cx.font='bold 11px sans-serif';
+cx.fillText(is?'维修事件(10/9)':'介质更换(10/5)',x+5,ch.scales.y.top+20);cx.restore();}}}]})}
+
+setTimeout(function(){drawAll();},200);
+</script>
+</body>
+</html>

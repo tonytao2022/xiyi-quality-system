@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全景数据分析 · 兮易AI大脑</title>
+<style>
+
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--bg-card-hover:#1c2538;--border-color:#1e2d4a;--border-light:#253a5e;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--color-quality:#10b981;--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.7;padding:20px 24px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border-color);color:var(--text-secondary);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-primary{background:var(--color-hold);color:#fff;border:none}
+.btn-primary:hover{background:#2563eb;transform:translateY(-1px)}
+.btn-sm{font-size:11px;padding:4px 10px}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;overflow:hidden;margin-bottom:16px;transition:border-color .2s}
+.card:hover{border-color:var(--border-light)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:var(--text-primary)}
+.card-body{padding:16px}
+.ai-summary-box{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:16px 20px;margin-bottom:16px}
+.ai-summary-box h4{font-size:14px;color:var(--color-hold);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-summary-box p,.ai-summary-box li{font-size:13px;color:var(--text-secondary);line-height:1.8}
+.ai-summary-box ul{padding-left:20px;margin-top:6px}
+.fpy-tabs{display:flex;gap:4px;margin-bottom:0;background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;padding:12px 16px;flex-wrap:wrap}
+.fpy-tab-item{padding:8px 18px;border-radius:20px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);border:1px solid transparent;transition:all .25s;white-space:nowrap;font-weight:500}
+.fpy-tab-item:hover{background:rgba(59,130,246,0.06);color:var(--text-primary)}
+.fpy-tab-item.active{background:rgba(59,130,246,0.12);color:var(--color-hold);border-color:rgba(59,130,246,0.3);box-shadow:0 0 12px rgba(59,130,246,0.08)}
+.fpy-tab-content{display:none;padding-top:20px;animation:fadeIn .3s ease}
+.fpy-tab-content.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fpy-kpi-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:10px;padding:16px 18px;transition:all .2s}
+.fpy-kpi-card:hover{border-color:var(--border-light);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+.fpy-kpi-card .fpy-kpi-title{font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.3px}
+.fpy-kpi-card .fpy-kpi-value{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.fpy-kpi-card .kpi-trend{font-size:11px;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px solid rgba(30,45,74,0.4)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.chart-box{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:10px;padding:16px;margin-bottom:16px}
+.chart-box h5{font-size:14px;color:var(--text-primary);margin-bottom:12px;font-weight:600}
+.chart-bar-area{height:200px;display:flex;align-items:flex-end;gap:10px;padding:6px 8px 24px}
+.chart-bar{flex:1;min-width:36px;border-radius:6px 6px 0 0;position:relative;text-align:center;transition:all .3s}
+.chart-bar:hover{opacity:0.8;transform:scaleX(1.05)}
+.chart-bar .val{position:absolute;top:-20px;left:0;right:0;font-size:11px;font-weight:600}
+.chart-bar .lbl{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-muted);white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 10px;border-bottom:2px solid var(--border-color);color:var(--text-muted);text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+td{padding:7px 10px;border-bottom:1px solid rgba(30,45,74,0.3);color:var(--text-secondary)}
+tr{transition:background .15s}
+tr:hover td{background:rgba(59,130,246,0.03)}
+tr.correlation-critical td{background:rgba(239,68,68,0.04)}
+tr.correlation-highlight td{background:rgba(245,158,11,0.04)}
+.fpy-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.fpy-filters select,.fpy-filters input{padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);font-size:12px;outline:none}
+.fpy-filters select:focus,.fpy-filters input:focus{border-color:var(--color-hold)}
+.report-preview{padding:4px 0}
+.report-preview h4{font-size:15px;color:var(--text-primary);margin:16px 0 8px;font-weight:600}
+.report-preview h4:first-child{margin-top:0}
+.report-preview p{font-size:13px;color:var(--text-secondary);line-height:1.8}
+.report-preview ul{padding-left:20px;margin:6px 0}
+.report-preview li{font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:4px}
+.report-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border-color)}
+.action-timeline{padding:4px 0}
+.action-item{padding:12px 0;border-bottom:1px solid var(--border-color);transition:all .2s}
+.action-item:last-child{border-bottom:none}
+.action-item:hover{background:rgba(59,130,246,0.02);margin:0 -12px;padding:12px}
+.action-item .action-header{font-size:13px;font-weight:600;color:var(--text-primary)}
+.action-item .action-meta{font-size:11px;color:var(--text-muted);margin:3px 0}
+.status-badge{display:inline-block;font-size:10px;padding:2px 10px;border-radius:10px;font-weight:600}
+.status-inprogress{background:rgba(59,130,246,0.12);color:var(--color-hold)}
+.status-pending{background:rgba(245,158,11,0.12);color:var(--color-warning)}
+.status-completed{background:rgba(34,197,94,0.12);color:var(--color-bear)}
+.correlation-section{margin-bottom:16px}
+.correlation-section h5{font-size:13px;color:var(--text-primary);margin-bottom:8px;font-weight:600}
+.correlation-header{font-size:14px;font-weight:600;padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:8px}
+.scenario-summary-title{font-size:13px;color:var(--color-hold);padding:10px 16px;background:rgba(59,130,246,0.05);border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+@media(max-width:768px){body{padding:12px}.grid-4{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}.fpy-tabs{overflow-x:auto;flex-wrap:nowrap}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1 id="pageTitle">📊 FPY场景 · 全景数据分析平台</h1>
+    <div style="font-size:13px;color:var(--text-secondary);margin-top:4px" id="pageSubtitle">在线一次检验合格率管控 (深度优化版)</div>
+  </div>
+  <div>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+  </div>
+</div>
+
+<div class="fpy-tabs" id="tabNav">
+  <div class="fpy-tab-item active" data-tab="tab-overview" onclick="switchTab('tab-overview')"><span>📊</span> 1. 全局监控仪表盘</div>
+  <div class="fpy-tab-item" data-tab="tab-defect-analysis" onclick="switchTab('tab-defect-analysis')"><span>📈</span> 2. 不合格结构分析</div>
+  <div class="fpy-tab-item" data-tab="tab-correlation" onclick="switchTab('tab-correlation')"><span>🔗</span> 3. 关联性深度分析</div>
+  <div class="fpy-tab-item" data-tab="tab-reporting" onclick="switchTab('tab-reporting')"><span>📝</span> 4. 报告与改善行动</div>
+</div>
+
+<div id="tabContents"></div>
+
+<script>
+var _sceneId = parseInt(new URLSearchParams(location.search).get('scene')) || 1;
+var _sceneName = new URLSearchParams(location.search).get('name') || '场景' + _sceneId;
+
+document.getElementById('pageTitle').textContent = '📊 ' + (_sceneName || 'FPY场景') + ' · 全景数据分析平台';
+document.getElementById('pageSubtitle').textContent = '智能体角色定位：全景数据分析师 — 自动数据集成与多维度关联分析';
+
+function switchTab(tabId) {
+  document.querySelectorAll('.fpy-tab-item').forEach(function(el){
+    el.classList.toggle('active', el.getAttribute('data-tab') === tabId);
+  });
+  document.querySelectorAll('.fpy-tab-content').forEach(function(el){
+    el.classList.toggle('active', el.id === tabId);
+  });
+}
+
+function renderAll() {
+  var html = '';
+  html += renderTab1();
+  html += renderTab2();
+  html += renderTab3();
+  html += renderTab4();
+  document.getElementById('tabContents').innerHTML = html;
+  // 默认显示Tab1
+  switchTab('tab-overview');
+}
+
+// ═══ Tab1: 全局监控仪表盘 ═══
+function renderTab1() {
+  return '<div id="tab-overview" class="fpy-tab-content active">' +
+    '<div class="grid-4">' +
+      '<div class="fpy-kpi-card"><div class="fpy-kpi-title">本周平均FPY (MOM实时)</div><div class="fpy-kpi-value" style="color:var(--color-warning)">97.5%</div><div class="kpi-trend">▼ 0.5% vs 上周</div></div>' +
+      '<div class="fpy-kpi-card"><div class="fpy-kpi-title">今日不合格批次数</div><div class="fpy-kpi-value" style="color:var(--color-defect)">12</div><div class="kpi-trend">▲ 3批 vs 昨日</div></div>' +
+      '<div class="fpy-kpi-card"><div class="fpy-kpi-title">NCM811产线 FPY</div><div class="fpy-kpi-value" style="color:var(--color-bear)">98.8%</div><div class="kpi-trend">▲ 0.2% vs 上周</div></div>' +
+      '<div class="fpy-kpi-card"><div class="fpy-kpi-title">LCO产线 FPY</div><div class="fpy-kpi-value" style="color:var(--color-defect)">96.1%</div><div class="kpi-trend">▼ 1.2% vs 上周</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="card-header">在线一次检验合格率 (FPY) 趋势分析 (近30天)<span style="font-size:11px;color:var(--text-muted)"><span style="padding:3px 10px;background:var(--bg-secondary);border-radius:6px;border:1px solid var(--border-color)">按天</span></span></div>' +
+    '<div class="card-body">' +
+    '<div style="position:relative;height:240px;padding:10px 0">' +
+      // 30天FPY趋势折线图 (Canvas自适应容器宽度)
+      (function(){
+        var data = [97.8,98.1,97.5,96.9,97.2,98.0,97.6,98.3,97.1,96.8,97.5,97.8,98.0,97.3,96.9,97.6,98.1,97.4,96.7,97.2,97.9,98.2,97.7,97.0,96.8,97.5,98.0,97.6,97.3,97.1];
+        var chartId = 'fpyTrendCanvas_' + Date.now();
+        setTimeout(function(){
+          var el = document.getElementById(chartId);
+          if (!el) return;
+          var rect = el.parentNode.getBoundingClientRect();
+          var dpr = window.devicePixelRatio || 1;
+          var w = Math.max(rect.width - 4, 100); // 父容器宽度(留2px边距)
+          var h = 220;
+          el.width = w * dpr;
+          el.height = h * dpr;
+          el.style.width = w + 'px';
+          el.style.height = h + 'px';
+          var ctx = el.getContext('2d');
+          ctx.scale(dpr, dpr);
+
+          var padL = 45, padR = 10, padT = 10, padB = 28;
+          var cw = w - padL - padR, ch = h - padT - padB;
+          var min = 96.5, max = 98.5, range = max - min;
+
+          function toX(i) { return padL + (i / (data.length-1)) * cw; }
+          function toY(v) { return padT + ch - ((v - min) / range) * ch; }
+
+          // 参考线
+          [99.0, 98.5, 98.0, 97.5, 97.0, 96.5].forEach(function(v){
+            var y = toY(v);
+            ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL+cw, y);
+            ctx.strokeStyle = 'rgba(30,45,74,0.35)'; ctx.lineWidth = 0.5; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#64748b'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText(v.toFixed(1) + '%', padL - 5, y + 3);
+          });
+
+          // 面积
+          ctx.beginPath();
+          ctx.moveTo(toX(0), toY(data[0]));
+          for(var i=1;i<data.length;i++) ctx.lineTo(toX(i), toY(data[i]));
+          ctx.lineTo(toX(data.length-1), toY(min));
+          ctx.lineTo(toX(0), toY(min)); ctx.closePath();
+          var grad = ctx.createLinearGradient(0, padT, 0, padT+ch);
+          grad.addColorStop(0, 'rgba(59,130,246,0.10)'); grad.addColorStop(1, 'rgba(59,130,246,0.01)');
+          ctx.fillStyle = grad; ctx.fill();
+
+          // 折线
+          ctx.beginPath(); ctx.moveTo(toX(0), toY(data[0]));
+          for(var i=1;i<data.length;i++) ctx.lineTo(toX(i), toY(data[i]));
+          ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+
+          // 数据点
+          for(var i=0;i<data.length;i++){
+            var x=toX(i), y=toY(data[i]);
+            var c = data[i] < 97.2 ? '#ef4444' : data[i] < 98.0 ? '#f59e0b' : '#22c55e';
+            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fillStyle = c; ctx.fill();
+            ctx.strokeStyle = '#0a0e17'; ctx.lineWidth = 1.5; ctx.stroke();
+          }
+
+          // X轴标签
+          ctx.fillStyle = '#64748b'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+          [0,5,10,15,20,25,29].forEach(function(idx){
+            ctx.fillText('Day'+(idx+1), toX(idx), h - padB + 18);
+          });
+        }, 100);
+        return '<canvas id="'+chartId+'" style="width:100%;height:220px;display:block;border-radius:6px"></canvas>';
+      })() +
+    '</div>' +
+    '<p style="font-size:12px;color:var(--text-muted);margin-top:8px">📡 数据来源: MOM系统自动采集与汇总，延迟小于5分钟。智能体已自动完成数据提取。</p></div></div></div>';
+}
+
+// ═══ Tab2: 不合格结构分析 ═══
+function renderTab2() {
+  return '<div id="tab-defect-analysis" class="fpy-tab-content">' +
+    '<div class="fpy-filters">' +
+      '<input type="date" class="form-control" value="2025-10-10" style="padding:6px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text-primary);font-size:12px">' +
+      '<select style="padding:6px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text-primary);font-size:12px"><option>所有产品型号</option><option>NCM811</option><option selected>LCO (高压实)</option></select>' +
+      '<select style="padding:6px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text-primary);font-size:12px"><option>所有生产线</option><option>产线A</option><option>产线B</option></select>' +
+      '<button class="btn btn-primary btn-sm"><span>🔍</span> 分析</button>' +
+      '<button class="btn btn-sm"><span>⬇️</span> 导出原始数据 (MOM/LIMS)</button>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div class="chart-box"><h5>检验项目不合格结构分析 (柏拉图)</h5><div class="chart-bar-area">' +
+        ['克容量偏低','粒度D50偏大','ICP成分波动','磁物超标','水分超标','其他'].map(function(l,i){
+          var vals = [40,30,15,10,3,2];
+          var h = vals[i] * 4;
+          var c = i < 2 ? 'var(--color-defect)' : i < 4 ? 'var(--color-warning)' : 'var(--border-color)';
+          return '<div class="chart-bar"><div class="val">'+vals[i]+'%</div><div style="height:'+h+'px;background:'+c+';border-radius:4px 4px 0 0;width:80%;margin:0 auto"></div><div class="lbl">'+l+'</div></div>';
+        }).join('') +
+      '</div></div>' +
+      '<div class="chart-box"><h5>Top 5 不合格项目趋势对比</h5><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 0">' +
+        [['克容量','40','var(--color-defect)'],['粒度D50','30','var(--color-defect)'],['ICP成分','15','var(--color-warning)'],['磁物','10','var(--color-warning)'],['水分','3','var(--color-bear)'],['其他','2','var(--border-color)']].map(function(d){
+          return '<div style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius);padding:6px 8px;font-size:11px"><div style="display:flex;justify-content:space-between;color:var(--text-muted)"><span>'+d[0]+'</span><span>'+d[1]+'%</span></div><div style="height:4px;background:var(--border-color);border-radius:2px;margin-top:3px"><div style="height:4px;width:'+d[1]*2+'%;background:'+d[2]+';border-radius:2px"></div></div></div>';
+        }).join('') +
+      '</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="card-header">不合格批次检验明细数据 (LIMS集成)</div><div class="card-body" style="overflow-x:auto">' +
+    '<table><tr><th>批次号</th><th>检验项目</th><th>检验值</th><th>标准范围 (Spec)</th><th>偏差率</th><th>检验时间</th><th>操作</th></tr>' +
+    '<tr class="correlation-critical"><td>LCO-W40-003</td><td>ICP (Co含量)</td><td style="color:var(--color-defect)">58.2%</td><td>59.5% ± 0.5%</td><td style="color:var(--color-defect)">-2.18%</td><td>2025-10-10 10:15</td><td><button class="btn btn-sm btn-primary" onclick="switchTab(\'tab-correlation\')">关联分析</button></td></tr>' +
+    '<tr><td>LCO-W40-003</td><td>粒度 (D50)</td><td style="color:var(--color-warning)">12.5 μm</td><td>15.0 μm ± 1.0 μm</td><td style="color:var(--color-warning)">-16.67%</td><td>2025-10-10 10:20</td><td><button class="btn btn-sm">详情</button></td></tr>' +
+    '<tr class="correlation-highlight"><td>LCO-W40-002</td><td>磁物总量 (Fe+Cr+Ni)</td><td style="color:var(--color-defect)">65 ppm</td><td>&lt; 50 ppm</td><td style="color:var(--color-defect)">+30.00%</td><td>2025-10-10 09:30</td><td><button class="btn btn-sm btn-primary" onclick="switchTab(\'tab-correlation\')">关联分析</button></td></tr>' +
+    '<tr><td>LCO-W40-001</td><td>ICP (Co含量)</td><td style="color:var(--color-warning)">58.8%</td><td>59.5% ± 0.5%</td><td style="color:var(--color-warning)">-1.17%</td><td>2025-10-10 08:45</td><td><button class="btn btn-sm">详情</button></td></tr>' +
+    '</table></div></div></div>';
+}
+
+// ═══ Tab3: 关联性深度分析 ═══
+function renderTab3() {
+  return '<div id="tab-correlation" class="fpy-tab-content">' +
+    '<div class="ai-summary-box">' +
+      '<h4>🤖 AI关联性分析摘要 (全景数据分析师)</h4>' +
+      '<p>智能体已自动提取不合格批次数据，并根据不合格类型，自动关联MOM系统中的原料投入批次、配比关系、工艺参数，以及MES系统中的设备维修、保养数据。识别出两大类核心关联因素：</p>' +
+      '<ul><li><strong>ICP/粒度异常 (影响占比 65%):</strong> 主要集中在LCO-W40批次，强关联至原料批次RM-Co-20251005及其配比参数。</li>' +
+      '<li><strong>磁物异常 (影响占比 25%):</strong> 主要出现在产线B，强关联至2#烧结炉的近期维保记录和原料磁物数据。</li></ul>' +
+    '</div>' +
+    '<div class="card"><div class="correlation-header" style="color:var(--color-defect)">🧪 场景一：ICP/粒度异常与原料批次/配比关联分析 (物料继承关系追溯)</div><div class="card-body"><p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">分析对象：LCO-W40-003批次 (ICP Co含量偏低 58.2%)</p>' +
+    '<div class="grid-2">' +
+      '<div><h5 style="font-size:13px;margin-bottom:6px">关联原料批次追溯 (IQC数据)</h5>' +
+      '<table><tr><th>原料类型</th><th>批次号</th><th>供应商</th><th>IQC关键指标</th><th>关联度</th></tr>' +
+      '<tr class="correlation-critical"><td>钴酸锂前驱体</td><td>RM-Co-20251005</td><td>供应商A</td><td>Co: 59.0% (偏低)</td><td style="color:var(--color-defect)">95%</td></tr>' +
+      '<tr><td>碳酸锂</td><td>RM-Li-20251001</td><td>供应商B</td><td>Li: 18.5% (正常)</td><td>30%</td></tr></table></div>' +
+      '<div><h5 style="font-size:13px;margin-bottom:6px">原料配比与制造过程数据 (MOM)</h5>' +
+      '<table><tr><th>参数名称</th><th>设定值 (SOP)</th><th>实际值</th><th>偏差</th></tr>' +
+      '<tr><td>钴前驱体投料量</td><td>1000 kg</td><td>998.5 kg</td><td>-0.15%</td></tr>' +
+      '<tr class="correlation-highlight"><td>混合时间</td><td>120 min</td><td style="color:var(--color-warning)">105 min</td><td style="color:var(--color-warning)">-12.5%</td></tr>' +
+      '<tr><td>混合转速</td><td>500 rpm</td><td>505 rpm</td><td>+1.0%</td></tr></table></div>' +
+    '</div></div></div>' +
+    '<div class="card"><div class="correlation-header" style="color:var(--color-warning)">🧲 场景二：磁物异常与设备/原料磁物关联分析</div><div class="card-body"><p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">分析对象：LCO-W40-002批次 (磁物总量超标 65 ppm)</p>' +
+    '<div class="grid-2">' +
+      '<div><h5 style="font-size:13px;margin-bottom:6px">设备维修/保养关联 (MES集成)</h5>' +
+      '<table><tr><th>关联设备</th><th>事件类型</th><th>发生时间</th><th>描述</th><th>关联度</th></tr>' +
+      '<tr class="correlation-critical"><td>2# 烧结炉 (Sinter-02)</td><td>非计划停机</td><td>2025-10-09 14:00</td><td>内壁耐火材料局部脱落修复</td><td style="color:var(--color-defect)">88%</td></tr>' +
+      '<tr><td>除磁器 (MagSep-05)</td><td>定期保养</td><td>2025-10-08 08:00</td><td>磁棒清洁与效能检测</td><td>45%</td></tr></table></div>' +
+      '<div><h5 style="font-size:13px;margin-bottom:6px">原料磁物数据追溯 (IQC)</h5>' +
+      '<table><tr><th>原料批次</th><th>Fe (ppm)</th><th>Cr (ppm)</th><th>Ni (ppm)</th><th>IQC判定</th></tr>' +
+      '<tr class="correlation-highlight"><td>RM-Co-20251005</td><td>25</td><td>5</td><td>10</td><td style="color:var(--color-warning)">合格 (接近上限)</td></tr>' +
+      '<tr><td>RM-Li-20251001</td><td>10</td><td>2</td><td>5</td><td style="color:var(--color-bear)">合格</td></tr></table></div>' +
+    '</div></div></div></div>';
+}
+
+// ═══ Tab4: 报告与改善行动 ═══
+function renderTab4() {
+  return '<div id="tab-reporting" class="fpy-tab-content">' +
+    '<div class="grid-2">' +
+      '<div class="card"><div class="card-header">一次检验合格率异常分析报告 (自动生成预览)</div>' +
+      '<div class="card-body"><div class="report-preview">' +
+        '<h4 style="text-align:center;">报告摘要 (2025年10月10日)</h4>' +
+        '<p>本报告针对近期LCO产线FPY从98.5%下降至97.5%的异常情况进行分析。</p>' +
+        '<h4>1. 核心问题与根因定位</h4>' +
+        '<p>通过对MOM、LIMS、SCADA数据的集成分析，确定了导致FPY下降的主要原因：</p>' +
+        '<ul><li><strong>主因 (65%):</strong> 供应商A提供的钴酸锂前驱体批次(RM-Co-20251005)Co含量偏低，结合混合时间不足(-12.5%)，导致成品ICP检测不合格。</li>' +
+        '<li><strong>次因 (25%):</strong> 2#烧结炉内壁耐火材料修复后，未充分清洁，导致生产过程中引入外部磁物，造成磁物总量超标。</li></ul>' +
+        '<h4>2. 影响范围评估</h4>' +
+        '<p>预计影响LCO-W40批次共计5吨产品，需进行隔离复检或降级处理。</p>' +
+        '<h4>3. 建议的纠正与预防措施 (CAPA)</h4>' +
+        '<ul><li><strong>[纠正]</strong> 立即停用RM-Co-20251005批次原料，并通知SQE启动供应商审核。</li>' +
+        '<li><strong>[纠正]</strong> 对2#烧结炉进行深度清洁和首件确认(FAI)。</li>' +
+        '<li><strong>[预防]</strong> 强化MOM系统对混合时间的防呆控制，低于SOP设定值自动报警并锁定设备。</li></ul>' +
+        '<p style="text-align:right;color:var(--text-muted);font-size:12px">分析人：品质专员 (李明) / 智能体辅助分析</p>' +
+      '</div>' +
+      '<div class="report-actions" style="padding:0 16px 16px">' +
+        '<button class="btn"><span>✏️</span> 编辑报告</button>' +
+        '<button class="btn btn-primary"><span>⬇️</span> 导出完整报告 (PDF/Word)</button>' +
+        '<button class="btn" style="color:var(--color-bear);border-color:var(--color-bear)"><span>📨</span> 提交技术管理经理审批</button>' +
+      '</div></div></div>' +
+      '<div class="card"><div class="card-header">改善措施跟踪 (CAPA)</div><div class="card-body">' +
+      '<div class="action-timeline">' +
+        '<div class="action-item"><div class="action-header">CAPA-2025-051: 2#烧结炉清洁与FAI</div><div class="action-meta">负责人: 设备部张工 | 计划完成: 2025-10-11</div><span class="status-badge status-inprogress">进行中 (30%)</span></div>' +
+        '<div class="action-item"><div class="action-header">CAPA-2025-052: 供应商原料质量复核</div><div class="action-meta">负责人: SQE王经理 | 计划完成: 2025-10-15</div><span class="status-badge status-pending">待启动</span></div>' +
+        '<div class="action-item"><div class="action-header">CAPA-2025-045: 混合工序防呆系统升级</div><div class="action-meta">负责人: IT部刘主管 | 计划完成: 2025-10-08</div><span class="status-badge status-completed">已完成</span></div>' +
+      '</div></div></div>' +
+    '</div></div>';
+}
+
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>兮易AI大脑 · 企业经营智能体平台</title>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#1e2940;--card-hover:#253552;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px}
+.header{text-align:center;padding:40px 0 20px}
+.header h1{font-size:26px;font-weight:700;color:#fff;background:linear-gradient(90deg,#60a5fa,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{font-size:13px;color:var(--muted);margin-top:6px}
+.header .badge{display:inline-block;margin-top:8px;font-size:11px;padding:3px 12px;border-radius:10px;background:rgba(59,130,246,0.1);color:var(--blue)}
+.section-title{font-size:14px;color:var(--text2);margin:24px 0 12px;font-weight:600}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.role-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .25s;display:block;text-decoration:none;position:relative;overflow:hidden}
+.role-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--green));opacity:0;transition:opacity .25s}
+.role-card:hover{background:var(--card-hover);border-color:var(--blue);transform:translateY(-3px);box-shadow:0 8px 30px rgba(59,130,246,0.1)}
+.role-card:hover::before{opacity:1}
+.role-card .icon{font-size:30px;margin-bottom:10px;display:inline-block;background:rgba(59,130,246,0.08);width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.role-card h3{font-size:16px;color:#fff;margin-bottom:6px;font-weight:600}
+.role-card p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+.role-card .scene-count{font-size:11px;padding:3px 12px;border-radius:8px;background:rgba(59,130,246,0.08);color:var(--blue);display:inline-block;font-weight:500}
+.link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
+.link-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:all .15s;display:block;text-decoration:none}
+.link-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.link-card h4{font-size:13px;color:var(--text);margin-bottom:4px}
+.link-card p{font-size:11px;color:var(--muted)}
+.footer{text-align:center;margin-top:40px;font-size:11px;color:var(--muted);padding-bottom:20px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏭 兮易AI大脑</h1>
+  <p>企业经营智能体平台 · 本地Demo</p>
+  <div class="badge" id="roleStatus">加载中...</div>
+</div>
+
+<div class="section-title">👤 选择角色进入工作台</div>
+<div class="role-grid" id="roleGrid"></div>
+
+<div class="section-title">⚙️ 系统管理</div>
+<div class="link-grid">
+  <a class="link-card" href="/xiyi-config-console.html">
+    <h4>⚙️ 系统配置</h4>
+    <p>场景/指标/标准/数据源管理</p>
+  </a>
+  <a class="link-card" href="/xiyi-capa-manager.html">
+    <h4>🔄 CAPA管理</h4>
+    <p>方案→任务→跟踪闭环</p>
+  </a>
+  <a class="link-card" href="/xiyi-ai-demo.html">
+    <h4>🎯 完整DEMO</h4>
+    <p>品质专员工作台完整版</p>
+  </a>
+</div>
+
+<div class="footer">
+  兮易企业经营AI大脑 · v1.0 · 基于OpenClaw<br>
+  数据库：xiyi_quality（27张表） · 后端：8890端口
+</div>
+
+<script>
+const API = '/api/v1/xiyi';
+
+async function loadRoles() {
+  const badge = document.getElementById('roleStatus');
+  try {
+    const r = await fetch(`${API}/roles`).then(r=>r.json());
+    if (r.code === 0) {
+      const roles = r.data.roles || [];
+      const grid = document.getElementById('roleGrid');
+      
+      grid.innerHTML = roles.map(role => `
+        <a class="role-card" href="/xiyi-quality-workbench.html?role=${role.role_code}">
+          <div class="icon">${role.icon === 'search' ? '🔍' : role.icon === 'cogs' ? '⚙️' : role.icon === 'calendar-alt' ? '📅' : role.icon === 'warehouse' ? '📦' : '📊'}</div>
+          <h3>${role.role_name}</h3>
+          <p>${role.description||''}</p>
+          <div class="scene-count">${role.scene_count||0}个场景</div>
+        </a>
+      `).join('');
+      
+      badge.textContent = `✅ ${roles.length}个角色 · 27张系统表 · 451条模拟数据`;
+    }
+  } catch(e) {
+    badge.textContent = '❌ ' + e.message;
+  }
+}
+
+loadRoles();
+</script>
+</body>
+</html>

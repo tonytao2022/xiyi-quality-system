@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>IQC · 全景数据分析 · 兮易AI大脑</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap}.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .15s}
+.btn:hover{border-color:var(--blue);color:var(--blue)}.btn-primary{background:var(--blue);color:#fff}.btn-danger{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}.btn-sm{font-size:11px;padding:3px 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.card-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:12px 14px}.np{padding:0}
+.tabs{display:flex;gap:3px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;flex-wrap:wrap;overflow-x:auto}
+.tab{padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .15s}
+.tab:hover{background:rgba(59,130,246,0.06);color:var(--text)}.tab.active{background:rgba(59,130,246,0.12);color:var(--blue)}
+.tc{display:none;padding-top:12px}.tc.active{display:block}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.k{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.kl{font-size:10px;color:var(--muted)}.kv{font-size:22px;font-weight:700;margin-top:2px}
+.kt{font-size:10px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid rgba(30,45,74,0.3)}
+.ch{width:100%;height:300px}
+table{width:100%;border-collapse:collapse;font-size:11px}th{padding:5px 8px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:10px;font-weight:600}
+td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}tr:hover td{background:rgba(59,130,246,0.03)}
+.ai{border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(59,130,246,0.01))}
+.ai h4{font-size:13px;color:var(--blue);margin-bottom:4px}.ai p,.ai li{font-size:12px;color:var(--text2);line-height:1.6}
+.ch2{font-size:13px;font-weight:600;padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.rp{font-size:12px;color:var(--text2);line-height:1.7}.rp h4{font-size:14px;color:var(--text);margin:10px 0 4px}
+.ra{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border)}
+.sb{display:inline-block;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600}
+.si{background:rgba(59,130,246,0.12);color:var(--blue)}.sp{background:rgba(245,158,11,0.12);color:var(--yellow)}.sc{background:rgba(34,197,94,0.12);color:var(--green)}.sd{background:rgba(239,68,68,0.12);color:var(--red)}
+.scard{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;position:relative;transition:border-color .2s}
+.scard:hover{border-color:var(--blue)}.sbadge{position:absolute;top:-8px;right:12px;background:var(--blue);color:#fff;font-size:9px;padding:2px 10px;border-radius:8px;font-weight:600}
+.f{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}.fs{padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px}
+.al2{padding:4px 0}.al2i{padding:8px 0;border-bottom:1px solid var(--border)}.al2i .ah2{font-size:12px;font-weight:600}.am{font-size:10px;color:var(--muted)}
+@media(max-width:768px){.g4,.g2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header"><div><h1>🚚 原料到货检验合格率管控 (IQC) · 全景数据分析平台</h1><div style="font-size:12px;color:var(--text2);margin-top:2px">🤖 智能体角色定位：全景数据分析师 & SQE专家顾问</div></div><div><a href="/xiyi-quality-workbench.html" class="btn">←返回</a></div></div>
+<div class="tabs">
+  <div class="tab active" data-t="1" onclick="sw(1)">📊 1. 合格率全局监控</div>
+  <div class="tab" data-t="2" onclick="sw(2)">🔍 2. 不合格批次分析与拦截</div>
+  <div class="tab" data-t="3" onclick="sw(3)">💡 3. 智能处置建议</div>
+  <div class="tab" data-t="4" onclick="sw(4)">📝 4. 原料结果分析报告</div>
+</div>
+<div id="tc"></div>
+<script>
+var cH={},curBatch='RM-A-20251020',curDisp='退货';
+function sw(t){
+  document.querySelectorAll('.tab').forEach(function(e){e.classList.toggle('active',e.dataset.t==t)});
+  document.querySelectorAll('.tc').forEach(function(e){e.classList.toggle('active',e.id==='t'+t)});
+  setTimeout(function(){Object.keys(cH).forEach(function(k){if(cH[k])cH[k].destroy()});cH={};drawC1();drawC2();drawC3()},50);
+}
+function ai(id){var s=document.getElementById('sel');if(s){s.value=id}ci();sw(2)}
+function ci(){var s=document.getElementById('sel');if(!s)return;var id=s.value;curBatch=id;
+document.getElementById('aid').innerHTML='<h4>🤖 AI批次分析摘要</h4><p>批次【'+id+'】'+(id.includes('20251020')?'粒度D50严重偏离OOS(12.5μm)，已触发MOM锁定。主含量合格。':'主含量不合格OOS(99.82%)，已触发MOM锁定。')+'</p>';
+document.getElementById('tb2').innerHTML=(id.includes('20251020')?'<tr class="cr"><td>粒度D50</td><td>理化</td><td style="color:var(--red)">12.5μm</td><td>10.0±1.0</td><td>+25%</td><td><span class="sb sd">OOS</span></td></tr><tr class="cw"><td>磁物Fe</td><td>杂质</td><td style="color:var(--yellow)">28ppm</td><td><30</td><td>-6.7%</td><td><span class="sb sp">OOT</span></td></tr><tr><td>主含量</td><td>成分</td><td>99.95%</td><td>≥99.9%</td><td>+0.05%</td><td><span class="sb sc">合格</span></td></tr>':'<tr class="cr"><td>主含量</td><td>成分</td><td style="color:var(--red)">99.82%</td><td>≥99.9%</td><td>-0.08%</td><td><span class="sb sd">OOS</span></td></tr>');
+document.getElementById('bid2').textContent=id;document.getElementById('rptB').textContent=id;
+Object.keys(cH).forEach(function(k){if(cH[k])cH[k].destroy()});cH={};drawC3();}
+function ds(id,d){curDisp=d;sw(4);}
+function drawC1(){var e=document.getElementById('c1');if(!e)return;var lb=[],da=[],t=98.5;for(var i=1;i<=30;i++){lb.push('10/'+i);da.push(i==20||i==21?96:99+Math.random()*0.8)}
+cH.c1=new Chart(e,{type:'line',data:{labels:lb,datasets:[{label:'IQC合格率(%)',data:da,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:0.4,fill:true,pointBackgroundColor:da.map(function(v){return v<t?'#ef4444':'#3b82f6'})},{label:'目标98.5%',data:lb.map(function(){return t}),borderColor:'#22c55e',borderWidth:2,borderDash:[5,5],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#94a3b8',boxWidth:10}}},scales:{y:{min:95,max:101,title:{display:true,text:'%'}}}}})}
+function drawC2(){var e=document.getElementById('c2');if(!e)return;cH.c2=new Chart(e,{type:'bar',data:{labels:['供应商A','供应商B','供应商C','供应商D','供应商E'],datasets:[{data:[92,99.5,100,98.5,99],backgroundColor:['#ef4444','#22c55e','#22c55e','#3b82f6','#3b82f6']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:90,max:101,title:{display:true,text:'%'}}}}})}
+function drawC3(){var e=document.getElementById('c3');if(!e)return;var is20=curBatch.includes('20251020');cH.c3=new Chart(e,{type:'line',data:{labels:['W36','W37','W38','W39','W40','W41'],datasets:[{label:'粒度D50(μm)',data:is20?[9.5,9.8,10.2,11.0,11.8,12.5]:[9.5,9.8,10.2,10.0,10.0,9.9],borderColor:'#ef4444',tension:0.3},{label:'控制上限11μm',data:[11,11,11,11,11,11],borderColor:'#f59e0b',borderDash:[5,5],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#94a3b8',boxWidth:10}}},scales:{y:{title:{display:true,text:'μm'},min:8,max:14}}}})}
+var H='';
+// TAB1 全局监控
+H+='<div id="t1" class="tc active"><div class="ai"><h4>🤖 数据集成摘要(MOM/LIMS)</h4><p>智能体已自动集成MOM到货记录与LIMS检验数据(近30天)。数据更新于5分钟前。</p></div>';
+H+='<div class="g4"><div class="k"><div class="kl">月度到货合格率(批次)</div><div class="kv" style="color:var(--green)">98.9%</div><div class="kt">▲0.2% vs 上月</div></div>';
+H+='<div class="k"><div class="kl">今日到货/检验中</div><div class="kv">25/8</div><div class="kt">待检占比32%</div></div>';
+H+='<div class="k"><div class="kl">本周不合格批次数</div><div class="kv" style="color:var(--red)">2</div><div class="kt">▲1批 vs 上周</div></div>';
+H+='<div class="k"><div class="kl">Top1不合格供应商</div><div class="kv" style="font-size:24px">供应商A</div><div class="kt" style="color:var(--red)">本月合格率仅92%</div></div></div>';
+H+='<div class="g2"><div class="card"><div class="card-header">原料到货合格率趋势(近30天)</div><div class="card-body"><div class="ch"><canvas id="c1"></canvas></div></div></div>';
+H+='<div class="card"><div class="card-header">Top5供应商合格率(月度)</div><div class="card-body"><div class="ch"><canvas id="c2"></canvas></div></div></div></div>';
+H+='<div class="card"><div class="card-header">IQC检验任务清单(实时)<button class="btn btn-sm">⬇️导出</button></div><div class="card-body np"><table><thead><tr><th>送检单号</th><th>物料</th><th>供应商</th><th>批次号</th><th>送检时间</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+H+='<tr style="background:rgba(239,68,68,0.04)"><td>INSP-1021-001</td><td>NCM-PRE-002前驱体</td><td>供应商A</td><td>RM-A-20251020</td><td>10/21 08:30</td><td><span class="sb sd">不合格</span></td><td><button class="btn btn-sm btn-primary" onclick="ai(\'RM-A-20251020\')">分析</button></td></tr>';
+H+='<tr style="background:rgba(245,158,11,0.04)"><td>INSP-1021-002</td><td>LCO-PRE-001前驱体</td><td>供应商B</td><td>RM-B-20251020</td><td>10/21 09:00</td><td><span class="sb sp">检验中</span></td><td><button class="btn btn-sm" disabled>查看</button></td></tr>';
+H+='<tr><td>INSP-1020-015</td><td>Li2CO3-001碳酸锂</td><td>供应商C</td><td>RM-C-20251019</td><td>10/20 15:00</td><td><span class="sb sc">合格</span></td><td><button class="btn btn-sm">查看</button></td></tr>';
+H+='<tr style="background:rgba(239,68,68,0.04)"><td>INSP-1020-014</td><td>NCM-PRE-002前驱体</td><td>供应商A</td><td>RM-A-20251019</td><td>10/20 14:00</td><td><span class="sb sd">不合格</span></td><td><button class="btn btn-sm btn-primary" onclick="ai(\'RM-A-20251019\')">分析</button></td></tr>';
+H+='</tbody></table></div></div></div>';
+
+// TAB2 不合格分析
+H+='<div id="t2" class="tc"><div class="f"><label style="font-size:11px;color:var(--muted)">批次:</label><select id="sel" onchange="ci()" class="fs" style="flex:0 0 250px"><option value="RM-A-20251020">RM-A-20251020(供应商A,不合格)</option><option value="RM-A-20251019">RM-A-20251019(供应商A,不合格)</option></select><span class="sb sd">已拦截(待处置)</span><button class="btn btn-sm btn-danger" style="margin-left:auto">🔒确认拦截</button></div>';
+H+='<div class="ai" id="aid"><h4>🤖 AI批次分析摘要</h4><p>批次【RM-A-20251020】粒度D50严重偏离OOS(12.5μm)，已触发MOM锁定。</p></div>';
+H+='<div class="g2"><div class="card"><div class="card-header">批次【<span id="bid2">RM-A-20251020</span>】检验明细</div><div class="card-body np"><table><thead><tr><th>项目</th><th>分类</th><th>值</th><th>标准</th><th>偏差</th><th>判定</th></tr></thead><tbody id="tb2">';
+H+='<tr style="background:rgba(239,68,68,0.04)"><td>粒度D50</td><td>理化</td><td style="color:var(--red)">12.5μm</td><td>10.0±1.0</td><td>+25%</td><td><span class="sb sd">OOS</span></td></tr><tr style="background:rgba(245,158,11,0.04)"><td>磁物Fe</td><td>杂质</td><td style="color:var(--yellow)">28ppm</td><td><30</td><td>-6.7%</td><td><span class="sb sp">OOT</span></td></tr><tr><td>主含量</td><td>成分</td><td>99.95%</td><td>≥99.9%</td><td>+0.05%</td><td><span class="sb sc">合格</span></td></tr></tbody></table></div></div>';
+H+='<div class="card"><div class="card-header">关键指标历史趋势(D50)</div><div class="card-body"><div class="ch"><canvas id="c3"></canvas></div></div></div></div></div>';
+
+// TAB3 处置建议
+H+='<div id="t3" class="tc"><div class="ai" style="border-left:3px solid var(--red)"><h4>🤖 AI智能处置建议</h4><p>粒度D50偏大(12.5μm)，历史数据显示D50偏大会导致成品D50超标并恶化压实密度。<b>综合结论：不推荐让步接收，优先执行退货。</b></p></div>';
+H+='<div class="card"><div class="card-header">请为批次【<span id="bid2d">RM-A-20251020</span>】选择处置方案</div><div class="card-body">';
+H+='<div class="scard" style="border-color:var(--red);border-width:2px"><div class="sbadge" style="background:var(--red)">AI推荐</div><div class="ch2" style="border:none;padding:0 0 4px;font-size:12px">🚚 方案一: 退货</div><div style="font-size:11px;color:var(--text2)">物料退回供应商A并启动SCAR。<br><b>理由:</b>关键指标严重偏离，风险极高。<br><b>历史案例:</b>RM-A-20250810曾让步导致W35批次降级。<br><button class="btn btn-sm btn-primary" style="margin-top:6px" onclick="ds(\'RM-A-20251020\',\'退货\')">选择此方案</button></div></div>';
+H+='<div class="scard"><div class="ch2" style="border:none;padding:0 0 4px;font-size:12px;color:var(--yellow)">✅ 方案二: 让步接收(风险极高)</div><div style="font-size:11px;color:var(--text2)">特采接收并调整工艺参数。<br><b>风险:</b>研磨参数调整可能无法完全纠正偏差。<br><b>要求:</b>技术/生产/品管经理三方会签。<br><button class="btn btn-sm">选择此方案</button></div></div></div></div></div>';
+
+// TAB4 报告
+H+='<div id="t4" class="tc"><div class="g2"><div class="card"><div class="card-header">IQC不合格物料分析与处置报告</div><div class="card-body"><div class="rp">';
+H+='<h4 style="text-align:center">IQC不合格物料分析与处置报告</h4><p><b>批次:</b><span id="rptB">RM-A-20251020</span> | 2025-10-21</p>';
+H+='<h4>1. 不合格物料</h4><p>物料:NCM-PRE-002前驱体 | 供应商:供应商A</p>';
+H+='<h4>2. 不合格项</h4><p>粒度D50=12.5μm(标准10.0±1.0)，OOS</p>';
+H+='<h4>3. 处置建议</h4><p>方案:<b>退货</b>。关键指标严重偏离将导致成品不合格。</p>';
+H+='<h4>4. 影响评估</h4><p>MOM已锁定。需采购部紧急追料，已向供应商A发送SCAR要求3日内回复8D报告。</p>';
+H+='<p style="text-align:right;font-size:11px;color:var(--muted)">分析人: 品质专员(李明)</p></div><div class="ra"><button class="btn btn-primary">⬇️PDF</button><button class="btn" style="color:var(--green);border-color:var(--green)">📨提交品管部经理</button></div></div></div>';
+H+='<div class="card"><div class="card-header">处置闭环跟踪</div><div class="card-body"><div class="al2"><div class="al2i"><div class="ah2">IQC-TASK-088: 批次<span id="rptB2">RM-A-20251020</span>处置</div><div class="am">仓储部/SQE | 计划:2025-10-25</div><span class="sb sp">待退货</span></div>';
+H+='<div class="al2i"><div class="ah2">IQC-TASK-087: RM-X-20251015让步接收</div><div class="am">技术部 | 完成:2025-10-20</div><span class="sb sc">已完成</span></div></div></div></div></div></div>';
+
+document.getElementById('tc').innerHTML=H;
+drawC1();
+</script>
+</body>
+</html>

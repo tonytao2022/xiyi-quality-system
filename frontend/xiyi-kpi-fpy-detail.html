@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPY指标详情 · 兮易AI大脑</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px;--lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-body{padding:14px 16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.st{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;transition:border-color .2s}
+.st:hover{border-color:var(--blue)}.st .l{font-size:11px;color:var(--muted);margin-bottom:6px}
+.st .v{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.st .t{font-size:11px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid rgba(30,45,74,0.3)}
+.cht{width:100%;height:320px;padding:4px 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 10px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:10px;font-weight:600}
+td{padding:6px 10px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.alert-bar{background:linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.01));border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.alert-bar .icon{font-size:20px}.alert-bar p{font-size:12px;color:var(--text2);line-height:1.5}
+@media(max-width:768px){.stats,.g2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>📊 在线一次交验合格率 (FPY) - 详情</h1></div>
+  <div><a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a></div>
+</div>
+
+<div id="content"></div>
+
+<script>
+var H = '';
+var chartLabels = ['W31','W32','W33','W34','W35','W36','W37','W38','W39','W40','W41','W42'];
+var chartData = [98.5,98.3,98.0,97.5,97.0,97.2,97.8,98.2,97.5,96.8,97.0,97.5];
+var targetLine = 99.0;
+
+// 状态栏
+H += '<div class="stats">' +
+  '<div class="st"><div class="l">当前 FPY</div><div class="v" style="color:var(--yellow)">97.5%</div><div class="t">▼ 0.5% vs 上周</div></div>' +
+  '<div class="st"><div class="l">目标值</div><div class="v" style="color:var(--green)">99.0%</div><div class="t">差距 -1.5%</div></div>' +
+  '<div class="st"><div class="l">LCO产线 FPY</div><div class="v" style="color:var(--red)">96.1%</div><div class="t">▼ 1.2% (重点关注)</div></div>' +
+'</div>';
+
+H += '<div class="alert-bar"><div class="icon">⚠️</div><p><b>AI自动预警：</b>LCO产线FPY连续3周低于97.0%警戒线，建议立即启动根因诊断流程。</p></div>';
+
+// 趋势图
+H += '<div class="card"><div class="card-header">FPY 趋势近12周 (vs 目标99.0%)</div><div class="card-body"><div class="cht"><canvas id="trendChart"></canvas></div></div></div>';
+
+// 产线分解
+H += '<div class="card"><div class="card-header">各产线 FPY 对比 (本月)</div><div class="card-body"><div class="cht"><canvas id="processChart"></canvas></div></div></div>';
+
+// 明细
+H += '<div class="card"><div class="card-header">产线 FPY 明细 (近5日)</div><div class="card-body np"><table><thead><tr><th>日期</th><th>产线A(NCM811)</th><th>产线B(LCO)</th><th>产线C(前驱体)</th></tr></thead><tbody>' +
+  '<tr><td>10/21</td><td>98.8%</td><td style="color:var(--red)">95.2%</td><td>99.1%</td></tr>' +
+  '<tr><td>10/20</td><td>99.0%</td><td style="color:var(--red)">96.0%</td><td>99.0%</td></tr>' +
+  '<tr><td>10/19</td><td>98.5%</td><td style="color:var(--yellow)">96.8%</td><td>98.8%</td></tr>' +
+  '<tr><td>10/18</td><td>99.2%</td><td style="color:var(--yellow)">97.2%</td><td>99.2%</td></tr>' +
+  '<tr><td>10/17</td><td>98.9%</td><td>97.5%</td><td>99.0%</td></tr>' +
+'</tbody></table></div></div>';
+
+document.getElementById('content').innerHTML = H;
+
+setTimeout(function(){
+  // FPY趋势折线图
+  var ctx = document.getElementById('trendChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line', data: {
+        labels: chartLabels,
+        datasets: [{
+          label: 'FPY (%)',
+          data: chartData,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.08)',
+          tension: 0.4, fill: true,
+          pointBackgroundColor: chartData.map(function(v){ return v < 97.5 ? '#ef4444' : v < 98.5 ? '#f59e0b' : '#22c55e'; }),
+          pointRadius: 4
+        },{
+          label: '目标 99.0%',
+          data: chartLabels.map(function(){ return targetLine; }),
+          borderColor: '#22c55e',
+          borderWidth: 2, borderDash: [5,5],
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 10 } } },
+        scales: {
+          y: { min: 95, max: 100, grid: { color: 'rgba(30,45,74,0.3)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // 产线对比柱状图
+  var ctx2 = document.getElementById('processChart');
+  if (ctx2) {
+    new Chart(ctx2, {
+      type: 'bar', data: {
+        labels: ['产线A(NCM811)', '产线B(LCO)', '产线C(前驱体)'],
+        datasets: [{
+          label: '本月FPY(%)', data: [98.8, 96.1, 99.0],
+          backgroundColor: ['#3b82f6', '#ef4444', '#22c55e']
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { min: 95, max: 100, grid: { color: 'rgba(30,45,74,0.3)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+}, 100);
+</script>
+</body>
+</html>

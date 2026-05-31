@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>呆滞库存 · 全景数据分析 · 兮易AI大脑</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap}.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .15s}
+.btn:hover{border-color:var(--blue);color:var(--blue)}.btn-primary{background:var(--blue);color:#fff}.btn-sm{font-size:11px;padding:3px 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;transition:border-color .2s}
+.card-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:12px 14px}.np{padding:0}
+.tabs{display:flex;gap:3px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;flex-wrap:wrap;overflow-x:auto}
+.tab{padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .15s}
+.tab:hover{background:rgba(59,130,246,0.06);color:var(--text)}.tab.active{background:rgba(59,130,246,0.12);color:var(--blue)}
+.tc{display:none;padding-top:12px}.tc.active{display:block}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.k{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}.kl{font-size:10px;color:var(--muted)}
+.kv{font-size:22px;font-weight:700;margin-top:2px}.kt{font-size:10px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid rgba(30,45,74,0.3)}
+.ch{width:100%;height:300px}
+table{width:100%;border-collapse:collapse;font-size:11px}th{padding:5px 8px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:10px;font-weight:600}
+td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}tr:hover td{background:rgba(59,130,246,0.03)}
+.ai{border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(59,130,246,0.01))}
+.ai h4{font-size:13px;color:var(--blue);margin-bottom:4px}.ai p,.ai li{font-size:12px;color:var(--text2);line-height:1.6}
+.ch2{font-size:13px;font-weight:600;padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.rp{font-size:12px;color:var(--text2);line-height:1.7}.rp h4{font-size:14px;color:var(--text);margin:10px 0 4px}
+.ra{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border)}
+.sb{display:inline-block;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600}
+.si{background:rgba(59,130,246,0.12);color:var(--blue)}.sp{background:rgba(245,158,11,0.12);color:var(--yellow)}.sc{background:rgba(34,197,94,0.12);color:var(--green)}.sd{background:rgba(239,68,68,0.12);color:var(--red)}
+.scard{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;position:relative;transition:border-color .2s}
+.scard:hover{border-color:var(--blue)}.sbadge{position:absolute;top:-8px;right:12px;background:var(--blue);color:#fff;font-size:9px;padding:2px 10px;border-radius:8px;font-weight:600}
+.sh{font-size:12px;font-weight:600;margin-bottom:4px}.sd2{font-size:11px;color:var(--text2);line-height:1.6}
+.f{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}.fs{padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px}
+.al2{padding:4px 0}.al2i{padding:8px 0;border-bottom:1px solid var(--border)}.al2i .ah2{font-size:12px;font-weight:600}.am{font-size:10px;color:var(--muted)}
+.tb{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
+.tb-t{font-size:12px;font-weight:600;color:var(--blue);margin-bottom:4px}.tb-c{font-size:11px;color:var(--text2);line-height:1.6}.tb-c li{margin-bottom:2px}
+@media(max-width:768px){.g4,.g2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header"><div><h1>🏚️ 库存呆滞情况跟踪分析 (SIA) · 全景数据分析平台</h1><div style="font-size:12px;color:var(--text2);margin-top:2px">🤖 智能体角色定位：业务方案专家 & 数据分析师</div></div><div><a href="/xiyi-quality-workbench.html" class="btn">←返回</a></div></div>
+<div class="tabs">
+  <div class="tab active" data-t="1" onclick="sw(1)">📊 1. 呆滞库存全局概览</div>
+  <div class="tab" data-t="2" onclick="sw(2)">🔍 2. 根本原因分析与追溯</div>
+  <div class="tab" data-t="3" onclick="sw(3)">💡 3. 解决方案制定</div>
+  <div class="tab" data-t="4" onclick="sw(4)">📝 4. 分析报告与审批</div>
+</div>
+<div id="tc"></div>
+<script>
+var cH={};
+function sw(t){
+  document.querySelectorAll('.tab').forEach(function(e){e.classList.toggle('active',e.dataset.t==t)});
+  document.querySelectorAll('.tc').forEach(function(e){e.classList.toggle('active',e.id==='t'+t)});
+  setTimeout(function(){Object.keys(cH).forEach(function(k){if(cH[k])cH[k].destroy()});cH={};drawC1();drawC2()},50);
+}
+function ai(id){var s=document.getElementById('sel');if(s){for(var i=0;i<s.options.length;i++){if(s.options[i].value===id){s.selectedIndex=i;break}}}ci();sw(2)}
+function ci(){var s=document.getElementById('sel');if(!s)return;var id=s.value,l=id.includes('NCM');
+document.getElementById('ai2').innerHTML='<h4>🤖 AI根因分析摘要</h4><p>物料['+id+']'+(l?'对应订单SO-20250715-001已取消(2025-09-01)，质量合格，非质量原因呆滞':'为研发项目LCO-HighVoltage-Project结余，项目2025-04结项，未及时处置')+'。<b>确认为: '+(l?'需求侧原因':'策略侧原因')+'</b></p>';
+document.getElementById('tb2').innerHTML=l?'<ul style="padding-left:16px;margin-top:6px"><li><b>销售订单:</b> SO-20250715-001</li><li><b>客户:</b> 客户B(海外)</li><li><b>状态:</b> <span class="sb sd">已取消(2025-09-01)</span></li><li><b>原因:</b> 客户产品策略调整</li></ul>':'<ul style="padding-left:16px;margin-top:6px"><li><b>关联项目:</b> LCO-HighVoltage-Project</li><li><b>状态:</b> <span class="sb sc">已结项(2025-04-15)</span></li><li><b>物料:</b> 项目结余</li></ul>';
+document.getElementById('tb3').innerHTML=l?'<ul style="padding-left:16px;margin-top:6px"><li><b>生产批次:</b> NCM-W29-008</li><li><b>生产日期:</b> 2025-07-20</li><li><b>质量:</b> <span class="sb sc">合格</span></li></ul>':'<ul style="padding-left:16px;margin-top:6px"><li><b>生产批次:</b> LCO-RND-W15-001</li><li><b>生产日期:</b> 2025-04-10</li><li><b>质量:</b> <span class="sb sc">合格</span></li></ul>';
+document.getElementById('bid2').textContent=id;document.getElementById('rptB').textContent=id;
+document.getElementById('rptV').textContent=l?'85.0':'35.5';
+document.getElementById('rptR').textContent=l?'客户订单变更':'研发项目结余';
+document.getElementById('rptS').textContent=l?'转入标准品销售':'技术降级/转内部验证';
+Object.keys(cH).forEach(function(k){if(cH[k])cH[k].destroy()});cH={};}
+function drawC1(){var e=document.getElementById('c1');if(!e)return;cH.c1=new Chart(e,{type:'bar',data:{labels:['订单变更','研发结余','安全库存','质量不合格','预测不准','其他'],datasets:[{data:[35,25,15,10,10,5],backgroundColor:['#ef4444','#f59e0b','#3b82f6','#64748b','#22c55e','#94a3b8']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}})}
+function drawC2(){var e=document.getElementById('c2');if(!e)return;cH.c2=new Chart(e,{type:'bar',data:{labels:['90-180天','181-365天','>365天'],datasets:[{label:'呆滞价值(万元)',data:[150.2,120.5,87.7],backgroundColor:['#f59e0b','#ef4444','#8b0000']}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'万元'}}}}})}
+var H='';
+// Tab1
+H+='<div id="t1" class="tc active"><div class="ai"><h4>🤖 数据集成摘要</h4><p>智能体已自动完成ERP与MOM/MES系统数据集成，汇总了当前所有呆滞库存信息(数据截止至2025-10-10)。</p></div>';
+H+='<div class="g4"><div class="k"><div class="kl">呆滞库存总价值(万元)</div><div class="kv" style="color:var(--red)">358.4</div><div class="kt">▲25.1 vs 上月</div></div>';
+H+='<div class="k"><div class="kl">呆滞价值占比(%)</div><div class="kv" style="color:var(--red)">5.8%</div><div class="kt">▲0.5%(目标<3.0%)</div></div>';
+H+='<div class="k"><div class="kl">呆滞料SKU</div><div class="kv" style="color:var(--yellow)">18</div><div class="kt">▲2 SKUs</div></div>';
+H+='<div class="k"><div class="kl">Top1呆滞原因</div><div class="kv" style="font-size:22px">客户订单变更</div><div class="kt">价值占比35%</div></div></div>';
+H+='<div class="g2"><div class="card"><div class="card-header">呆滞原因结构分析(柏拉图)</div><div class="card-body"><div class="ch"><canvas id="c1"></canvas></div></div></div>';
+H+='<div class="card"><div class="card-header">呆滞库存库龄分析</div><div class="card-body"><div class="ch"><canvas id="c2"></canvas></div></div></div></div>';
+H+='<div class="card"><div class="card-header">呆滞库存明细清单<button class="btn btn-sm">⬇️导出</button></div><div class="card-body np"><table><thead><tr><th>物料/描述</th><th>类型</th><th>数量</th><th>价值</th><th>库龄</th><th>原因</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+H+='<tr style="background:rgba(239,68,68,0.04)"><td>NCM811-CUS-002</td><td>定制成品</td><td>10000kg</td><td>85.0</td><td>95天</td><td>客户订单变更</td><td><span class="sb sd">待分析</span></td><td><button class="btn btn-sm btn-primary" onclick="ai(\'NCM811-CUS-002\')">深度分析</button></td></tr>';
+H+='<tr style="background:rgba(245,158,11,0.04)"><td>LCO-RND-005</td><td>研发中试品</td><td>500kg</td><td>35.5</td><td>180天</td><td>研发项目结余</td><td><span class="sb sp">待分析</span></td><td><button class="btn btn-sm btn-primary" onclick="ai(\'LCO-RND-005\')">深度分析</button></td></tr>';
+H+='<tr><td>RM-PRECURSOR-088</td><td>前驱体原料</td><td>8000kg</td><td>40.0</td><td>120天</td><td>安全库存过高</td><td><span class="sb sp">分析中</span></td><td><button class="btn btn-sm">查看</button></td></tr>';
+H+='</tbody></table></div></div></div>';
+
+// Tab2
+H+='<div id="t2" class="tc"><div class="f"><label style="font-size:11px;color:var(--muted)">物料:</label><select id="sel" onchange="ci()" class="fs" style="flex:0 0 250px"><option value="NCM811-CUS-002">NCM811-CUS-002(定制成品)</option><option value="LCO-RND-005">LCO-RND-005(研发中试品)</option></select></div>';
+H+='<div class="ai" id="ai2"><h4>🤖 AI根因分析摘要</h4><p>物料【NCM811-CUS-002】对应订单SO-20250715-001已取消，质量合格，非质量原因呆滞。<b>确认为: 需求侧原因</b></p></div>';
+H+='<div class="g2"><div class="card"><div class="ch2" style="color:var(--blue)">📄 需求与订单追溯(ERP/PLM)</div><div class="card-body np" id="tb2"><ul style="padding-left:16px;margin-top:6px"><li><b>销售订单:</b> SO-20250715-001</li><li><b>客户:</b> 客户B(海外)</li><li><b>状态:</b> <span class="sb sd">已取消(2025-09-01)</span></li><li><b>原因:</b> 客户产品策略调整</li></ul></div></div>';
+H+='<div class="card"><div class="ch2" style="color:var(--green)">🏭 生产与质量追溯(MOM/LIMS)</div><div class="card-body np" id="tb3"><ul style="padding-left:16px;margin-top:6px"><li><b>生产批次:</b> NCM-W29-008</li><li><b>生产日期:</b> 2025-07-20</li><li><b>质量:</b> <span class="sb sc">合格</span></li></ul></div></div></div></div>';
+
+// Tab3
+H+='<div id="t3" class="tc"><div class="ai"><h4>🤖 AI智能解决方案推荐</h4><p>根据呆滞原因【客户订单变更】及物料属性【定制成品】，优先推荐【方案二：转入标准品销售】，处置周期短，价值回收率较高。</p></div>';
+H+='<div class="card"><div class="card-header">请为物料【<span id="bid2">NCM811-CUS-002</span>】选择处置方案</div><div class="card-body">';
+H+='<div class="scard"><div class="sbadge">AI推荐</div><div class="sh" style="color:var(--blue)">🔄 方案一: 转入标准品销售</div><div class="sd2">重新包装检验转为通用标准品销售。<br><b>优点:</b>处置周期短，确定性高。 <b>缺点:</b>可能需要小幅折价。<br><b>预估价值回收率:</b>70%~85% | <b>预估周期:</b><1月<br><button class="btn btn-sm btn-primary" style="margin-top:6px">选择此方案</button></div></div>';
+H+='<div class="scard"><div class="sh" style="color:var(--yellow)">🔀 方案二: 寻找替代客户</div><div class="sd2">市场部尝试寻找有需求的其它客户。<br><b>优点:</b>价值回收率最高。 <b>缺点:</b>周期长不确定性高。<br><b>预估价值回收率:</b>80%~100% | <b>预估周期:</b>>3月<br><button class="btn btn-sm">选择此方案</button></div></div>';
+H+='<div class="scard"><div class="sh" style="color:var(--red)">♻️ 方案三: 报废处置</div><div class="sd2">环保报废处理。<br><b>优点:</b>操作简单快速。 <b>缺点:</b>价值损失巨大。<br><b>预估价值回收率:</b><5% | <b>预估周期:</b>2周<br><button class="btn btn-sm">选择此方案</button></div></div></div></div></div>';
+
+// Tab4
+H+='<div id="t4" class="tc"><div class="g2"><div class="card"><div class="card-header">呆滞库存分析与处置报告</div><div class="card-body"><div class="rp">';
+H+='<h4 style="text-align:center">呆滞库存分析与处置报告</h4><p><b>报告编号:</b> SIA-RPT-20251010-001</p>';
+H+='<h4>1. 呆滞物料信息</h4><ul><li><b>物料编码:</b> <span id="rptB">NCM811-CUS-002</span></li><li><b>呆滞价值:</b> <span id="rptV">85.0</span>万元</li><li><b>库龄:</b> 95天</li></ul>';
+H+='<h4>2. 根因分析</h4><p>确认本次呆滞核心原因为：<strong id="rptR">客户订单变更</strong>。质量检验合格，非质量原因导致呆滞。</p>';
+H+='<h4>3. 选定处置方案</h4><p>基于AI推荐选定：<strong id="rptS">转入标准品销售</strong>。</p><ul><li><b>预期价值回收率:</b>70%~85%</li><li><b>责任部门:</b>销售部</li><li><b>完成时限:</b>一个月内</li></ul>';
+H+='<p style="text-align:right;font-size:11px;color:var(--muted)">分析人: 品质专员(李明)</p></div><div class="ra"><button class="btn btn-primary">⬇️导出PDF</button><button class="btn" style="color:var(--green);border-color:var(--green)">📨提交审批</button></div></div></div>';
+H+='<div class="card"><div class="card-header">处置方案执行跟踪</div><div class="card-body"><div class="al2"><div class="al2i"><div class="ah2">SIA-TASK-035: 处置方案执行</div><div class="am">销售部 | 计划:2025-11-10</div><span class="sb sp">待审批</span></div>';
+H+='<div class="al2i"><div class="ah2">SIA-TASK-034: LCO-HV-008报废</div><div class="am">仓储部 | 完成:2025-10-08</div><span class="sb sc">已完成</span></div></div></div></div></div></div>';
+
+document.getElementById('tc').innerHTML=H;
+drawC1();
+</script>
+</body>
+</html>

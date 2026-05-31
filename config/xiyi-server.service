@@ -1,0 +1,17 @@
+[Unit]
+Description=Xiyi AI Brain API Server
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace/projects/兮易clawai-demo/api
+Environment=XIYI_API_KEY=90a275cbcc004fd5
+Environment=XIYI_MYSQL_DB=xiyi_quality
+ExecStart=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现/venv/bin/python3 /root/.openclaw/workspace/projects/兮易clawai-demo/api/xiyi_server.py
+Restart=always
+RestartSec=5
+RestartPreventExitStatus=0
+
+[Install]
+WantedBy=multi-user.target

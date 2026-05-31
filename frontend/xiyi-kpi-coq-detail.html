@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COQ指标详情 · 兮易AI大脑</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-body{padding:14px 16px}.np{padding:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.st{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;transition:border-color .2s}
+.st:hover{border-color:var(--blue)}.st .l{font-size:11px;color:var(--muted);margin-bottom:6px}
+.st .v{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.st .t{font-size:11px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid rgba(30,45,74,0.3)}
+.cht{width:100%;height:320px;padding:4px 0}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g1f2{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 10px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:10px;font-weight:600}
+td{padding:6px 10px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+@media(max-width:768px){.stats,.g2,.g1f2{grid-template-columns:1fr}body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>💰 质量成本率 (COQ Ratio) - 详情</h1><div style="font-size:13px;color:var(--text2);margin-top:4px">品质专员 · 全业务质量损失成本监控</div></div>
+  <div><a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a></div>
+</div>
+
+<div id="content"></div>
+
+<script>
+var H = '';
+
+H += '<div class="stats">' +
+  '<div class="st"><div class="l">质量成本率(COQ)</div><div class="v" style="color:var(--red)">2.8%</div><div class="t">▲ 0.3% vs 上月 (目标<1.8%)</div></div>' +
+  '<div class="st"><div class="l">内部损失(IF)</div><div class="v" style="color:var(--red)">185.2万</div><div class="t">报废+返工 占63%</div></div>' +
+  '<div class="st"><div class="l">外部损失(EF)</div><div class="v" style="color:var(--yellow)">65.0万</div><div class="t">客诉+退换货占22%</div></div>' +
+'</div>';
+
+// 环形图结构+COQ趋势
+H += '<div class="g1f2"><div class="card"><div class="card-header">COQ成本结构分析</div><div class="card-body"><div class="cht"><canvas id="structureChart"></canvas></div></div></div>';
+H += '<div class="card"><div class="card-header">COQ率趋势 (近6月)</div><div class="card-body"><div class="cht"><canvas id="trendChart"></canvas></div></div></div></div>';
+
+// 各基地对比
+H += '<div class="card"><div class="card-header">各基地COQ对比 (月度)</div><div class="card-body"><div class="cht"><canvas id="baseChart"></canvas></div></div></div>';
+
+// 明细
+H += '<div class="card"><div class="card-header">Top 质量损失明细</div><div class="card-body np"><table><thead><tr><th>损失项</th><th>类型</th><th>金额(万)</th><th>占比</th><th>基地</th><th>趋势</th></tr></thead><tbody>' +
+  '<tr style="background:rgba(239,68,68,0.04)"><td>烧结工序报废(磁物超标)</td><td>报废</td><td>66.5</td><td>22.8%</td><td>厦门</td><td style="color:var(--red)">↑ 上升</td></tr>' +
+  '<tr style="background:rgba(239,68,68,0.04)"><td>混料工序返工(成分偏离)</td><td>返工</td><td>34.3</td><td>11.7%</td><td>厦门</td><td style="color:var(--red)">↑ 上升</td></tr>' +
+  '<tr style="background:rgba(245,158,11,0.04)"><td>客诉赔偿(粒度批次波动)</td><td>客诉</td><td>33.0</td><td>11.3%</td><td>厦门</td><td style="color:var(--yellow)">→ 持平</td></tr>' +
+  '<tr><td>来料检验复测费用</td><td>复测</td><td>15.5</td><td>5.3%</td><td>三明</td><td>→ 持平</td></tr>' +
+'</tbody></table></div></div>';
+
+// 分解维度
+H += '<div class="card"><div class="card-header">关联分解维度与数据来源</div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">分解维度</div>基地/工序/损失类型/时间周期</div>' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">数据来源</div>MOM/MES/ERP/LIMS</div>' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">负责人</div>品质技术经理/财务经理</div>' +
+  '<div style="padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">更新频率</div>月度结算</div>' +
+'</div></div></div>';
+
+document.getElementById('content').innerHTML = H;
+
+setTimeout(function(){
+  // 环形图
+  var ctx = document.getElementById('structureChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut', data: {
+        labels: ['内部损失-报废','内部损失-返工','外部损失-客诉','外部损失-退换货','复测费用','预防/鉴定'],
+        datasets: [{ data: [32,25,15,10,15,3], backgroundColor: ['#ef4444','#f59e0b','#3b82f6','#64748b','#22c55e','#94a3b8'] }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, padding: 8 } } },
+        cutout: '60%'
+      }
+    });
+  }
+
+  // 趋势
+  var ctx2 = document.getElementById('trendChart');
+  if (ctx2) {
+    new Chart(ctx2, {
+      type: 'line', data: {
+        labels: ['10月','11月','12月','1月','2月','3月'],
+        datasets: [{
+          label: 'COQ率(%)',
+          data: [2.5,2.6,2.8,3.0,2.9,2.8],
+          borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)',
+          tension: 0.3, fill: true, pointRadius: 4
+        },{
+          label: '目标 1.8%',
+          data: [1.8,1.8,1.8,1.8,1.8,1.8],
+          borderColor: '#22c55e', borderWidth: 2, borderDash: [5,5], pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 10 } } },
+        scales: { y: { min: 1.5, max: 3.5, grid: { color: 'rgba(30,45,74,0.3)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  // 基地对比柱状图
+  var ctx3 = document.getElementById('baseChart');
+  if (ctx3) {
+    new Chart(ctx3, {
+      type: 'bar', data: {
+        labels: ['厦门基地','三明基地','宁德基地'],
+        datasets: [{
+          label: 'COQ率(%)', data: [3.2,2.6,1.8],
+          backgroundColor: ['#ef4444','#f59e0b','#22c55e']
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 4, grid: { color: 'rgba(30,45,74,0.3)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+}, 100);
+</script>
+</body>
+</html>

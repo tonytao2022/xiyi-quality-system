@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>场景管理 · 兮易AI大脑</title>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px;--lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:20px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.header h1{font-size:20px;color:#fff}
+.header .sub{font-size:13px;color:var(--text-muted);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--radius);font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border-color);color:var(--text-secondary);background:transparent;transition:all .15s}
+.btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-primary{background:var(--color-hold);color:#fff;border:none}
+.btn-primary:hover{background:#2563eb}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--lg);overflow:hidden;transition:all .2s;cursor:default}
+.card:hover{border-color:var(--color-hold)}
+.card-h{display:flex;gap:14px;padding:16px}
+.card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.card-body{flex:1;min-width:0}
+.card-body .cat{font-size:11px;color:var(--color-hold);margin-bottom:2px}
+.card-body .name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.card-body .desc{font-size:12px;color:var(--text-secondary);line-height:1.6}
+.card-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-top:1px solid var(--border-light);background:var(--bg-secondary)}
+.card-footer .meta{font-size:11px;color:var(--text-muted)}
+.loading{padding:40px;text-align:center;color:var(--text-muted);font-size:14px}
+.cat-grid{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.cat-btn{padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;border:1px solid var(--border-color);background:transparent;color:var(--text-secondary);transition:all .15s}
+.cat-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
+.cat-btn:hover{border-color:var(--color-hold);color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📋 工作场景管理</h1>
+    <div class="sub" id="sceneCount">加载中...</div>
+  </div>
+  <div>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+    <button class="btn btn-outline" onclick="loadSceneList()">🔄 刷新</button>
+  </div>
+</div>
+
+<div class="cat-grid" id="categoryFilter">
+  <button class="cat-btn active" onclick="filterScenes('all',this)">全部</button>
+</div>
+
+<div id="sceneGrid" class="grid"><div class="loading">加载场景数据...</div></div>
+
+<script>
+const API = '/api/v1/xiyi';
+
+function getIcon(cat) {
+  var map = {'品质监控':'📈','过程分析':'🔍','库存预警':'⚠️','资产优化':'💰','供应商质量':'📦','过程品控':'⚙️','成本分析':'💹'};
+  return map[cat] || '📋';
+}
+
+function getColor(cat) {
+  var map = {'品质监控':'warning','过程分析':'success','库存预警':'danger','资产优化':'warning','供应商质量':'blue','过程品控':'info','成本分析':'cost'};
+  return map[cat] || 'blue';
+}
+
+var allScenes = [];
+
+async function loadSceneList() {
+  document.getElementById('sceneCount').textContent = '加载中...';
+  try {
+    var r = await fetch(API + '/scenes').then(r=>r.json());
+    if (r.code !== 0) return;
+    allScenes = r.data.scenes || [];
+    
+    // 分类筛选按钮
+    var cats = ['全部'];
+    allScenes.forEach(function(s) { if (cats.indexOf(s.category) < 0) cats.push(s.category); });
+    var catHtml = '';
+    cats.forEach(function(c) {
+      catHtml += '<button class="cat-btn' + (c === '全部' ? ' active' : '') + '" onclick="filterScenes(\'' + c + '\',this)">' + c + '</button>';
+    });
+    document.getElementById('categoryFilter').innerHTML = catHtml;
+    
+    renderScenes(allScenes);
+    document.getElementById('sceneCount').textContent = '共 ' + allScenes.length + ' 个工作场景';
+  } catch(e) {
+    document.getElementById('sceneCount').textContent = '❌ ' + e.message;
+  }
+}
+
+function renderScenes(scenes) {
+  var html = '';
+  scenes.forEach(function(s) {
+    var icon = getIcon(s.category);
+    html += '<div class="card" onclick="showSceneDetail(' + s.id + ')">' +
+      '<div class="card-h">' +
+        '<div class="card-icon" style="background:rgba(59,130,246,0.1)">' + icon + '</div>' +
+        '<div class="card-body">' +
+          '<div class="cat">' + (s.category||'') + '</div>' +
+          '<div class="name">' + (s.scene_name||'') + '</div>' +
+          '<div class="desc">' + ((s.description||'').length > 100 ? (s.description||'').slice(0,100) + '...' : s.description||'') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-footer">' +
+        '<span class="meta">' + (s.step_count||7) + '步流程</span>' +
+        '<span class="meta">' + (s.scene_code||'') + '</span>' +
+      '</div></div>';
+  });
+  document.getElementById('sceneGrid').innerHTML = html || '<div class="loading">暂无匹配场景</div>';
+}
+
+function filterScenes(cat, btn) {
+  document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  
+  if (cat === '全部') {
+    renderScenes(allScenes);
+  } else {
+    renderScenes(allScenes.filter(function(s) { return s.category === cat; }));
+  }
+}
+
+function showSceneDetail(id) {
+  window.open('/xiyi-diagnose.html?scene=' + id, 'sceneDetail', 'width=900,height=700');
+}
+
+loadSceneList();
+</script>
+</body>
+</html>

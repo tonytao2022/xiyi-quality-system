@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI分析 · 兮易AI大脑</title>
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--color-hold:#3b82f6;--color-bear:#22c55e;--color-defect:#ef4444;--color-warning:#f59e0b;--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.7;padding:20px;min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.header h1{font-size:18px;color:#fff}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--radius);font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border-color);color:var(--text-secondary);background:transparent;transition:all .2s}
+.btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-primary{background:var(--color-hold);color:#fff;border:none}
+.btn-primary:hover{background:#2563eb}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:16px}
+.banner{background:var(--bg-card);border-radius:var(--radius-lg);padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;border:1px solid var(--border-color)}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.meta-item{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:10px 14px}
+.meta-item .lbl{font-size:11px;color:var(--text-muted);margin-bottom:2px}
+.meta-item .val{font-size:14px;font-weight:600}
+pre.ai-content{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:16px;font-size:13px;color:var(--text-secondary);white-space:pre-wrap;word-break:break-word;line-height:1.8;max-height:70vh;overflow-y:auto}
+pre.ai-content strong{color:var(--text-primary)}
+.loading{text-align:center;padding:60px;color:var(--text-muted)}.loading .spinner{font-size:32px;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.analyze-btn-area{text-align:center;padding:40px}
+@media(max-width:768px){body{padding:12px}.meta-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1 id="pageTitle">🤖 AI品质分析</h1>
+    <div style="font-size:13px;color:var(--text-secondary);margin-top:4px" id="sceneInfo"></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn" onclick="refreshAnalysis()" id="btnRefresh" style="display:none">🔄 刷新分析</button>
+    <a href="/xiyi-quality-workbench.html" class="btn">← 返回工作台</a>
+  </div>
+</div>
+
+<div id="loadingArea" class="loading">
+  <div class="spinner">🧠</div>
+  <div id="loadingText">正在调用AI进行分析...</div>
+</div>
+
+<div id="resultArea" style="display:none">
+  <div class="banner" id="resultBanner">
+    <div style="font-size:28px" id="bannerIcon">✅</div>
+    <div>
+      <div style="font-weight:600;font-size:15px" id="bannerTitle">AI分析完成</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="bannerSub"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span>📊 分析概览</span>
+      <span style="font-size:11px;color:var(--text-muted)" id="metaTime"></span>
+    </div>
+    <div class="card-body">
+      <div class="meta-grid" id="metaGrid"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span>📝 AI分析报告</span>
+      <span style="font-size:11px;color:var(--text-muted)" id="reportId"></span>
+    </div>
+    <div class="card-body">
+      <pre class="ai-content" id="aiReportContent">加载中...</pre>
+    </div>
+  </div>
+
+  <div class="card" id="metricsCard" style="display:none">
+    <div class="card-header"><span>📈 场景指标数据</span></div>
+    <div class="card-body">
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px" id="metricsTable">
+        <tr><th style="padding:6px 8px;border-bottom:2px solid var(--border-color);color:var(--text-muted);text-align:left;font-size:11px">指标</th><th style="padding:6px 8px;border-bottom:2px solid var(--border-color);color:var(--text-muted);text-align:left;font-size:11px">值</th></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+    <button class="btn btn-primary" onclick="runAgain()">🔄 重新分析</button>
+    <button class="btn" onclick="window.location.href='/xiyi-quality-workbench.html'">← 返回工作台</button>
+  </div>
+</div>
+
+<script>
+var API = '/api/v1/xiyi';
+var _sceneId = parseInt(new URLSearchParams(location.search).get('scene')) || 1;
+var _sceneName = new URLSearchParams(location.search).get('name') || '';
+var _traceId = new URLSearchParams(location.search).get('trace') || '';
+var _errorMsg = new URLSearchParams(location.search).get('error') || '';
+
+async function init() {
+  if (_errorMsg) {
+    showError(_errorMsg);
+    return;
+  }
+  // 加载场景信息
+  try {
+    var sr = await fetch(API + '/scenes/' + _sceneId).then(function(r){return r.json();});
+    if (sr.code === 0) {
+      _sceneName = sr.data.scene.scene_name || _sceneName;
+    }
+  } catch(e) {}
+  document.getElementById('pageTitle').textContent = '🤖 AI品质分析 · ' + (_sceneName || '场景' + _sceneId);
+  document.getElementById('sceneInfo').textContent = '场景: ' + (_sceneName || '场景' + _sceneId) + ' | trace: ' + (_traceId || '新分析');
+
+  if (_traceId) {
+    // 有traceId: 加载已有分析结果
+    loadExistingTrace();
+  } else {
+    // 无traceId: 自动发起新分析
+    startNewAnalysis();
+  }
+}
+
+// 加载已有trace (轮询模式)
+function loadExistingTrace() {
+  document.getElementById('loadingText').innerHTML = getProgressHTML('正在查询已有分析结果...', 5);
+  fetch(API + '/analysis/trace/' + _traceId)
+  .then(function(r){return r.json();})
+  .then(function(resp){
+    if (resp.code === 0) {
+      var task = resp.data.task || {};
+      var status = task.status || '';
+      var result = task.result || '';
+      if (typeof result === 'string') { try { result = JSON.parse(result); } catch(e) {} }
+      
+      if (status === 'done' && result && result.ai_analysis) {
+        // 已有完成结果
+        showResult(result, _traceId);
+        return;
+      } else if (status === 'error') {
+        // 之前分析失败,重新分析
+        startNewAnalysis();
+        return;
+      }
+    }
+    // 结果还在处理或未找到,进入轮询等待
+    pollTrace();
+  })
+  .catch(function(){
+    // 连不上也重新发起
+    startNewAnalysis();
+  });
+}
+
+// 发起新分析 - 异步轮询模式
+function startNewAnalysis() {
+  _traceId = 'ai_' + Date.now() + '_' + _sceneId;
+  pollTrace();
+
+  // 先立即发起分析请求(不等待结果,由轮询获取)
+  fetch(API + '/analysis/ai-run', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      trace_id: _traceId,
+      scene_id: parseInt(_sceneId),
+      input_data: {},
+      prompt: '请对"' + (_sceneName || '场景' + _sceneId) + '"进行全面品质分析，包括品质状况评估、异常指标识别、4M1E排查方向、下一步行动计划'
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(resp){
+    if (resp.code !== 0) {
+      // 启动失败显示错误
+      showError('AI分析启动失败: ' + (resp.error || '未知错误'));
+    }
+  })
+  .catch(function(e){
+    showError('网络请求异常: ' + e.message);
+  });
+}
+
+// 轮询trace进度
+var _pollTimer = null;
+var _pollCount = 0;
+var POLL_INTERVAL = 2500;
+
+function pollTrace() {
+  if (!_traceId) return;
+  _pollCount++;
+  
+  fetch(API + '/analysis/trace/' + _traceId)
+  .then(function(r){return r.json();})
+  .then(function(resp){
+    if (resp.code === 0) {
+      var task = resp.data.task || {};
+      var status = task.status || '';
+      var inputParams = task.input_params || '';
+      if (typeof inputParams === 'string') { try { inputParams = JSON.parse(inputParams); } catch(e) {} }
+      
+      var step = (inputParams && inputParams.step) || '';
+      var progress = (inputParams && inputParams.progress) || '';
+      var pct = (inputParams && inputParams.pct) || 0;
+      
+      // 更新进度显示
+      if (progress) {
+        var barW = pct > 0 ? pct : Math.min(_pollCount * 8, 80);
+        var dots = '.'.repeat(_pollCount % 4);
+        document.getElementById('loadingText').innerHTML = getProgressHTML(progress, barW);
+      }
+      
+      if (status === 'done') {
+        // 分析完成,获取结果
+        var result = task.result || '';
+        if (typeof result === 'string') { try { result = JSON.parse(result); } catch(e) {} }
+        if (result && result.ai_analysis) {
+          showResult(result, _traceId);
+          var url = new URL(location.href);
+          url.searchParams.set('trace', _traceId);
+          history.replaceState(null, '', url);
+          return;
+        }
+      } else if (status === 'error') {
+        showError('AI分析执行异常,请重试');
+        return;
+      }
+    }
+    // 继续轮询
+    if (_pollCount < 120) {  // 最多轮询5分钟
+      _pollTimer = setTimeout(pollTrace, POLL_INTERVAL);
+    } else {
+      showError('AI分析超时,请刷新重试');
+    }
+  })
+  .catch(function(e){
+    // 轮询失败继续重试
+    _pollTimer = setTimeout(pollTrace, POLL_INTERVAL);
+  });
+}
+
+// 进度HTML
+function getProgressHTML(msg, pct) {
+  pct = Math.min(pct, 95);
+  var bars = '';
+  for (var i = 0; i < 20; i++) {
+    bars += '<div style="width:8px;height:8px;border-radius:2px;display:inline-block;margin:0 1px;background:' + (i < pct/5 ? 'var(--color-hold)' : 'var(--border-color)') + '"></div>';
+  }
+  return '<div style="margin-bottom:8px">🧠 ' + msg + '</div>' +
+    '<div>' + bars + ' <span style="font-size:11px;color:var(--text-muted)">' + pct + '%</span></div>';
+}
+
+// 展示结果
+function showResult(report, traceId) {
+  try {
+    var aiText = (report && report.ai_analysis) || 'AI未返回分析结果';
+    var hasAlarm = (report && report.has_alarm) || false;
+    var metrics = (report && report.metrics) || {};
+    var sceneName = (report && report.scene_name) || _sceneName;
+    
+    // 显示结果区域
+    document.getElementById('loadingArea').style.display = 'none';
+    document.getElementById('resultArea').style.display = '';
+    document.getElementById('btnRefresh').style.display = '';
+    
+    // 横幅
+    document.getElementById('bannerIcon').textContent = hasAlarm ? '⚠️' : '✅';
+    document.getElementById('bannerTitle').textContent = hasAlarm ? 'AI分析完成 \u00b7 检测到异常指标' : 'AI分析完成 \u00b7 品质状况良好';
+    document.getElementById('bannerSub').textContent = '场景: ' + sceneName + ' | trace: ' + (traceId || '');
+    document.getElementById('resultBanner').style.borderColor = hasAlarm ? '#f59e0b' : '#22c55e';
+    
+    // 元数据
+    document.getElementById('metaTime').textContent = '分析时间: ' + new Date().toLocaleString();
+    document.getElementById('metaGrid').innerHTML =
+      '<div class="meta-item"><div class="lbl">场景名称</div><div class="val" style="color:#3b82f6">' + sceneName + '</div></div>' +
+      '<div class="meta-item"><div class="lbl">分析结果</div><div class="val" style="color:' + (hasAlarm ? '#f59e0b' : '#22c55e') + '">' + (hasAlarm ? '⚠️ 有异常' : '✅ 正常') + '</div></div>' +
+      '<div class="meta-item"><div class="lbl">Trace ID</div><div class="val" style="font-size:11px;color:#64748b">' + (traceId || '') + '</div></div>' +
+      '<div class="meta-item"><div class="lbl">指标数量</div><div class="val">' + Object.keys(metrics).length + ' 个</div></div>';
+    
+    // AI报告内容 - 直接用pre显示，不用formatAIReport
+    document.getElementById('reportId').textContent = '#' + ((traceId || '').slice(-8) || '');
+    document.getElementById('aiReportContent').textContent = aiText;
+    
+    // 指标数据
+    var mc = document.getElementById('metricsCard');
+    var mt = document.getElementById('metricsTable');
+    if (Object.keys(metrics).length > 0 && mc && mt) {
+      mc.style.display = '';
+      mt.innerHTML = '<tr><th style="padding:6px 8px;border-bottom:2px solid #1e2d4a;color:#64748b;text-align:left;font-size:11px">指标</th><th style="padding:6px 8px;border-bottom:2px solid #1e2d4a;color:#64748b;text-align:left;font-size:11px">值</th></tr>' +
+        Object.keys(metrics).slice(0, 10).map(function(k){
+          return '<tr><td style="padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.4);font-weight:500">' + k + '</td><td style="padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.4);color:#94a3b8;font-size:11px">' + JSON.stringify(metrics[k]).slice(0, 80) + '</td></tr>';
+        }).join('');
+    }
+  } catch(e) {
+    // showResult出错时用最简单的方式显示结果
+    document.getElementById('loadingArea').style.display = 'none';
+    document.getElementById('resultArea').style.display = '';
+    document.getElementById('bannerIcon').textContent = '\u2757';
+    document.getElementById('bannerTitle').textContent = 'AI分析完成';
+    document.getElementById('bannerSub').textContent = '' + (e ? e.message : '');
+    document.getElementById('resultBanner').style.borderColor = '#f59e0b';
+    document.getElementById('metaGrid').innerHTML = '<div class="meta-item" style="grid-column:1/-1"><div class="lbl">提示</div><div class="val" style="color:#94a3b8">分析已完成，请刷新查看完整报告。</div></div>';
+    document.getElementById('aiReportContent').textContent = aiText || '';
+  }
+}
+
+function formatAIReport(text) { return text || ''; }
+
+function refreshAnalysis() {
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('loadingArea').style.display = '';
+  document.getElementById('loadingText').textContent = '重新调用AI分析...';
+  _traceId = '';
+  startNewAnalysis();
+}
+function runAgain() { refreshAnalysis(); }
+
+function showError(msg) {
+  try{
+  var g=function(id){return document.getElementById(id);};
+  var la=g('loadingArea');if(la)la.style.display='none';
+  var ra=g('resultArea');if(ra)ra.style.display='';
+  var bi=g('bannerIcon');if(bi)bi.textContent='\u274c';
+  var bt=g('bannerTitle');if(bt)bt.textContent='分析失败';
+  var bs=g('bannerSub');if(bs)bs.textContent=msg;
+  var b=g('banner');if(b)b.style.borderColor='#ef4444';
+  var mg=g('metaGrid');if(mg)mg.innerHTML='<div class="meta-item" style="grid-column:1/-1"><div class="lbl">错误信息</div><div class="val" style="color:#ef4444">'+msg+'</div></div>';
+  var ac=g('aiReportContent');if(ac)ac.innerHTML='<div style="color:#ef4444;text-align:center;padding:30px">\u274c '+msg+'</div>';
+  var br=g('btnRefresh');if(br)br.style.display='inline-flex';
+  }catch(e){}
+}
+function refreshAnalysis() {
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('loadingArea').style.display = '';
+  document.getElementById('loadingText').textContent = '重新调用AI分析...';
+  _traceId = '';
+  startNewAnalysis();
+}
+function runAgain() { refreshAnalysis(); }
+
+// 显示错误
+function showError(msg) {
+  try{
+  var g=function(id){return document.getElementById(id);};
+  var la=g('loadingArea');if(la)la.style.display='none';
+  var ra=g('resultArea');if(ra)ra.style.display='';
+  var bi=g('bannerIcon');if(bi)bi.textContent='❌';
+  var bt=g('bannerTitle');if(bt)bt.textContent='分析失败';
+  var bs=g('bannerSub');if(bs)bs.textContent=msg;
+  var b=g('banner');if(b)b.style.borderColor='var(--color-defect)';
+  var mg=g('metaGrid');if(mg)mg.innerHTML='<div class="meta-item" style="grid-column:1/-1"><div class="lbl">错误信息</div><div class="val" style="color:var(--color-defect)">'+msg+'</div></div>';
+  var ac=g('aiReportContent');if(ac)ac.innerHTML='<div style="color:var(--color-defect);text-align:center;padding:30px">❌ '+msg+'</div>';
+  var br=g('btnRefresh');if(br)br.style.display='inline-flex';
+  }catch(e){}
+}
+
+init();
+</script>
+</body>
+</html>
