@@ -341,6 +341,26 @@ async function loadAll() {
     } catch(e) {
       document.getElementById('newsPanel').innerHTML = '<div style="font-size:12px;color:var(--text-muted)">暂无动态</div>';
     }
+    
+    // 6. 指标体系（核心KPI）
+    try {
+      const ir = await fetch('/api/v1/xiyi/indicators').then(r=>r.json());
+      if (ir.code === 0) {
+        const inds = ir.data.indicators || [];
+        document.getElementById('indicatorFullList').innerHTML = inds.map(function(ind){
+          var c = ind.alert_level === 'danger' ? 'var(--color-defect)' : ind.alert_level === 'warning' ? 'var(--color-warning)' : 'var(--color-bear)';
+          var unit = ind.unit || '';
+          return '<div class="kpi-card" onclick="showKpiDetail(\'' + ind.indicator_code + '\')">' +
+            '<div class="kpi-label">' + ind.indicator_name + '</div>' +
+            '<div class="kpi-value" style="color:' + c + '">' + (ind.threshold_lower||'0') + '~' + (ind.threshold_upper||'∞') + '<span style="font-size:13px;color:var(--text-muted)"> ' + unit + '</span></div>' +
+            '<div class="kpi-target">' + (ind.category_name||'') + '</div>' +
+          '</div>';
+        }).join('');
+      }
+    } catch(e) {
+      document.getElementById('indicatorFullList').innerHTML = '<div class="empty">暂无指标数据</div>';
+    }
+
     badge.textContent = '\u2705 \u5DF2\u8FDE\u63A5';
   } catch(e) {
     badge.textContent = '\u274C ' + e.message;
