@@ -1073,6 +1073,60 @@ def execute_workflow():
         cur.execute("SELECT COUNT(*) as c FROM ag_workflow_step WHERE workflow_code=%s AND is_active=1", (wc,))
         return api_success({'workflow': wc, 'steps_count': cur.fetchone()['c'], 'message':'ok'})
 
+@app.route('/api/v1/xiyi/workflows/steps', methods=['POST'])
+@api_handler
+def create_workflow_step():
+    """新增工作流步骤"""
+    data = request.get_json()
+    with get_cursor() as cur:
+        # 获取当前最大step_order
+        cur.execute("SELECT COALESCE(MAX(step_order),0)+1 as next_order FROM ag_workflow_step WHERE workflow_code=%s", (data['workflow_code'],))
+        next_order = cur.fetchone()['next_order']
+        cur.execute(
+            "INSERT INTO ag_workflow_step (workflow_code,step_order,step_name,step_type,tool_code,prompt_template_code,input_mapping,output_schema) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            (data['workflow_code'], data.get('step_order', next_order), data.get('step_name',''), data.get('step_type','query'),
+             data.get('tool_code'), data.get('prompt_template_code'),
+             json.dumps(data.get('input_mapping', {})), json.dumps(data.get('output_schema', {}))))
+        return api_success({'step_id': cur.lastrowid, 'message':'创建成功'})
+
+@app.route('/api/v1/xiyi/workflows/steps/<int:step_id>', methods=['PUT'])
+@api_handler
+def update_workflow_step(step_id):
+    """更新工作流步骤"""
+    data = request.get_json()
+    with get_cursor() as cur:
+        sets = []; vals = []
+        for f in ['step_order','step_name','step_type','tool_code','prompt_template_code','is_active']:
+            if f in data:
+                sets.append(f + "=%s"); vals.append(data[f])
+        if 'input_mapping' in data:
+            sets.append("input_mapping=%s"); vals.append(json.dumps(data['input_mapping']))
+        if 'output_schema' in data:
+            sets.append("output_schema=%s"); vals.append(json.dumps(data['output_schema']))
+        if sets:
+            vals.append(step_id)
+            cur.execute("UPDATE ag_workflow_step SET " + ",".join(sets) + " WHERE id=%s", vals)
+        return api_success({'message':'更新成功'})
+
+@app.route('/api/v1/xiyi/workflows/steps/<int:step_id>', methods=['DELETE'])
+@api_handler
+def delete_workflow_step(step_id):
+    """删除工作流步骤"""
+    with get_cursor() as cur:
+        cur.execute("DELETE FROM ag_workflow_step WHERE id=%s", (step_id,))
+        return api_success({'message':'删除成功'})
+
+@app.route('/api/v1/xiyi/workflows/steps/reorder', methods=['POST'])
+@api_handler
+def reorder_workflow_steps():
+    """重新排列步骤顺序"""
+    data = request.get_json()
+    steps = data.get('steps', [])  # [{id:1, order:1}, ...]
+    with get_cursor() as cur:
+        for s in steps:
+            cur.execute("UPDATE ag_workflow_step SET step_order=%s WHERE id=%s", (s['order'], s['id']))
+        return api_success({'message':'排序更新成功'})
+
 # ── Phase 9: 数据血缘 ──
 @app.route('/api/v1/xiyi/lineage', methods=['GET'])
 @api_handler

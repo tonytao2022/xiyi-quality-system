@@ -81,9 +81,11 @@
 
 <!-- 工作流编排 -->
 <div id="cpWorkflows" class="console-panel" style="display:none">
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
     <select id="wfSelector" class="form-control" style="width:200px" onchange="loadWorkflow(this.value)"></select>
-    <span id="wfStepsCount" style="font-size:12px;color:var(--muted);align-self:center"></span>
+    <span id="wfStepsCount" style="font-size:12px;color:var(--muted)"></span>
+    <button class="btn btn-sm" onclick="showAddStep()" style="margin-left:auto">➕ 添加步骤</button>
+    <button class="btn btn-sm btn-primary" onclick="saveReorder()">💾 保存排序</button>
   </div>
   <div id="wfVisual" class="wf-container"><div class="empty">请选择一个工作流查看</div></div>
 </div>
@@ -244,6 +246,8 @@ async function loadWorkflow(code) {
     const r = await fetch(API + '/workflows?code=' + code).then(r=>r.json());
     if (r.code !== 0) return;
     var steps = r.data.steps || [];
+    window._currentWfSteps = steps;
+    window._currentWfCode = code;
     document.getElementById('wfStepsCount').textContent = steps.length + '个步骤';
     document.getElementById('wfVisual').innerHTML = steps.map(function(s, i){
       var icons = {query:'🔍',ai_analysis:'🧠',rule_check:'⚖️',decision:'🔀',manual_input:'📝'};
@@ -252,11 +256,99 @@ async function loadWorkflow(code) {
       var promptTag = s.prompt_template_code ? '<span class="scene-tag">📄 ' + s.prompt_template_code + '</span>' : '';
       var toolTag = s.tool_code ? '<span class="scene-tag">🔧 ' + s.tool_code + '</span>' : '';
       var arrow = i < steps.length-1 ? '<div class="wf-arrow">↓</div>' : '';
-      return '<div class="wf-step"><div class="wf-dot ' + typeClass + '">' + (icons[s.step_type]||'⚙️') + '</div>' +
+      var dragBtns = '<div style="display:flex;gap:4px;margin-top:4px">' +
+        '<button class="btn btn-sm" onclick="moveStep(' + i + ',-1)" style="font-size:10px;padding:1px 6px" ' + (i===0?'disabled':'') + '>↑</button>' +
+        '<button class="btn btn-sm" onclick="moveStep(' + i + ',1)" style="font-size:10px;padding:1px 6px" ' + (i===steps.length-1?'disabled':'') + '>↓</button>' +
+        '<button class="btn btn-sm" onclick="editStep(' + s.id + ')" style="font-size:10px;padding:1px 6px;color:var(--blue)">✏️</button>' +
+        '<button class="btn btn-sm" onclick="deleteStep(' + s.id + ')" style="font-size:10px;padding:1px 6px;color:var(--red)">🗑️</button></div>';
+      return '<div class="wf-step" data-step-id="' + s.id + '"><div class="wf-dot ' + typeClass + '">' + (icons[s.step_type]||'⚙️') + '</div>' +
         '<div style="flex:1"><div class="wf-body"><div class="step-name">' + (i+1) + '. ' + s.step_name + '</div>' +
-        '<div class="step-detail"><span>' + (typeLabels[s.step_type]||s.step_type) + '</span>' + toolTag + promptTag + '</div></div>' + arrow + '</div></div>';
+        '<div class="step-detail"><span>' + (typeLabels[s.step_type]||s.step_type) + '</span>' + toolTag + promptTag + '</div>' +
+        dragBtns + '</div></div>' + arrow + '</div></div>';
     }).join('');
   } catch(e) {}
+}
+
+function moveStep(idx, dir) {
+  var steps = window._currentWfSteps;
+  if (!steps) return;
+  var target = idx + dir;
+  if (target < 0 || target >= steps.length) return;
+  // 交换step_order
+  var tmp = steps[idx].step_order;
+  steps[idx].step_order = steps[target].step_order;
+  steps[target].step_order = tmp;
+  // 交换数组位置
+  [steps[idx], steps[target]] = [steps[target], steps[idx]];
+  loadWorkflow(window._currentWfCode);
+}
+
+async function saveReorder() {
+  if (!window._currentWfSteps) return;
+  var reorder = window._currentWfSteps.map(function(s, i) { return {id: s.id, order: i+1}; });
+  const r = await fetch(API + '/workflows/steps/reorder', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({steps: reorder})}).then(r=>r.json());
+  if (r.code === 0) { loadWorkflow(window._currentWfCode); alert('✅ 排序已保存'); } else alert('❌ ' + (r.error||''));
+}
+
+async function deleteStep(id) {
+  if (!confirm('确定删除此步骤？')) return;
+  const r = await fetch(API + '/workflows/steps/' + id, {method:'DELETE'}).then(r=>r.json());
+  if (r.code === 0) loadWorkflow(window._currentWfCode); else alert('❌');
+}
+
+function showAddStep() {
+  var html = '<div class="modal-overlay" id="wfModal"><div class="modal" style="width:560px"><div class="modal-h">➕ 添加工作流步骤</div><div class="modal-b">' +
+    '<div class="form-group"><label>工作流编码</label><input class="form-control" id="ns_wf" value="' + (window._currentWfCode||'') + '"></div>' +
+    '<div class="form-group"><label>步骤名称</label><input class="form-control" id="ns_name" placeholder="指标数据拉取"></div>' +
+    '<div class="form-group"><label>步骤类型</label><select class="form-control" id="ns_type">' +
+    '<option value="query">🔍 数据查询(query)</option><option value="ai_analysis">🧠 AI分析(ai_analysis)</option>' +
+    '<option value="rule_check">⚖️ 规则验证(rule_check)</option><option value="decision">🔀 决策分支(decision)</option>' +
+    '<option value="manual_input">📝 手动输入(manual_input)</option></select></div>' +
+    '<div class="form-group"><label>关联工具(Tool Code)</label><input class="form-control" id="ns_tool" placeholder="QUERY_METRICS / AI_ANALYSIS / EVALUATE_RULES"></div>' +
+    '<div class="form-group"><label>关联提示词模板</label><input class="form-control" id="ns_prompt" placeholder="FPY_DIAGNOSE"></div>' +
+    '</div><div class="modal-f"><button class="btn" onclick="closeModal(\'wfModal\')">取消</button><button class="btn btn-primary" onclick="submitAddStep()">💾 添加</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function submitAddStep() {
+  var data = {
+    workflow_code: document.getElementById('ns_wf').value,
+    step_name: document.getElementById('ns_name').value,
+    step_type: document.getElementById('ns_type').value,
+    tool_code: document.getElementById('ns_tool').value,
+    prompt_template_code: document.getElementById('ns_prompt').value
+  };
+  if (!data.workflow_code || !data.step_name) { alert('工作流编码和步骤名称必填'); return; }
+  const r = await fetch(API + '/workflows/steps', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(r=>r.json());
+  if (r.code === 0) { closeModal('wfModal'); loadWorkflow(data.workflow_code); } else alert('❌ ' + (r.error||''));
+}
+
+function editStep(id) {
+  var s = window._currentWfSteps.find(x => x.id === id);
+  if (!s) return;
+  var html = '<div class="modal-overlay" id="wfModal"><div class="modal" style="width:560px"><div class="modal-h">✏️ ' + s.step_name + '</div><div class="modal-b">' +
+    '<div class="form-group"><label>步骤名称</label><input class="form-control" id="es_name" value="' + (s.step_name||'') + '"></div>' +
+    '<div class="form-group"><label>步骤类型</label><select class="form-control" id="es_type">' +
+    '<option value="query"' + (s.step_type==='query'?' selected':'') + '>🔍 数据查询</option>' +
+    '<option value="ai_analysis"' + (s.step_type==='ai_analysis'?' selected':'') + '>🧠 AI分析</option>' +
+    '<option value="rule_check"' + (s.step_type==='rule_check'?' selected':'') + '>⚖️ 规则验证</option>' +
+    '<option value="decision"' + (s.step_type==='decision'?' selected':'') + '>🔀 决策分支</option>' +
+    '<option value="manual_input"' + (s.step_type==='manual_input'?' selected':'') + '>📝 手动输入</option></select></div>' +
+    '<div class="form-group"><label>关联工具</label><input class="form-control" id="es_tool" value="' + (s.tool_code||'') + '"></div>' +
+    '<div class="form-group"><label>关联提示词</label><input class="form-control" id="es_prompt" value="' + (s.prompt_template_code||'') + '"></div>' +
+    '</div><div class="modal-f"><button class="btn" onclick="closeModal(\'wfModal\')">取消</button><button class="btn btn-primary" onclick="submitEditStep(' + id + ')">💾 保存</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function submitEditStep(id) {
+  var data = {
+    step_name: document.getElementById('es_name').value,
+    step_type: document.getElementById('es_type').value,
+    tool_code: document.getElementById('es_tool').value,
+    prompt_template_code: document.getElementById('es_prompt').value
+  };
+  const r = await fetch(API + '/workflows/steps/' + id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(r=>r.json());
+  if (r.code === 0) { closeModal('wfModal'); loadWorkflow(window._currentWfCode); } else alert('❌ ' + (r.error||''));
 }
 
 // ══════ 规则管理 ══════
