@@ -37,7 +37,7 @@ logger = logging.getLogger('xiyi_8890')
 # ─── 配置 (环境变量优先) ───
 MYSQL_USER = os.environ.get('XIYI_MYSQL_USER', 'debian-sys-maint')
 
-# P0-1: 密码不再硬编码,用环境变量,无环境变量时从debian.cnf读取
+# FIXED: P0-4 密码优先从环境变量读取,debian.cnf仅作fallback
 def _get_mysql_pass():
     env_pass = os.environ.get('XIYI_MYSQL_PASS')
     if env_pass:
@@ -95,7 +95,17 @@ def get_cursor():
 app = Flask(__name__)
 CORS(app)
 
-# ─── API鉴权 (P0-1 Tony) ───
+# ─── API鉴权 (FIXED: P0-1 添加require_api_key装饰器) ───
+def require_api_key(f):
+    """接口级API Key鉴权装饰器"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key', '')
+        if api_key != API_KEY:
+            return jsonify({'code': -1, 'error': 'Unauthorized: invalid or missing X-API-Key'}), 401
+        return f(*args, **kwargs)
+    return decorated
+
 @app.before_request
 def check_api_key():
     if request.method == 'OPTIONS':
@@ -560,18 +570,15 @@ def ai_analysis_run():
         cur.execute("INSERT INTO ag_agent_task (trace_id,scene_id,skill_name,input_params,status,started_at) VALUES (%s,%s,%s,%s,%s,NOW())", _params)
 
     def _direct_conn():
-        """后台线程专用数据库连接(独立连接,不经过连接池)"""
-        _p = ''
-        try:
-            with open('/etc/mysql/debian.cnf') as _f:
-                for _l in _f:
-                    if 'password' in _l:
-                        _p = _l.split('=')[1].strip()
-                        break
-        except:
-            pass
-        return pymysql.connect(host='127.0.0.1', port=3306, user='debian-sys-maint',
-            password=_p, database='xiyi_quality', charset='utf8mb4')
+        """后台线程专用数据库连接(独立连接,不经过连接池) (FIXED: P0-4 改用环境变量)"""
+        return pymysql.connect(
+            host=os.environ.get('XIYI_MYSQL_HOST', '127.0.0.1'),
+            port=3306,
+            user=os.environ.get('XIYI_MYSQL_USER', 'debian-sys-maint'),
+            password=os.environ.get('XIYI_MYSQL_PASS', MYSQL_PASS),
+            database=os.environ.get('XIYI_MYSQL_DB', 'xiyi_quality'),
+            charset='utf8mb4'
+        )
 
     def _update_progress(step, msg, pct=0):
         try:
@@ -906,9 +913,18 @@ def get_datasource(ds_id):
 @api_handler
 def update_datasource(ds_id):
     data = request.get_json()
+    # FIXED: P0-5 白名单校验,禁止f-string动态拼接列名(防SQL注入)
+    ALLOWED_COLS = {'source_code','source_name','source_type','host','port','db_name','sync_frequency','retry_count','status'}
     with get_cursor() as cur:
-        for f in ['source_code','source_name','source_type','host','port','db_name','sync_frequency','retry_count','status']:
-            if f in data: cur.execute(f"UPDATE ds_source_connection SET {f}=%s WHERE id=%s", (data[f], ds_id))
+        sets = []
+        params = []
+        for f, v in data.items():
+            if f in ALLOWED_COLS:
+                sets.append(f"{f}=%s")
+                params.append(v)
+        if sets:
+            params.append(ds_id)
+            cur.execute(f"UPDATE ds_source_connection SET {','.join(sets)} WHERE id=%s", params)
         return api_success({'message':'ok'})
 
 @app.route('/api/v1/xiyi/csv-import', methods=['POST'])
