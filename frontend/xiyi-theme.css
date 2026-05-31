@@ -1,0 +1,237 @@
+/* ─── 兮易品质专员平台 · 统一工业风格主题 ─── */
+/* 所有管理页引用此文件: <link rel="stylesheet" href="xiyi-theme.css"> */
+/* 变量体系: 兼容旧用法的别名 + 新用法的标准化命名 */
+
+:root {
+  /* ─── 背景色系 ─── */
+  --bg:            #0a0e17;   /* 页面主体 */
+  --bg-primary:    #0a0e17;   /* 别名 */
+  --bg2:           #111827;   /* 次要背景（sidebar等） */
+  --bg-secondary:  #111827;   /* 别名 */
+  --card:          #161d2a;   /* 卡片背景 */
+  --bg-card:       #161d2a;   /* 别名 */
+  --bg-modal:      #1a2235;   /* 弹窗背景，区别于卡片 */
+
+  /* ─── 边框 ─── */
+  --border:        #1e2d4a;   /* 默认边框 */
+  --border-color:  #1e2d4a;   /* 别名 */
+
+  /* ─── 文字色系 ─── */
+  --text:          #e2e8f0;   /* 主要文字（亮白） */
+  --text-primary:  #e2e8f0;   /* 别名 */
+  --text2:         #cbd5e1;   /* 次要文字（深色卡片上可读） */
+  --text-secondary:#cbd5e1;   /* 别名 */
+  --muted:         #94a3b8;   /* 低优先文字 */
+  --text-muted:    #94a3b8;   /* 别名 */
+
+  /* ─── 功能色 ─── */
+  --blue:          #3b82f6;   /* 持有/主色 */
+  --color-hold:    #3b82f6;   /* 别名 */
+  --green:         #22c55e;   /* 正常/上涨 */
+  --color-bear:    #22c55e;   /* 别名 */
+  --red:           #ef4444;   /* 缺陷/下跌 */
+  --color-defect:  #ef4444;   /* 别名 */
+  --yellow:        #f59e0b;   /* 警告 */
+  --color-warning: #f59e0b;   /* 别名 */
+  --purple:        #8b5cf6;   /* 安全/辅助 */
+  --color-safety:  #8b5cf6;   /* 别名 */
+
+  /* ─── 圆角 ─── */
+  --radius:        8px;
+  --radius-lg:     12px;
+  --lg:            12px;      /* 别名 */
+}
+
+/* ─── 全局重置 ─── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+               'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ─── 通用组件样式 ─── */
+
+/* 页面头部 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  background: transparent;
+  transition: all 0.2s;
+}
+.btn:hover {
+  border-color: var(--blue);
+  color: #fff;
+}
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+.btn-primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.btn-outline {
+  border-color: var(--border);
+  color: var(--text2);
+}
+
+/* 卡片 */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+.card-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+}
+.card-b {
+  padding: 14px 16px;
+  color: var(--text);
+}
+
+/* 表单 */
+.form-group {
+  margin-bottom: 10px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.form-control {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.form-control:focus {
+  border-color: var(--blue);
+}
+
+/* 弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 550px;
+  max-width: 92vw;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-h {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal-b {
+  padding: 14px 18px;
+  color: var(--text);
+}
+.modal-f {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* 表格 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* 空状态提示 */
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* badge标签 */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-hold { background: rgba(59,130,246,0.1); color: var(--blue); }
+.badge-green { background: rgba(34,197,94,0.1); color: var(--green); }
+.badge-red { background: rgba(239,68,68,0.1); color: var(--red); }
+.badge-yellow { background: rgba(245,158,11,0.1); color: var(--yellow); }

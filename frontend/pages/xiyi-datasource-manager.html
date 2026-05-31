@@ -3,39 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数据源管理 · 兮易AI大脑</title>
+  <link rel="stylesheet" href="xiyi-theme.css">
+  <title>数据源管理 · 兮易AI大脑</title>
 <style>
-:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px 24px}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+/* datasource-manager 特有样式 */
 .header h1{font-size:20px;color:#fff;font-weight:700}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
-.btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,0.06)}
-.btn-primary{background:var(--blue);color:#fff;border:none}.btn-primary:hover{background:#2563eb}
-.btn-sm{font-size:11px;padding:3px 10px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
-.card-header{padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.card-body{padding:12px 14px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{padding:6px 8px;border-bottom:2px solid var(--border);color:var(--muted);text-align:left;font-size:11px;font-weight:600}
-td{padding:5px 8px;border-bottom:1px solid rgba(30,45,74,0.2);color:var(--text2)}
-tr:hover td{background:rgba(59,130,246,0.03)}
-.sb{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
-.sb-on{background:rgba(34,197,94,0.12);color:var(--green)}.sb-off{background:rgba(239,68,68,0.12);color:var(--red)}.sb-warn{background:rgba(245,158,11,0.12);color:var(--yellow)}
-.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center}
-.modal.active{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;width:500px;max-height:80vh;overflow-y:auto}
-.modal-box h3{font-size:15px;margin-bottom:12px;color:var(--text)}
-.form-group{margin-bottom:10px}
-.form-group label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
-.form-group input,.form-group select{width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none}
-.form-group input:focus,.form-group select:focus{border-color:var(--blue)}
-.form-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
-.f{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.fs{padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px}
-input[type=file]{padding:6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:auto}
-@media(max-width:768px){body{padding:12px}.modal-box{width:90%}}
+.ds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:20px}
+.ds-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:all .15s}
+.ds-card:hover{border-color:var(--blue)}
+.ds-card .name{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.ds-card .type{font-size:11px;color:var(--blue);margin-bottom:4px}
+.ds-card .desc{font-size:12px;color:var(--text2);line-height:1.5}
+.ds-card .meta{font-size:11px;color:var(--muted);margin-top:6px;display:flex;gap:10px}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.status-online{background:var(--green)}
+.status-offline{background:var(--muted)}
+.status-error{background:var(--red)}
 </style>
 </head>
 <body>

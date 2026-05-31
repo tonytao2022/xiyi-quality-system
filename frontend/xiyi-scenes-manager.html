@@ -3,34 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>场景管理 · 兮易AI大脑</title>
+  <link rel="stylesheet" href="xiyi-theme.css">
+  <title>场景管理 · 兮易AI大脑</title>
 <style>
-:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--radius:8px;--lg:12px}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:20px;min-height:100vh}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+/* scenes-manager 特有样式 */
 .header h1{font-size:20px;color:#fff}
-.header .sub{font-size:13px;color:var(--text-muted);margin-top:4px}
-.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--radius);font-size:12px;cursor:pointer;text-decoration:none;border:1px solid var(--border-color);color:var(--text-secondary);background:transparent;transition:all .15s}
-.btn:hover{border-color:var(--color-hold);color:var(--color-hold)}
-.btn-primary{background:var(--color-hold);color:#fff;border:none}
-.btn-primary:hover{background:#2563eb}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--lg);overflow:hidden;transition:all .2s;cursor:default}
-.card:hover{border-color:var(--color-hold)}
-.card-h{display:flex;gap:14px;padding:16px}
-.card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.card-body{flex:1;min-width:0}
-.card-body .cat{font-size:11px;color:var(--color-hold);margin-bottom:2px}
-.card-body .name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
-.card-body .desc{font-size:12px;color:var(--text-secondary);line-height:1.6}
-.card-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-top:1px solid var(--border-light);background:var(--bg-secondary)}
-.card-footer .meta{font-size:11px;color:var(--text-muted)}
-.loading{padding:40px;text-align:center;color:var(--text-muted);font-size:14px}
-.cat-grid{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.cat-btn{padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;border:1px solid var(--border-color);background:transparent;color:var(--text-secondary);transition:all .15s}
-.cat-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
-.cat-btn:hover{border-color:var(--color-hold);color:var(--text)}
+.header .sub{font-size:13px;color:var(--muted);margin-top:4px}
+.scene-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.scene-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .15s}
+.scene-card:hover{transform:translateY(-2px);border-color:var(--blue)}
+.scene-card .icon{font-size:28px;margin-bottom:8px}
+.scene-card .name{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.scene-card .desc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px}
+.scene-card .meta{font-size:11px;color:var(--muted);display:flex;gap:12px}
+.scene-card .step-bar{display:flex;gap:3px;margin-top:10px}
+.scene-card .step-dot{width:20px;height:4px;border-radius:2px;background:var(--bg2)}
+.scene-card .step-dot.done{background:var(--green)}
+.scene-card .step-dot.active{background:var(--blue)}
 </style>
 <!-- FIXED: P2-4 前端分页控件样式 -->
 .pagination{display:flex;justify-content:center;align-items:center;gap:4px;padding:12px 0}
