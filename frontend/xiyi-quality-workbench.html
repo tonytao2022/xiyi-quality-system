@@ -360,6 +360,21 @@ async function loadAll() {
     } catch(e) {
       document.getElementById('indicatorFullList').innerHTML = '<div class="empty">暂无指标数据</div>';
     }
+    // 8. 数据标准
+    try {
+      const sr = await fetch('/api/v1/xiyi/standards').then(r=>r.json());
+      if (sr.code === 0) {
+        const stds = sr.data.standards || [];
+        document.getElementById('stdTableBody').innerHTML = stds.map(function(s){
+          return '<tr><td style="padding:8px;border-bottom:1px solid var(--border-color);color:var(--color-hold);font-size:12px">' + (s.standard_code||'') + '</td>' +
+            '<td style="padding:8px;border-bottom:1px solid var(--border-color);font-size:12px">' + (s.standard_name||'') + '</td>' +
+            '<td style="padding:8px;border-bottom:1px solid var(--border-color);font-size:12px;color:var(--text-secondary)">' + (s.data_type||'') + '</td>' +
+            '<td style="padding:8px;border-bottom:1px solid var(--border-color);font-size:12px;color:var(--text-secondary)">' + (s.description||'') + '</td></tr>';
+        }).join('');
+      }
+    } catch(e) {
+      document.getElementById('stdTableBody').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:var(--text-muted)">暂无标准数据字段</td></tr>';
+    }
 
     badge.textContent = '\u2705 \u5DF2\u8FDE\u63A5';
   } catch(e) {
