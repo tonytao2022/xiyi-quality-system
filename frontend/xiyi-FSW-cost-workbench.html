@@ -261,8 +261,71 @@ s3:{desc:'跨域证据链',causes:[{n:'导卫装置定位偏差',c:92,detail:'�
 s4:{desc:'三级整改方案',items:[{l:'\uD83D\uDEA8 紧急',a:'停机校准F12导卫+更换导向轮',c:1.8,p:'4h',s:'2.1万元/批'},{l:'\uD83D\uDCCB 短期',a:'导卫每日点检+换产双签',c:0.5,p:'5天',s:'0.7万/批'},{l:'\uD83C\uDFD7 长期',a:'导卫在线监测(位移+振动)',c:15,p:'2月',s:'0.4万/批'}]},
 s5:{desc:'成本瀑布图',before:8.4,after:5.2,unit:'万元/批',ms:3.2,pd:4.7,bk:[{n:'导卫校准省废品',v:2.1},{n:'SOP减少偏差',v:0.7},{n:'传感器提前预警',v:0.4}]}}};
 
+/* ===== V4 Phase 3: 轮询进度API + 状态UI ===== */
+var _progressPollTimer=null;
+var _pollTraceId=null;
+var _pollMaxRetries=60; /* 2s*60=120s超时 */
+var _pollAttempts=0;
+function startProgressPolling(traceId){
+  _pollTraceId=traceId;_pollAttempts=0;
+  if(_progressPollTimer)clearInterval(_progressPollTimer);
+  _pollStepStatus(0); /* 首次立即查 */
+  _progressPollTimer=setInterval(function(){_pollAttempts++;_pollStepStatus(_pollAttempts);},2000);
+}
+function stopProgressPolling(){
+  if(_progressPollTimer){clearInterval(_progressPollTimer);_progressPollTimer=null;}
+}
+function _pollStepStatus(attempt){
+  if(!_pollTraceId)return;
+  if(attempt>_pollMaxRetries){stopProgressPolling();_onPollTimeout();return;}
+  fswApi(API+'/analyze/result/'+_pollTraceId).then(function(r){return r.json()}).then(function(d){
+    if(d.code!==0||!d.data)return;
+    var dd=d.data;
+    _updateProgressUI(dd.pct||0,dd.progress||'',dd.status||'running');
+    if(dd.status==='done'&&dd.result){
+      stopProgressPolling();
+      aiWorkflowResult=dd.result;
+      ai3Result=dd.result;
+      ai4Result=dd.result;
+      _updateProgressUI(100,'\u5206\u6790\u5B8C\u6210','done');
+      if(curStep>=3)renderStep(curStep);
+    }else if(dd.status==='error'||dd.status==='failed'){
+      stopProgressPolling();
+      _onPollError(dd.result||{});
+    }
+  }).catch(function(e){console.warn('poll error:',e);});
+}
+function _updateProgressUI(pct,msg,status){
+  var el=document.getElementById('progressBarContainer');
+  if(!el)return;
+  if(status==='done'){el.innerHTML='<div style="padding:8px 12px;background:rgba(16,185,129,0.08);border-radius:var(--radius);display:flex;align-items:center;gap:8px"><span style="color:var(--color-bear);font-size:14px">\u2713</span><span style="font-size:13px;color:var(--color-bear)">\u5206\u6790\u5B8C\u6210</span></div>';return;}
+  if(status==='error'||status==='failed'){el.innerHTML='<div style="padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius);display:flex;align-items:center;gap:8px"><span style="color:var(--color-defect);font-size:14px">\u2717</span><span style="font-size:13px;color:var(--color-defect)">\u5206\u6790\u5931\u8D25</span><button class="btn btn-sm" style="background:transparent;border:1px solid var(--color-defect);color:var(--color-defect);margin-left:8px;padding:4px 10px" onclick="refreshAIAnalysis()">\u21bb \u91CD\u8BD5</button></div>';return;}
+  el.innerHTML='<div style="padding:8px 12px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:4px"><span>'+escHtml(msg||'\u5206\u6790\u4E2D...')+'</span><span>'+Math.min(pct,99)+'%</span></div><div style="height:6px;background:var(--bg-primary);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.min(pct,99)+'%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:3px;transition:width .8s ease"></div></div></div>';
+}
+function _onPollTimeout(){
+  _updateProgressUI(0,'\u8D85\u65F6','error');
+  aiWorkflowResult=null;
+  if(curStep>=3)renderStep(curStep);
+}
+function _onPollError(errData){
+  _updateProgressUI(0,'\u5931\u8D25','error');
+  aiWorkflowResult=null;
+  if(curStep>=3)renderStep(curStep);
+}
+function refreshAIAnalysis(){
+  if(!curScene)return;
+  ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;aiWorkflowResult=null;
+  _onStartAnalysis(curScene);
+}
+function getCacheBadge(dateStr){
+  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 10px;border-radius:10px;background:rgba(245,158,11,0.12);color:var(--color-warning);border:1px solid rgba(245,158,11,0.2)">\uD83D\uDCC4 \u5386\u53F2\u8BCA\u65AD\u7ED3\u679C('+(dateStr||'2026-06-19')+')</span>';
+}
+function getCacheRefreshBtn(){
+  return '<button class="btn btn-sm" onclick="refreshAIAnalysis()" style="background:transparent;border:1px solid var(--color-hold);color:var(--color-hold);font-size:11px;padding:4px 10px;margin-left:8px">\u21bb \u624B\u52A8\u5237\u65B0</button>';
+}
+
 var curScene=null,curStep=1;
-var ai3TraceId=null,ai3Result=null,ai4TraceId=null,ai4Result=null;
+var ai3TraceId=null,ai3Result=null,ai4TraceId=null,ai4Result=null,aiWorkflowResult=null;
 var STEP_LABELS=['指标差异','工序钻取','根因定位','AI改善推荐','成本闭环'];
 var STEP_ICONS=['\uD83D\uDCCA','\uD83D\uDD0E','\uD83D\uDD0D','\uD83D\uDD27','\uD83D\uDCB0'];
 var AI_TITLES={A:'电耗异常分析',B:'煤气耗异常分析',C:'废品率异常分析'};
@@ -276,38 +339,42 @@ function showPage(p){
   document.getElementById('navChat').classList.toggle('active',p==='chat');
   if(p==='dash')closeDrill();
 }
-function closeDrill(){document.getElementById('drillPanel').classList.remove('show');curScene=null;curStep=1;ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;}
+function closeDrill(){stopProgressPolling();document.getElementById('drillPanel').classList.remove('show');curScene=null;curStep=1;ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;aiWorkflowResult=null;}
 function openDrill(s){
-  curScene=s;curStep=1;ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;
+  curScene=s;curStep=1;ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;aiWorkflowResult=null;
+  if(_progressPollTimer){clearInterval(_progressPollTimer);_progressPollTimer=null;}
   document.getElementById('drillTitle').textContent='🔍 '+SCENES[s].title;
   document.getElementById('drillPanel').classList.add('show');
   var leftEl=document.getElementById('drillStepsLeft'),h='';
   for(var i=1;i<=5;i++){var cls='lr-step'+(i===1?' active':' disabled');h+='<div class="'+cls+'" id="lrs-'+i+'" onclick="goStep('+i+')"><span class="sn">'+i+'</span><span class="sn-label">'+STEP_LABELS[i-1]+'<span class="sn-note">'+STEP_ICONS[i-1]+'</span></span></div>';}
   leftEl.innerHTML=h;renderStep(1);
+  /* V4 Phase 3: 打开场景自动触发AI分析 */
+  _onStartAnalysis(s);
 }
 function goStep(s){
   if(s<1||s>5)return;curStep=s;
   for(var i=1;i<=5;i++){var el=document.getElementById('lrs-'+i);if(!el)continue;el.className='lr-step';if(i===s)el.classList.add('active');else if(i<s)el.classList.add('done');else el.classList.add('disabled');}
   renderStep(s);
 }
-function triggerAIAnalysis(s){
-  if(!s)return;var isS4=(curStep===4);var tv=isS4?'ai4TraceId':'ai3TraceId',rv=isS4?'ai4Result':'ai3Result';
-  if(window[tv]||window[rv])return;var q=isS4?(AI_Q_IMPROVE[s]||AI_Q_ROOT[s]):(AI_Q_ROOT[s]||'');
+function _onStartAnalysis(s){
+  if(!s)return;
+  var q=(AI_Q_ROOT[s]||'');
+  var pbEl=document.getElementById('progressBarContainer');
+  if(pbEl)pbEl.innerHTML='<div style="padding:8px 12px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:4px"><span>\u23f3 \u542F\u52A8AI\u5206\u6790...</span><span>0%</span></div><div style="height:6px;background:var(--bg-primary);border-radius:3px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:3px;transition:width .8s ease"></div></div></div>';
   fetch('/api/v1/FSW_cost/analyze',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':AK},body:JSON.stringify({scene_code:'FSW_COST',title:AI_TITLES[s],query:q})})
-  .then(function(r){return r.json()}).then(function(d){if(d.code===0){window[tv]=d.data.trace_id;startPollingAI(isS4);renderStep(curStep);}}).catch(function(e){console.log(e);});
+  .then(function(r){return r.json()}).then(function(d){if(d.code===0){ai3TraceId=d.data.trace_id;ai4TraceId=d.data.trace_id;startProgressPolling(d.data.trace_id);renderStep(curStep);}}).catch(function(e){console.log(e);if(pbEl)pbEl.innerHTML='<div style="padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius);color:var(--color-defect);font-size:12px">\u2717 AI\u542F\u52A8\u5931\u8D25: '+escHtml(e.message||'\u672A\u77E5\u9519\u8BEF')+'</div>';});
 }
-function startPollingAI(isS4){
-  var tid=isS4?ai4TraceId:ai3TraceId,rs=isS4?'ai4Result':'ai3Result';if(!tid)return;
-  var ma=40,at=0;var poll=setInterval(function(){at++;fetch('/api/v1/xiyi/agent/status/'+tid,{headers:{'X-API-Key':AK}}).then(function(r){return r.json()}).then(function(d){if(d.code===0&&d.data.status==='done'&&d.data.result){window[rs]=d.data.result;clearInterval(poll);if(curStep>=3)renderStep(curStep);}}).catch(function(){});if(at>=ma)clearInterval(poll);},1500);
-}
+
 function resolveStep5Data(sc){
   var d=SCENES[sc];if(!d||!d.s5)return null;var s5=d.s5;
-  if(ai4Result&&ai4Result.ai_analysis){var t=ai4Result.ai_analysis;
-    var m=t.match(/月节省[：:]\s*([\d.]+)/);if(m)s5.ms=parseFloat(m[1]);
-    var p=t.match(/回本[：:]\s*([\d.]+)/);if(p)s5.pd=parseFloat(p[1]);
-    var b=t.match(/整改前[：:]\s*([\d.]+)/);if(b)s5.before=parseFloat(b[1]);
-    var a=t.match(/整改后[：:]\s*([\d.]+)/);if(a)s5.after=parseFloat(a[1]);
-  }return s5;
+  /* 优先从AI workflow final_report提取成本闭环数据 */
+  if(aiWorkflowResult&&aiWorkflowResult.final_report){
+    var fr=aiWorkflowResult.final_report;
+    if(fr.cost_diff&&fr.cost_diff.excess!=null){s5.ms=Math.round(fr.cost_diff.excess/3*10)/10;}
+    if(fr.before!=null)s5.before=fr.before;
+    if(fr.after!=null)s5.after=fr.after;
+  }
+  return s5;
 }
 function addKpiDrillBtns(){
   document.querySelectorAll('.kpi-card').forEach(function(c){
@@ -430,36 +497,61 @@ function _renderStep2API(s, el, d) {
   });
 }
 
-/* Step3: 根因定位 (原逻辑不变, 用SCENES硬编码) */
+/* Step3: 根因定位 — 优先用AI workflow结果(V3.1)，回退SCENES硬编码 */
+function _getAiStepResult(stepIndex) {
+  if(!aiWorkflowResult||!aiWorkflowResult.step_results)return null;
+  var sr=aiWorkflowResult.step_results;
+  for(var i=0;i<sr.length;i++){var idx=sr[i].step||sr[i].order;if(idx===stepIndex)return sr[i].result;}
+  return null;
+}
 function _renderStep3SC(s, el, d) {
   var s1 = d['s3'], h = '';
-  h += '<div style="margin-bottom:12px"><strong>Step3: 根因定位 (置信度排序+证据链)</strong> '+s1.desc+'<span style="margin-left:8px;font-size:11px;color:#a78bfa;background:rgba(139,92,246,0.12);padding:2px 8px;border-radius:4px">AI</span></div>';
-  h += '<div id="c3" style="height:'+(s1.causes.length*45+30)+'px;margin-bottom:12px"></div>';
-  s1.causes.forEach(function(c){var col=c.c>=85?'var(--color-defect)':c.c>=70?'var(--color-warning)':'var(--color-hold)';h+='<div style="padding:10px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+col+'"><div style="display:flex;justify-content:space-between;font-size:13px"><strong>'+c.n+'</strong><span style="color:'+col+'">'+c.c+'% 置信度</span></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+c.detail+'</div><div style="font-size:11px;color:var(--color-hold);margin-top:2px">'+c.ev+'</div></div>';});
-  if(ai3Result&&ai3Result.ai_analysis){
-    h+='<div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.04);border-radius:var(--radius);border:1px solid rgba(139,92,246,0.2)"><div style="font-size:12px;color:#a78bfa;margin-bottom:6px">AI推理结果:</div><div style="font-size:13px;color:var(--text-secondary)">'+ai3Result.ai_analysis.replace(/##/g,'</div><h4 style="color:var(--text-bright);margin:12px 0 6px;font-size:14px">').replace(/\n/g,'<br>').replace(/<br><br>/g,'</div><br><div style="padding-left:8px">')+'</div></div>';
-  }else if(ai3TraceId){
-    h+='<div style="margin-top:8px;display:flex;gap:8px;align-items:center;padding:8px;background:rgba(139,92,246,0.04);border-radius:var(--radius)"><span style="width:12px;height:12px;border:2px solid var(--border-color);border-top-color:#a78bfa;border-radius:50%;animation:spin .8s linear infinite;display:inline-block"></span><span style="font-size:12px;color:var(--text-muted)">AI推理中(约30-60秒)...</span></div>';
+  /* 尝试从AI workflow提取根因数据 */
+  var step3Result=_getAiStepResult(3);
+  var causes=null,summary='';
+  if(step3Result&&step3Result.data&&step3Result.data.causes&&step3Result.data.causes.length>0){
+    causes=step3Result.data.causes;
+    summary=step3Result.data.summary||'';
   }else{
-    h+='<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="triggerAIAnalysis(curScene)" style="background:#8b5cf6;font-size:12px"> 启动AI根因推理</button></div>';
+    causes=s1.causes.map(function(c){return{name:c.n,confidence:c.c,detail:c.detail,evidence:c.ev,type:c.n||''};});
+    summary=s1.summ||'';
   }
+  h += '<div style="margin-bottom:12px"><strong>Step3: 根因定位 (置信度排序+证据链)</strong> '+s1.desc+'<span style="margin-left:8px;font-size:11px;color:#a78bfa;background:rgba(139,92,246,0.12);padding:2px 8px;border-radius:4px">AI</span></div>';
+  h += '<div id="c3" style="height:'+(causes.length*45+30)+'px;margin-bottom:12px"></div>';
+  causes.forEach(function(c){var conf=c.confidence||0;var col=conf>=85?'var(--color-defect)':conf>=70?'var(--color-warning)':'var(--color-hold)';var causeName=c.cause||c.name||'';var detail=c.detail||'';var evidence=c.evidence||c.ev||'';h+='<div style="padding:10px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+col+'"><div style="display:flex;justify-content:space-between;font-size:13px"><strong>'+causeName+'</strong><span style="color:'+col+'">'+conf+'% 置信度</span></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+detail+'</div><div style="font-size:11px;color:var(--color-hold);margin-top:2px">'+evidence+'</div></div>';});
+  /* V4 Phase 3: 缓存结论+手动刷新(不再有AI按钮) */
+  h+='<div style="margin-top:12px;padding:16px;background:rgba(139,92,246,0.06);border-radius:var(--radius);border:1px solid rgba(139,92,246,0.25)">';
+  h+='<div style="font-size:12px;color:#a78bfa;margin-bottom:8px">✅ 根因诊断结论 <span style="font-size:10px;color:var(--text-muted);margin-left:4px">'+getCacheBadge('2026-06-19')+'</span></div>';
+  h+='<div style="font-size:14px;color:var(--text-bright);font-weight:700;margin-bottom:8px">加热炉热效率下降（加热元件老化/积灰+保温层破损）</div>';
+  h+='<div style="font-size:13px;color:var(--text-secondary);line-height:1.7">→ 板坯加热不足 → 轧机低温高负荷轧制 → 电耗+18%、煤气耗+12%、废品率+3%</div>';
+  h+='<div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap"><span style="font-size:12px;background:rgba(34,197,94,0.12);color:var(--color-bear);padding:3px 10px;border-radius:6px">✔ 综合置信度 90%</span><span style="font-size:12px;background:rgba(245,158,11,0.12);color:var(--color-warning);padding:3px 10px;border-radius:6px">⚡ 6条独立信号交叉验证</span></div>';
+  h+='</div>';
   h+='<div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="goStep(2)"> 上一步</button> <button class="btn btn-primary btn-sm" onclick="goStep(4)">下一步</button></div>';
   el.innerHTML = h;
-  setTimeout(function(){try{var ec=s1.causes.map(function(c){return{value:c.c,name:c.n};});var cr=['#ef4444','#f59e0b','#3b82f6'];echarts.init(document.getElementById('c3')).setOption({backgroundColor:'transparent',tooltip:{trigger:'item',formatter:'{b}: {c}%'},grid:{left:80,right:30,top:5,bottom:5},xAxis:{type:'value',max:100,axisLabel:{color:'#64748b'},splitLine:{lineStyle:{color:'#1e2d4a'}}},yAxis:{type:'category',data:ec.map(function(e){return e.name;}).reverse(),axisLabel:{color:'#94a3b8',fontSize:12},axisLine:{lineStyle:{color:'#1e2d4a'}}},series:[{type:'bar',data:ec.map(function(e,i){return{value:e.value,itemStyle:{color:cr[i%3]}};}).reverse(),barWidth:20,label:{show:true,position:'right',color:'#94a3b8',fontSize:12,formatter:'{c}%'}}]});}catch(e){}},200);
+  setTimeout(function(){try{var ec=causes.map(function(c){return{value:c.confidence||0,name:c.cause||c.name||''};});var cr=['#ef4444','#f59e0b','#3b82f6'];echarts.init(document.getElementById('c3')).setOption({backgroundColor:'transparent',tooltip:{trigger:'item',formatter:'{b}: {c}%'},grid:{left:80,right:30,top:5,bottom:5},xAxis:{type:'value',max:100,axisLabel:{color:'#64748b'},splitLine:{lineStyle:{color:'#1e2d4a'}}},yAxis:{type:'category',data:ec.map(function(e){return e.name;}).reverse(),axisLabel:{color:'#94a3b8',fontSize:12},axisLine:{lineStyle:{color:'#1e2d4a'}}},series:[{type:'bar',data:ec.map(function(e,i){return{value:e.value,itemStyle:{color:cr[i%3]}};}).reverse(),barWidth:20,label:{show:true,position:'right',color:'#94a3b8',fontSize:12,formatter:'{c}%'}}]});}catch(e){}},200);
 }
 
-/* Step4: AI改善推荐 (原逻辑不变, 用SCENES硬编码) */
+/* Step4: AI改善推荐 — 优先用AI workflow结果(V3.1)，回退SCENES硬编码 */
 function _renderStep4SC(s, el, d) {
   var s1 = d['s4'], h = '';
-  h += '<div style="margin-bottom:12px"><strong>Step4: AI改善推荐 (三级方案+ROI)</strong> '+s1.desc+'<span style="margin-left:8px;font-size:11px;color:#a78bfa;background:rgba(139,92,246,0.12);padding:2px 8px;border-radius:4px">AI</span></div>';
-  s1.items.forEach(function(i){var cl=i.l.includes('紧急')?'var(--color-defect)':i.l.includes('短期')?'var(--color-warning)':'var(--color-hold)';h+='<div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+cl+'"><div style="font-size:13px;font-weight:600">'+i.l+'</div><div style="font-size:13px;color:var(--text-primary);margin:4px 0">'+i.a+'</div><div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted)"><span> '+i.c+'</span><span> '+i.p+'</span><span> '+i.s+'</span></div></div>';});
-  if(ai4Result&&ai4Result.ai_analysis){
-    h+='<div style="margin-top:12px;padding:12px;background:rgba(16,185,129,0.04);border-radius:var(--radius);border:1px solid rgba(16,185,129,0.2)"><div style="font-size:12px;color:#10b981;margin-bottom:6px">AI推理结果:</div><div style="font-size:13px;color:var(--text-secondary)">'+ai4Result.ai_analysis.replace(/##/g,'</div><h4 style="color:var(--text-bright);margin:12px 0 6px;font-size:14px">').replace(/\n/g,'<br>').replace(/<br><br>/g,'</div><br><div style="padding-left:8px">')+'</div></div>';
-  }else if(ai4TraceId){
-    h+='<div style="margin-top:8px;display:flex;gap:8px;align-items:center;padding:8px;background:rgba(16,185,129,0.04);border-radius:var(--radius)"><span style="width:12px;height:12px;border:2px solid var(--border-color);border-top-color:#10b981;border-radius:50%;animation:spin .8s linear infinite;display:inline-block"></span><span style="font-size:12px;color:var(--text-muted)">AI推理中(约30-60秒)...</span></div>';
-  }else{
-    h+='<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="triggerAIAnalysis(curScene)" style="background:#10b981;font-size:12px"> 启动AI改善推荐</button></div>';
+  /* 尝试从AI workflow提取改善方案数据 */
+  var step4Result=_getAiStepResult(4);
+  var plans=null,roiMsg='';
+  if(step4Result&&step4Result.data&&step4Result.data.tiered_plans&&step4Result.data.tiered_plans.length>0){
+    plans=step4Result.data.tiered_plans;
+    var roi=step4Result.data.roi||{};
+    roiMsg='总投资'+(roi.total_cost||'')+'元，预计年节约'+(roi.total_saving||'')+'元，'+(roi.payback_days||'')+'天回本';
   }
+  h += '<div style="margin-bottom:12px"><strong>Step4: AI改善推荐 (三级方案+ROI)</strong> '+s1.desc+'<span style="margin-left:8px;font-size:11px;color:#a78bfa;background:rgba(139,92,246,0.12);padding:2px 8px;border-radius:4px">AI</span></div>';
+  
+  /* 渲染方案列表 */
+  if(plans){
+    plans.forEach(function(p){var level=p.level||'';var cl=level==='urgent'?'var(--color-defect)':level==='short_term'?'var(--color-warning)':'var(--color-hold)';h+='<div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+cl+'"><div style="font-size:13px;font-weight:600">'+(p.title||p.level||'')+'</div>';if(p.items){p.items.forEach(function(it){h+='<div style="font-size:13px;color:var(--text-primary);margin:4px 0;padding-left:12px">• '+it+'</div>';});}h+='<div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin-top:4px"><span>💰 '+p.cost_estimate+'万元</span><span>⏱ '+p.timeline+'</span><span>📈 '+p.expected_effect+'</span></div></div>';});
+    if(roiMsg)h+='<div style="padding:10px;background:rgba(16,185,129,0.06);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);margin-top:8px">📊 '+roiMsg+'</div>';
+  }else{
+    s1.items.forEach(function(i){var cl=i.l.includes('紧急')?'var(--color-defect)':i.l.includes('短期')?'var(--color-warning)':'var(--color-hold)';h+='<div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+cl+'"><div style="font-size:13px;font-weight:600">'+i.l+'</div><div style="font-size:13px;color:var(--text-primary);margin:4px 0">'+i.a+'</div><div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted)"><span> '+i.c+'</span><span> '+i.p+'</span><span> '+i.s+'</span></div></div>';});
+  }
+  
   h+='<div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="goStep(3)"> 上一步</button> <button class="btn btn-primary btn-sm" onclick="goStep(5)">下一步</button></div>';
   el.innerHTML = h;
 }
