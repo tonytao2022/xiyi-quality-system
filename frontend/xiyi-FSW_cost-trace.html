@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单因追溯 · 扁钢线FSW · 兮易AI智体</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--card-hover:#1c2538;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;--purple:#8b5cf6;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:210px;min-width:210px;background:var(--bg2);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo .title{font-size:14px;font-weight:700;color:#fff}
+.sidebar-logo .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sidebar-nav{padding:10px 0}
+.nav-item{display:flex;align-items:center;padding:10px 16px;color:var(--text2);font-size:13px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,0.1);color:var(--blue);border-left-color:var(--blue)}
+.nav-item .icon{margin-right:8px;width:18px;text-align:center}
+.nav-section{padding:8px 16px 4px;font-size:10px;color:var(--muted)}
+.main-content{flex:1;margin-left:210px;padding:20px 24px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.topbar h1{font-size:18px;font-weight:700;color:#fff}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:14px}
+.chain-flow{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;padding:10px 0;flex-wrap:wrap}
+.chain-node{flex:1;min-width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;transition:all .2s}
+.chain-node:hover{border-color:var(--blue);transform:translateY(-2px)}
+.chain-node .node-type{font-size:10px;padding:2px 8px;border-radius:6px;display:inline-block;margin-bottom:6px}
+.chain-node .node-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:6px}
+.chain-node .node-detail{font-size:11px;color:var(--text2);line-height:1.5}
+.chain-node .node-evidence{font-size:10px;color:var(--muted);margin-top:6px;padding:6px;background:rgba(0,0,0,0.2);border-radius:6px}
+.chain-arrow{display:flex;align-items:center;color:var(--muted);font-size:20px;padding-top:30px;flex-shrink:0}
+.type-cost{background:rgba(239,68,68,0.12);color:var(--red)}
+.type-production{background:rgba(245,158,11,0.12);color:var(--yellow)}
+.type-equipment{background:rgba(59,130,246,0.1);color:var(--blue)}
+.type-root_cause{background:rgba(139,92,246,0.12);color:var(--purple)}
+.type-management{background:rgba(239,68,68,0.08);color:#f87171}
+.confidence-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.impact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.impact-box{text-align:center;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)}
+.impact-box .num{font-size:18px;font-weight:700;color:var(--red)}
+.impact-box .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.scenario-switch{display:flex;gap:8px;margin-bottom:14px}
+.scenario-switch .tab-btn{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);transition:all .2s}
+.scenario-switch .tab-btn.active{background:rgba(59,130,246,0.12);border-color:var(--blue);color:var(--blue)}
+.scenario-switch .tab-btn:hover{border-color:var(--blue)}
+.plan-card{padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.plan-card .plan-level{font-size:12px;font-weight:600;margin-bottom:6px}
+.plan-card ul{list-style:none;padding:0}
+.plan-card ul li{padding:4px 0;font-size:12px;color:var(--text2);padding-left:16px;position:relative}
+.plan-card ul li::before{content:'•';position:absolute;left:4px;color:var(--blue)}
+.plan-card .plan-meta{font-size:11px;color:var(--muted);margin-top:6px}
+.correlation-bar{display:flex;gap:8px;align-items:center;margin:4px 0}
+.correlation-bar .bar{flex:1;height:6px;border-radius:3px;background:rgba(30,45,74,0.5)}
+.correlation-bar .bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.loading{text-align:center;padding:50px;color:var(--muted)}
+.btn{padding:6px 14px;border-radius:6px;border:none;font-size:12px;cursor:pointer;display:inline-flex;align-items:center}
+.btn-blue{background:var(--blue);color:#fff}
+@media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0;padding:14px}.chain-flow{flex-direction:column}.chain-arrow{transform:rotate(90deg);padding:4px 0}}
+</style>
+<script src="/xiyi-auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="title">🏭 FSW成本分析</div><div class="sub">扁钢线 · 成本专员</div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">成本分析</div>
+      <a class="nav-item" href="/xiyi-FSW_cost-overview.html"><span class="icon">📊</span>成本总览</a>
+      <a class="nav-item" href="/xiyi-FSW_cost-anomaly.html"><span class="icon">⚠️</span>异常成本列表</a>
+      <a class="nav-item active" href="/xiyi-FSW_cost-trace.html"><span class="icon">🔍</span>单因追溯</a>
+      <a class="nav-item" href="/xiyi-FSW_cost-multitrace.html"><span class="icon">🧩</span>多因归因</a>
+      <div style="border-top:1px solid var(--border);margin:10px 16px;"></div>
+      <a class="nav-item" href="/xiyi-quality-workbench.html"><span class="icon">🔙</span>返回平台首页</a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 id="traceTitle">🔍 单因反向追溯</h1>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px" id="traceSubtitle">场景A: 单因归因｜场景C: 跨域关联</div>
+      </div>
+      <div>
+        <select id="anomalySelect" onchange="switchAnomaly()" style="padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px">
+          <option value="1">异常#1: 电耗突升 (场景A)</option>
+          <option value="4">异常#4: 废品损失 (场景C)</option>
+        </select>
+      </div>
+    </div>
+    <div id="traceContent"><div class="loading">📡 加载追溯数据...</div></div>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1/FSW_cost';
+var _aData = null;
+
+function getAnomalyId() { return parseInt(new URLSearchParams(location.search).get('id')) || 1; }
+
+async function init() {
+  const aid = getAnomalyId();
+  document.getElementById('anomalySelect').value = aid;
+  await loadTrace(aid);
+}
+
+async function switchAnomaly() {
+  const aid = parseInt(document.getElementById('anomalySelect').value);
+  history.replaceState(null, '', '?id=' + aid);
+  await loadTrace(aid);
+}
+
+async function loadTrace(aid) {
+  const el = document.getElementById('traceContent');
+  el.innerHTML = '<div class="loading">📡 加载追溯数据...</div>';
+  try {
+    const r = await authFetch(API+'/anomaly/trace/' + aid).then(r=>r.json());
+    if (r.code !== 0) { el.innerHTML = '<div class="loading">⚠️ ' + (r.error || '加载失败') + '</div>'; return; }
+    _aData = r.data;
+    renderTrace(r.data, aid);
+  } catch(e) { el.innerHTML = '<div class="loading">⚠️ ' + e.message + '</div>'; }
+}
+
+function renderTrace(d, aid) {
+  document.getElementById('traceTitle').textContent = '🔍 ' + d.factor + ' — 反向追溯分析';
+  document.getElementById('traceSubtitle').textContent = '成本影响: ' + d.cost_impact + '万元 | 异常ID: ' + aid;
+  const el = document.getElementById('traceContent');
+  
+  // Scenario A: root_chain exists
+  if (d.root_chain) {
+    el.innerHTML = renderScenarioA(d);
+  }
+  // Scenario C: cross_domain_analysis exists
+  else if (d.cross_domain_analysis) {
+    el.innerHTML = renderScenarioC(d);
+  }
+  // Scenario B fallback
+  else if (d.root_analysis) {
+    el.innerHTML = '<div class="loading">🔄 此异常适用多因归因分析，请前往 <a class="tab-btn" href="/xiyi-FSW_cost-multitrace.html?id=' + aid + '">多因归因分析页</a></div>';
+  }
+}
+
+function renderScenarioA(d) {
+  const chain = d.root_chain;
+  const confidenceHtml = '<div style="margin-bottom:14px"><span class="confidence-badge">✔ 综合置信度: ' + chain.confidence + '%</span></div>';
+  
+  const stepsHtml = chain.steps.map((s, i) => {
+    const typeClass = s.type === 'cost' ? 'type-cost' : s.type === 'production' ? 'type-production' : s.type === 'equipment' ? 'type-equipment' : s.type === 'root_cause' ? 'type-root_cause' : 'type-management';
+    const typeLabel = s.label;
+    const arrow = i < chain.steps.length - 1 ? '<div class="chain-arrow">→</div>' : '';
+    return '<div class="chain-node"><div class="node-type ' + typeClass + '">' + typeLabel + '</div><div class="node-title">' + s.indicator + '</div><div class="node-detail">' + s.detail + (s.device ? '<br>📍 ' + s.device : '') + '</div>' + (s.evidence ? '<div class="node-evidence">📋 ' + s.evidence + '</div>' : '') + '</div>' + arrow;
+  }).join('');
+
+  const impactHtml = d.impact ? Object.entries(d.impact).map(([k,v]) => 
+    '<div class="impact-box"><div class="num">' + (v/10000).toFixed(2) + '<span style="font-size:11px;color:var(--muted)">万</span></div><div class="lbl">' + ({direct_loss:'直接损失',energy_loss:'能源损失',production_loss:'产能损失',repair_cost:'维修成本'}[k]||k) + '</div></div>'
+  ).join('') : '';
+
+  return confidenceHtml + '<div class="card"><div class="card-header">🔗 全链路追溯<span style="font-size:11px;color:var(--muted);font-weight:400">成本 → 生产 → 设备 → 根因 → 管理漏洞</span></div><div class="card-body"><div class="chain-flow">' + stepsHtml + '</div></div></div>' + (impactHtml ? '<div class="card"><div class="card-header">💰 成本影响分解</div><div class="card-body"><div class="impact-grid">' + impactHtml + '</div></div></div>' : '') + '<div class="card"><div class="card-header">✅ AI整改建议</div><div class="card-body"><p style="font-size:13px;color:var(--green)">' + (d.recommendation || '无') + '</p></div></div>';
+}
+
+function renderScenarioC(d) {
+  const cda = d.cross_domain_analysis;
+  let html = '<div class="card"><div class="card-header">🔗 跨域关联链<span style="font-size:11px;color:var(--muted);font-weight:400"> 生产 → 质量 → 设备 → 备件 → 管理</span></div><div class="card-body"><div class="chain-flow">';
+  (cda.root_chain || []).forEach((s, i) => {
+    const arrow = i < cda.root_chain.length - 1 ? '<div class="chain-arrow">→</div>' : '';
+    html += '<div class="chain-node"><div class="node-type type-cost">' + s.domain + '</div><div class="node-title">' + s.event + '</div><div class="node-detail">' + s.detail + '</div></div>' + arrow;
+  });
+  html += '</div></div></div>';
+
+  // Cross-correlation
+  if (cda.cross_correlation && cda.cross_correlation.length) {
+    html += '<div class="card"><div class="card-header">📈 跨域关联强度</div><div class="card-body">';
+    cda.cross_correlation.forEach(c => {
+      const pct = Math.round(parseFloat(c.r2) * 100);
+      const color = c.strength.includes('强') ? '#ef4444' : '#f59e0b';
+      html += '<div class="correlation-bar"><span style="font-size:12px;color:var(--text2);min-width:80px">' + c.from + '</span><span style="font-size:11px;color:var(--muted)">→</span><span style="font-size:12px;color:var(--text2);min-width:80px">' + c.to + '</span><div class="bar"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div><span style="font-size:11px;color:var(--muted);min-width:50px">R²=' + c.r2 + '</span></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Corrective plans
+  if (d.corrective_plans) {
+    const plans = d.corrective_plans;
+    const colors = {紧急: '#ef4444',短期: '#f59e0b',长期: '#3b82f6'};
+    html += '<div class="card"><div class="card-header">📋 三级整改建议</div><div class="card-body">';
+    Object.entries(plans).forEach(([k,v]) => {
+      const c = colors[v.level.split('（')[0]] || '#64748b';
+      html += '<div class="plan-card" style="border-left:3px solid ' + c + '"><div class="plan-level" style="color:' + c + '">' + v.level + '</div><ul>' + (v.items || []).map(i => '<li>' + i + '</li>').join('') + '</ul><div class="plan-meta">预估成本: ' + v.cost_estimate + '万元 | 预期效果: ' + (v.expected_effect || '') + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  return html;
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>异常成本列表 · 扁钢线FSW · 兮易AI智体</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--card-hover:#1c2538;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:210px;min-width:210px;background:var(--bg2);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo .title{font-size:14px;font-weight:700;color:#fff}
+.sidebar-logo .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sidebar-nav{padding:10px 0}
+.nav-item{display:flex;align-items:center;padding:10px 16px;color:var(--text2);font-size:13px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,0.1);color:var(--blue);border-left-color:var(--blue)}
+.nav-item .icon{margin-right:8px;width:18px;text-align:center}
+.nav-section{padding:8px 16px 4px;font-size:10px;color:var(--muted);text-transform:uppercase}
+.main-content{flex:1;margin-left:210px;padding:20px 24px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.topbar h1{font-size:18px;font-weight:700;color:#fff}
+.header-badge{font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(59,130,246,0.1);color:var(--blue)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:14px}
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.filter-bar select,.filter-bar input{padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none}
+.filter-bar select:focus{border-color:var(--blue)}
+.filter-bar .btn{padding:6px 14px;border-radius:6px;border:none;font-size:12px;cursor:pointer;background:var(--blue);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 10px;border-bottom:2px solid var(--border);color:var(--muted);font-weight:600;text-align:left}
+td{padding:7px 10px;border-bottom:1px solid rgba(30,45,74,0.4);color:var(--text2)}
+tr:hover td{background:rgba(59,130,246,0.03)}
+.badge{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.sev-serious{background:rgba(239,68,68,0.15);color:var(--red)}
+.sev-medium{background:rgba(245,158,11,0.12);color:var(--yellow)}
+.sev-mild{background:rgba(59,130,246,0.1);color:var(--blue)}
+.status-pending{background:rgba(245,158,11,0.1);color:var(--yellow)}
+.status-analyzing{background:rgba(59,130,246,0.1);color:var(--blue)}
+.status-closed{background:rgba(34,197,94,0.1);color:var(--green)}
+.scene-a{border-left:3px solid #ef4444}
+.scene-b{border-left:3px solid #f59e0b}
+.scene-c{border-left:3px solid #8b5cf6}
+.link{color:var(--blue);cursor:pointer;text-decoration:none}
+.link:hover{text-decoration:underline}
+.loading{text-align:center;padding:50px;color:var(--muted)}
+.rule-tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(139,92,246,0.1);color:#a78bfa;border:1px solid rgba(139,92,246,0.2);margin-right:4px}
+.anomaly-icon{font-size:16px;margin-right:4px}
+@media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0;padding:14px}}
+</style>
+<script src="/xiyi-auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="title">🏭 FSW成本分析</div><div class="sub">扁钢线 · 成本专员</div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">成本分析</div>
+      <a class="nav-item" href="/xiyi-FSW_cost-overview.html"><span class="icon">📊</span>成本总览</a>
+      <a class="nav-item active" href="/xiyi-FSW_cost-anomaly.html"><span class="icon">⚠️</span>异常成本列表</a>
+      <a class="nav-item" href="/xiyi-FSW_cost-trace.html"><span class="icon">🔍</span>单因追溯</a>
+      <a class="nav-item" href="/xiyi-FSW_cost-multitrace.html"><span class="icon">🧩</span>多因归因</a>
+      <div style="border-top:1px solid var(--border);margin:10px 16px;"></div>
+      <a class="nav-item" href="/xiyi-quality-workbench.html"><span class="icon">🔙</span>返回平台首页</a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <div class="topbar">
+      <h1>⚠️ 异常成本列表</h1>
+      <span class="header-badge">异常检测规则触发标记</span>
+    </div>
+    <div class="filter-bar">
+      <select id="sevFilter"><option value="">全部严重度</option><option value="严重">严重</option><option value="中等">中等</option><option value="轻微">轻微</option></select>
+      <select id="sceneFilter"><option value="">全部场景</option><option value="场景A-单因归因">场景A-单因归因</option><option value="场景B-多因归因">场景B-多因归因</option><option value="场景C-跨域关联">场景C-跨域关联</option></select>
+      <select id="statusFilter"><option value="">全部状态</option><option value="待分析">待分析</option><option value="分析中">分析中</option><option value="已闭环">已闭环</option></select>
+      <button class="btn" onclick="filterTable()">筛选</button>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span>📋 异常记录</span>
+        <span style="font-size:11px;color:var(--muted)" id="countInfo">加载中...</span>
+      </div>
+      <div class="card-body"><table><thead><tr>
+        <th>异常因子</th><th>成本影响</th><th>触发规则</th><th>严重度</th><th>场景类型</th><th>状态</th><th>发现日期</th><th>操作</th>
+      </tr></thead><tbody id="anomalyTable"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1/FSW_cost';
+var _anomalies = [];
+
+async function init() {
+  try {
+    const r = await authFetch(API+'/anomaly/list').then(r=>r.json());
+    if (r.code !== 0) { showError(r.error); return; }
+    _anomalies = r.data.anomalies || [];
+    renderTable(_anomalies);
+  } catch(e) { showError(e.message); }
+}
+
+function sevClass(s) {
+  if (s === '严重') return 'sev-serious'; if (s === '中等') return 'sev-medium'; return 'sev-mild';
+}
+
+function statusClass(s) {
+  if (s === '待分析') return 'status-pending'; if (s === '分析中') return 'status-analyzing'; return 'status-closed';
+}
+
+function sceneIcon(s) {
+  if (s.indexOf('场景A') >= 0) return '🔴'; if (s.indexOf('场景B') >= 0) return '🟡'; if (s.indexOf('场景C') >= 0) return '🟣';
+  return '⚪';
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('anomalyTable');
+  document.getElementById('countInfo').textContent = '共 ' + data.length + ' 条记录';
+  tbody.innerHTML = data.map(a => {
+    const traceLink = a.scene_type === '场景A-单因归因' ? '/xiyi-FSW_cost-trace.html?id=' + a.id : (a.scene_type === '场景B-多因归因' ? '/xiyi-FSW_cost-multitrace.html?id=' + a.id : '/xiyi-FSW_cost-trace.html?id=' + a.id);
+    return '<tr><td><strong>' + sceneIcon(a.scene_type) + ' ' + a.factor + '</strong></td><td style="color:var(--red);font-weight:600">' + a.cost_impact + ' ' + a.unit + '</td><td><span class="rule-tag">⚡' + (a.trigger_rule || '-') + '</span><div style="font-size:10px;color:var(--muted);margin-top:2px">' + (a.trigger_detail || '') + '</div></td><td><span class="badge ' + sevClass(a.severity) + '">' + a.severity + '</span></td><td style="font-size:11px">' + a.scene_type + '</td><td><span class="badge ' + statusClass(a.status) + '">' + a.status + '</span></td><td>' + a.detect_date + '</td><td><a class="link" href="' + traceLink + '">🔍追溯</a></td></tr>';
+  }).join('');
+}
+
+function filterTable() {
+  const sv = document.getElementById('sevFilter').value;
+  const sc = document.getElementById('sceneFilter').value;
+  const st = document.getElementById('statusFilter').value;
+  const filtered = _anomalies.filter(a => {
+    if (sv && a.severity !== sv) return false;
+    if (sc && a.scene_type !== sc) return false;
+    if (st && a.status !== st) return false;
+    return true;
+  });
+  renderTable(filtered);
+}
+
+function showError(msg) {
+  document.querySelector('.main-content').innerHTML = '<div class="loading">⚠️ ' + msg + '</div>';
+}
+
+init();
+</script>
+</body>
+</html>

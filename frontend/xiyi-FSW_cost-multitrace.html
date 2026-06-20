@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多因归因 · 扁钢线FSW · 兮易AI智体</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--card:#161d2a;--card-hover:#1c2538;--border:#1e2d4a;--text:#e2e8f0;--text2:#94a3b8;--muted:#64748b;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--purple:#8b5cf6;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:210px;min-width:210px;background:var(--bg2);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo .title{font-size:14px;font-weight:700;color:#fff}
+.sidebar-logo .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sidebar-nav{padding:10px 0}
+.nav-item{display:flex;align-items:center;padding:10px 16px;color:var(--text2);font-size:13px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,0.1);color:var(--blue);border-left-color:var(--blue)}
+.nav-item .icon{margin-right:8px;width:18px;text-align:center}
+.nav-section{padding:8px 16px 4px;font-size:10px;color:var(--muted);text-transform:uppercase}
+.main-content{flex:1;margin-left:210px;padding:20px 24px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.topbar h1{font-size:18px;font-weight:700;color:#fff}
+.topbar .subtitle{font-size:12px;color:var(--text2);margin-top:4px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:14px}
+.confidence-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:14px}
+.conf-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;transition:all .2s}
+.conf-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.conf-card .cause-type{font-size:10px;padding:2px 8px;border-radius:6px;display:inline-block;margin-bottom:6px}
+.conf-card .cause-name{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
+.conf-card .confidence-bar{margin:8px 0;height:8px;border-radius:4px;background:rgba(30,45,74,0.5);overflow:hidden}
+.conf-card .confidence-fill{height:100%;border-radius:4px;transition:width .8s ease}
+.conf-card .confidence-label{font-size:11px;color:var(--text2);margin-bottom:4px}
+.conf-card .conf-detail{font-size:11px;color:var(--text2);line-height:1.5}
+.conf-card .conf-evidence{font-size:10px;color:var(--muted);margin-top:6px;padding:6px;background:rgba(0,0,0,0.2);border-radius:6px}
+.conf-card .conf-action{font-size:11px;color:var(--blue);margin-top:6px}
+.dim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.dim-card{text-align:center;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px}
+.dim-card .dim-score{font-size:24px;font-weight:700;margin-bottom:2px}
+.dim-card .dim-name{font-size:11px;color:var(--muted);margin-bottom:4px}
+.dim-card .dim-remark{font-size:10px;color:var(--text2)}
+.chart-sm{height:250px}
+.check-group{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.check-item{display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;cursor:pointer}
+.check-item input[type=checkbox]{accent-color:var(--blue)}
+.check-item label{font-size:12px;color:var(--text2);cursor:pointer}
+.btn{padding:6px 16px;border-radius:6px;border:none;font-size:12px;cursor:pointer}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:#2563eb}
+.loading{text-align:center;padding:50px;color:var(--muted)}
+@media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0;padding:14px}}
+</style>
+<script src="/xiyi-auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="title">🏭 FSW成本分析</div><div class="sub">扁钢线 · 成本专员</div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">成本分析</div>
+      <a class="nav-item" href="/xiyi-FSW_cost-overview.html"><span class="icon">📊</span>成本总览</a>
+      <a class="nav-item" href="/xiyi-FSW_cost-anomaly.html"><span class="icon">⚠️</span>异常成本列表</a>
+      <a class="nav-item" href="/xiyi-FSW_cost-trace.html"><span class="icon">🔍</span>单因追溯</a>
+      <a class="nav-item active" href="/xiyi-FSW_cost-multitrace.html"><span class="icon">🧩</span>多因归因</a>
+      <div style="border-top:1px solid var(--border);margin:10px 16px;"></div>
+      <a class="nav-item" href="/xiyi-quality-workbench.html"><span class="icon">🔙</span>返回平台首页</a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <h1>🧩 多因归因分析</h1>
+        <div class="subtitle">场景B: 煤气耗上升 → 综合归因排序 + 置信度诊断</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">🎯 选择分析异常</div>
+      <div class="card-body">
+        <div class="check-group" id="anomalyCheckGroup">
+          <div class="check-item"><input type="checkbox" id="chk1" value="1"><label for="chk1">🔴 电耗突升</label></div>
+          <div class="check-item"><input type="checkbox" id="chk2" value="2" checked><label for="chk2">🟡 煤气耗上升</label></div>
+          <div class="check-item"><input type="checkbox" id="chk4" value="4"><label for="chk4">🟣 废品损失</label></div>
+          <div class="check-item"><input type="checkbox" id="chk3" value="3"><label for="chk3">⚪ 维修费用</label></div>
+        </div>
+        <button class="btn btn-blue" onclick="runMultiTrace()">🔍 执行综合归因分析</button>
+      </div>
+    </div>
+
+    <div id="resultArea">
+      <div class="loading">选择异常后点击上方按钮进行分析</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1/FSW_cost';
+var _mData = null;
+
+async function runMultiTrace() {
+  const area = document.getElementById('resultArea');
+  area.innerHTML = '<div class="loading">🔄 正在执行多因综合归因分析...</div>';
+  
+  const checked = [];
+  document.querySelectorAll('#anomalyCheckGroup input[type=checkbox]:checked').forEach(cb => checked.push(parseInt(cb.value)));
+  if (checked.length === 0) { area.innerHTML = '<div class="loading">⚠️ 请至少选择1个异常因子</div>'; return; }
+  
+  try {
+    const r = await authFetch(API+'/anomaly/multi-trace', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ anomaly_ids: checked })
+    }).then(r => r.json());
+    
+    if (r.code !== 0) { area.innerHTML = '<div class="loading">⚠️ ' + (r.error || '分析失败') + '</div>'; return; }
+    _mData = r.data;
+    renderMultiTrace(r.data);
+  } catch(e) {
+    area.innerHTML = '<div class="loading">⚠️ ' + e.message + '</div>';
+  }
+}
+
+function renderMultiTrace(d) {
+  const area = document.getElementById('resultArea');
+  const summaryHtml = '<div class="card"><div class="card-header">📊 综合诊断摘要</div><div class="card-body"><p style="font-size:13px;color:var(--text2)">' + (d.root_analysis ? d.root_analysis.summary : d.summary || '') + '</p></div></div>';
+
+  // Confidence ranked causes (from root_analysis for scenario B)
+  let causesHtml = '';
+  const causes = d.root_analysis ? d.root_analysis.causes : (d.causes || []);
+  if (causes.length) {
+    causesHtml = '<div class="card"><div class="card-header">🏆 置信度排序<span style="font-size:11px;color:var(--muted);font-weight:400">按置信度从高到低</span></div><div class="card-body"><div class="confidence-grid">' + 
+      causes.map((c, i) => {
+        const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6'];
+        const clr = colors[i % colors.length];
+        return '<div class="conf-card" style="border-top:3px solid ' + clr + '"><div class="cause-type" style="background:' + clr + '22;color:' + clr + '">' + (c.type || '') + '</div><div class="cause-name">' + c.cause + '</div><div class="confidence-label">置信度: ' + c.confidence + '%</div><div class="confidence-bar"><div class="confidence-fill" style="width:' + c.confidence + '%;background:' + clr + '"></div></div><div class="conf-detail">' + (c.detail || '') + (c.device ? '<br>📍 ' + c.device : '') + '</div>' + (c.evidence ? '<div class="conf-evidence">📋 ' + c.evidence + '</div>' : '') + '<div class="conf-action">✅ 建议: ' + (c.action || '') + '</div></div>';
+      }).join('') + '</div></div></div>';
+  }
+
+  // Comprehensive diagnosis dimensions
+  let dimHtml = '';
+  const diag = d.comprehensive_diagnosis || d.diagnosis || [];
+  if (diag.length) {
+    dimHtml = '<div class="card"><div class="card-header">📋 多维诊断评分</div><div class="card-body"><div class="dim-grid">' +
+      diag.map(dd => {
+        const clr = dd.score >= 80 ? '#22c55e' : dd.score >= 60 ? '#f59e0b' : '#ef4444';
+        return '<div class="dim-card"><div class="dim-score" style="color:' + clr + '">' + dd.score + '</div><div class="dim-name">' + dd.dimension + '</div><div class="dim-remark">' + (dd.remark || '') + '</div></div>';
+      }).join('') + '</div></div></div>';
+  }
+
+  // Cross-domain from scenario C
+  let crossHtml = '';
+  if (d.cross_domain) {
+    crossHtml = '<div class="card"><div class="card-header">🔄 跨域关联<span style="font-size:11px;color:var(--muted);font-weight:400">废品率关联因素</span></div><div class="card-body"><p style="font-size:12px;color:var(--text2);margin-bottom:8px">' + d.cross_domain.summary + '</p><div style="display:flex;flex-wrap:wrap;gap:8px">' +
+      (d.cross_domain.root_chain || []).map(s => '<span style="font-size:11px;padding:4px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px">' + s.domain + ': ' + s.event + '</span>').join('') + '</div></div></div>';
+  }
+
+  area.innerHTML = summaryHtml + causesHtml + dimHtml + crossHtml;
+}
+
+// Auto-run on load if anomaly ID is in URL
+(function() {
+  const aid = parseInt(new URLSearchParams(location.search).get('id'));
+  if (aid === 2) {
+    document.getElementById('chk2').checked = true;
+    document.getElementById('chk1').checked = false;
+    document.getElementById('chk4').checked = false;
+    runMultiTrace();
+  }
+  if (aid === 1) {
+    document.getElementById('chk1').checked = true;
+    document.getElementById('chk2').checked = false;
+    runMultiTrace();
+  }
+})();
+</script>
+</body>
+</html>

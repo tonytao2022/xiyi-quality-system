@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扁钢线成本分析专员 · 兮易AI智体</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#161d2a;--bg-card-hover:#1c2538;--border-color:#1e2d4a;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--text-bright:#fff;--color-defect:#ef4444;--color-bear:#22c55e;--color-hold:#3b82f6;--color-cost:#f97316;--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.7;min-height:100vh}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:220px;min-width:220px;background:var(--bg-secondary);border-right:1px solid var(--border-color);position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border-color)}
+.sidebar-logo .title{font-size:14px;font-weight:700;color:var(--text-bright)}
+.sidebar-logo .sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.sidebar-nav{padding:12px 0}
+.nav-item{display:flex;align-items:center;padding:12px 20px;color:var(--text-secondary);font-size:14px;cursor:pointer;transition:all .2s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg-card);color:var(--text-primary)}
+.nav-item.active{background:rgba(16,185,129,0.1);color:#10b981;border-left-color:#10b981}
+.nav-item .icon{margin-right:10px;width:18px;text-align:center}
+.nav-section{padding:8px 20px 4px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.main-content{flex:1;margin-left:220px;padding:24px 28px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.header h1{font-size:20px;font-weight:700;color:var(--text-bright)}
+.header .badge{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(16,185,129,0.12);color:#10b981}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:15px;color:var(--text-bright);display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:16px;position:relative}
+.kpi-card:hover{border-color:#10b981;transform:translateY(-2px)}
+.kpi-card .kpi-label{font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.kpi-card .kpi-value{font-size:22px;font-weight:700}
+.kpi-card .kpi-threshold{font-size:12px;color:var(--text-muted);margin-top:2px}
+.kpi-card .drill-btn{font-size:10px;padding:3px 8px;border:1px solid var(--color-hold);border-radius:4px;background:transparent;color:var(--color-hold);cursor:pointer;margin-top:6px;display:inline-block}
+.kpi-card .drill-btn:hover{background:rgba(59,130,246,0.1)}
+.kpi-card .anomaly-dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--color-defect);animation:pulse2 1.2s infinite}
+@keyframes pulse2{0%{opacity:.4}50%{opacity:1}100%{opacity:.4}}
+.scene-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:24px}
+.scene-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:16px;cursor:pointer}
+.scene-card:hover{border-color:var(--color-cost);background:var(--bg-card-hover)}
+.scene-card .cat{font-size:12px;color:var(--color-cost);margin-bottom:4px}
+.scene-card .scene-name{font-size:15px;font-weight:600;color:var(--text-bright);margin-bottom:6px}
+.scene-card .scene-desc{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:8px}
+.scene-card .tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(249,115,22,0.12);color:var(--color-cost);border:1px solid rgba(249,115,22,0.2);margin-right:4px}
+.btn{display:inline-block;padding:8px 16px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:#fff}
+.btn-primary{background:var(--color-hold)}
+.btn-primary:hover{background:#2563eb}
+.btn-outline{background:transparent;border:1px solid var(--border-color);color:var(--text-secondary)}
+.btn-outline:hover{border-color:var(--color-hold);color:var(--color-hold)}
+.btn-sm{padding:6px 10px;font-size:12px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.loading{text-align:center;padding:40px;color:var(--text-muted)}
+.drill-panel{display:none;margin-bottom:24px}
+.drill-panel.show{display:block}
+.drill-steps{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.drill-step{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-secondary)}
+.drill-step:hover{border-color:var(--color-hold)}
+.drill-step.active{background:rgba(59,130,246,0.15);border-color:var(--color-hold);color:var(--color-hold)}
+.drill-step .snum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--border-color)}
+.drill-step.active .snum{background:var(--color-hold);color:#fff}
+.drill-step.done .snum{background:var(--color-bear);color:#fff}
+.close-panel{font-size:12px;color:var(--color-hold);cursor:pointer;float:right;padding:4px 10px;border-radius:6px}
+.close-panel:hover{background:rgba(59,130,246,0.1)}
+.waterfall-row{display:flex;gap:4px;align-items:flex-end;height:140px;padding-top:20px}
+.waterfall-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.waterfall-bar{width:70%;border-radius:4px 4px 0 0;min-height:6px}
+.waterfall-label{font-size:10px;color:var(--text-muted);margin-top:4px;text-align:center;white-space:nowrap}
+.waterfall-val{font-size:11px;font-weight:600;margin-bottom:2px}
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="title">🏭 扁钢线成本分析</div>
+      <div class="sub">FSW Cost Intelligence</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">导航菜单</div>
+      <div class="nav-item active" onclick="document.getElementById('pageTitle').textContent='🏠 扁钢线成本分析专员 · 驾驶舱';document.getElementById('drillPanel').classList.remove('show')"><span class="icon">📊</span> 成本驾驶舱</div>
+      <div class="nav-item" onclick="window.location.href='/xiyi-agent-chat.html'"><span class="icon">💬</span> 智能对话分析</div>
+      <div class="nav-item" onclick="window.location.href='/fsw-poc/xiyi-FSW_cost-anomaly.html'"><span class="icon">⚠️</span> 异常成本列表</div>
+      <div class="nav-section">系统</div>
+      <div class="nav-item" onclick="window.location.href='/xiyi-index.html'"><span class="icon">🏠</span> 返回首页</div>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <div class="header">
+      <h1 id="pageTitle">🏠 扁钢线成本分析专员 · 驾驶舱</h1>
+      <span class="badge" id="apiBadge">加载中...</span>
+    </div>
+    <div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">系统检测到成本异常，已标记红色。点击【🔍钻取分析】查看完整闭环。</div>
+    <div class="kpi-grid" id="kpiGrid"><div class="loading">加载中...</div></div>
+
+
+    <div class="card">
+      <div class="card-header">🧠 3个递推分析场景 <span style="font-size:12px;color:var(--text-muted)">点击进入5步闭环分析</span></div>
+      <div class="card-body">
+        <div class="scene-grid">
+          <div class="scene-card" onclick="openDrill('A')">
+            <div class="cat">🔹 单因归因</div>
+            <div class="scene-name">电耗突升 → 轴承卡滞</div>
+            <div class="scene-desc">主传动电耗突升≥15%，粗轧轴承卡滞。完整5步闭环分析。</div>
+            <div><span class="tag">⚡电耗+18%</span><span class="tag">🔧轴承卡滞</span><span class="tag">92%置信度</span></div>
+          </div>
+          <div class="scene-card" onclick="openDrill('B')">
+            <div class="cat">🔹 多因归因</div>
+            <div class="scene-name">煤气耗上升 → 双因子排序</div>
+            <div class="scene-desc">煤气耗连续3天≥计划+8%，空燃比+密封双因子置信度排序。</div>
+            <div><span class="tag">🔥煤气耗+12%</span><span class="tag">📐空燃比85%</span><span class="tag">🔩密封78%</span></div>
+          </div>
+          <div class="scene-card" onclick="openDrill('C')">
+            <div class="cat">🔹 跨域关联</div>
+            <div class="scene-name">废品率突升 → 三级整改</div>
+            <div class="scene-desc">废品率单批次≥3%，导卫偏差。三级整改+成本瀑布图。</div>
+            <div><span class="tag">📉废品率3.2%</span><span class="tag">🛠️导卫偏差</span><span class="tag">💰三级整改</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="drill-panel" id="drillPanel">
+      <div class="card">
+        <div class="card-header"><span id="drillTitle">🔍 场景闭环分析</span><span class="close-panel" onclick="closeDrill()">✕ 关闭</span></div>
+        <div class="card-body">
+          <div class="drill-steps" id="drillSteps"></div>
+          <div id="drillContent"><div class="loading">加载中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="card"><div class="card-header">成本构成 <span style="font-size:12px;color:var(--text-muted)">万元/月</span></div><div class="card-body"><div id="pieChart" style="height:240px"></div></div></div>
+      <div class="card"><div class="card-header">成本趋势 <span style="font-size:12px;color:var(--text-muted)">周度变化</span></div><div class="card-body"><div id="trendChart" style="height:240px"></div></div></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const AK = '90a275cbcc004fd5';
+function fswApi(url, opt) { if (!opt) opt = {}; if (!opt.headers) opt.headers = {}; opt.headers['X-API-Key'] = AK; return fetch(url, opt); }
+const API = '/api/v1/FSW_cost';
+
+const SCENES = {
+  A:{title:'电耗突升→轴承卡滞',
+    s1:{desc:'主传动电耗连续3日超基准',labels:['6/12','6/13','6/14','6/15','6/16','6/17','6/18'],actual:[492,505,498,515,530,545,528],base:Array(7).fill(490),limit:Array(7).fill(563.5),summ:'6/15起电耗从490飙升至545kWh/t(+11.2%),连续3天超SPC上限.粗轧工序贡献68%增量.'},
+    s2:{desc:'定位粗轧R1为主因',items:[{n:'粗轧R1',a:236,b:195,d:'+21%',p:'68%'},{n:'中轧F1-F6',a:152,b:148,d:'+2.7%',p:'12%'},{n:'精轧F7-F12',a:140,b:147,d:'-4.8%',p:'-20%'}],root:'锁定粗轧R1驱动端轴承'},
+    s3:{desc:'三重证据交叉验证',causes:[{n:'轴承润滑不足/卡滞',c:92,detail:'振动6.8mm/s(阈值4.5mm/s),超限51%',ev:'DCS温振监测'},{n:'预防性维保缺失',c:88,detail:'润滑管路上次清洗7个月前,无月度计划',ev:'维保系统记录'},{n:'操作员未及时上报',c:75,detail:'交接班记录有"轻微异响"备注未升级',ev:'交接班日志'}]},
+    s4:{desc:'三级整改建议',items:[{l:'🚨 紧急',a:'更换R1#1/#2轴承+清洗管路',c:1.2,p:'8h',s:'28元/吨'},{l:'📋 短期',a:'润滑管路月度清洗SOP+巡检表',c:0.5,p:'7天',s:'5元/吨'},{l:'🏗️ 长期',a:'轴承在线温振监测(6测点)',c:8.5,p:'2月',s:'42万元/年'}]},
+    s5:{desc:'整改前后成本对比',before:186.5,after:153.5,unit:'元/吨',ms:9.8,pd:1.4,bk:[{n:'电耗节省',v:14.2},{n:'停机减少',v:8.1},{n:'维修优化',v:6.5},{n:'备件延长',v:4.2}]}},
+  B:{title:'煤气耗上升→双因子排序',
+    s1:{desc:'煤气耗连续超标,热效率下降',labels:['6/12','6/13','6/14','6/15','6/16','6/17','6/18'],actual:[195,202,198,215,225,230,222],base:Array(7).fill(200),limit:Array(7).fill(216),summ:'6/15起煤气耗从200升至230m³/t(+15%).加热炉热效率从78%降至71%.'},
+    s2:{desc:'锁定#2加热炉',items:[{n:'#2加热炉',a:106,b:88,d:'+20.5%',p:'62%'},{n:'#1加热炉',a:72,b:68,d:'+5.9%',p:'18%'},{n:'均热段',a:44,b:44,d:'0%',p:'0%'}],root:'#2加热炉燃烧效率恶化'},
+    s3:{desc:'双因子置信度排序',causes:[{n:'空燃比偏离最优区间',c:85,detail:'当前3.5-3.8(最优3.2),热效率下降7%',ev:'DCS燃烧数据'},{n:'加热炉密封件老化',c:78,detail:'炉门密封条脱落,漏风率6.2%',ev:'红外热成像'},{n:'钢坯入炉温度偏低',c:62,detail:'热装率52%(设计>75%)',ev:'MES报表'}]},
+    s4:{desc:'分级整改',items:[{l:'🚨 紧急',a:'校准#2空燃比至3.2±0.1',c:0.3,p:'2h',s:'12元/吨'},{l:'📋 短期',a:'更换炉门密封条+周检',c:2.8,p:'5天',s:'8元/吨'},{l:'🏗️ 长期',a:'智能燃烧控制升级',c:18,p:'3月',s:'68万元/年'}]},
+    s5:{desc:'整改前后成本对比',before:215,after:195,unit:'元/吨',ms:6.0,pd:3.5,bk:[{n:'煤气耗节省',v:10.5},{n:'热效率提升',v:5.2},{n:'维护下降',v:2.3},{n:'废品减少',v:2.0}]}},
+  C:{title:'废品率突升→导卫偏差→三级整改',
+    s1:{desc:'废品率从0.8%突升至3.5%',labels:['6/12','6/13','6/14','6/15','6/16','6/17','6/18'],actual:[0.6,0.8,1.2,1.8,2.5,3.5,2.8],base:Array(7).fill(0.8),limit:Array(7).fill(3.0),summ:'6/17废品率单批次3.5%(常规≤0.8%).尺寸超差占比82%.'},
+    s2:{desc:'锁定精轧导卫装置',items:[{n:'精轧F12出口',a:1.2,b:0.2,d:'+500%',p:'46%'},{n:'精轧F10出口',a:0.6,b:0.15,d:'+300%',p:'23%'},{n:'剪前托板',a:0.3,b:0.1,d:'+200%',p:'12%'}],root:'导卫定位偏差致轧件跑偏'},
+    s3:{desc:'跨域证据链',causes:[{n:'导卫装置定位偏差',c:92,detail:'开口度偏差+0.08mm(标准±0.02mm)',ev:'换产校准记录'},{n:'换产流程不标准',c:85,detail:'换辊后漏做导卫校准,无签字',ev:'换产记录表'},{n:'导向轮超期服役',c:78,detail:'已用4.5月(更换周期2月)',ev:'备件更换台账'}]},
+    s4:{desc:'三级整改方案',items:[{l:'🚨 紧急',a:'停机校准F12导卫+更换导向轮',c:1.8,p:'4h',s:'2.1万元/批'},{l:'📋 短期',a:'导卫每日点检+换产双签',c:0.5,p:'5天',s:'0.7万/批'},{l:'🏗️ 长期',a:'导卫在线监测(位移+振动)',c:15,p:'2月',s:'0.4万/批'}]},
+    s5:{desc:'成本瀑布图',before:8.4,after:5.2,unit:'万元/批',ms:3.2,pd:4.7,bk:[{n:'导卫校准省废品',v:2.1},{n:'SOP减少偏差',v:0.7},{n:'传感器提前预警',v:0.4}]}}
+};
+
+var curScene=null, curStep=1;
+var ai3TraceId=null, ai3Result=null, ai4TraceId=null, ai4Result=null;
+
+function closeDrill(){document.getElementById('drillPanel').classList.remove('show');curScene=null;ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;}
+
+var _drillBusy=false;
+var AI_Q_ROOT={'A':'扁钢线电耗连续3日超基准15%,请进行根因分析,输出置信度排序和证据链.','B':'扁钢线煤气耗连续3天超计划值8%,请进行多因归因分析,按置信度排序输出根因.','C':'扁钢线废品率单批次达3%,尺寸超差为主,请进行跨域关联根因分析.'};
+var AI_Q_IMPROVE={'A':'基于根因分析结果,请给出扁钢线电耗超标的三级改善方案(紧急/短期/长期),每项量化成本和节省.','B':'基于根因分析结果,请给出扁钢线煤气耗超标的三级改善方案,每项量化成本和节省.','C':'基于根因分析结果,请给出扁钢线废品率超标的三级改善方案,每项量化成本和节省.'};
+var AI_TITLES={'A':'电耗异常分析','B':'煤气耗异常分析','C':'废品率异常分析'};
+function triggerAIAnalysis(s){
+  if(!s)return;
+  var isStep4=(curStep===4);
+  var traceVar=(isStep4?'ai4TraceId':'ai3TraceId'), resultVar=(isStep4?'ai4Result':'ai3Result');
+  if(window[traceVar]||window[resultVar])return;
+  var q = isStep4 ? (AI_Q_IMPROVE[s]||AI_Q_ROOT[s]) : (AI_Q_ROOT[s]||'');
+  fetch('/api/v1/FSW_cost/analyze',{
+    method:'POST',headers:{'Content-Type':'application/json','X-API-Key':AK},
+    body:JSON.stringify({scene_code:'FSW_COST',title:AI_TITLES[s],query:q})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.code===0){window[traceVar]=d.data.trace_id;startPollingAI(isStep4);renderStep(curStep);}
+  }).catch(function(e){console.log(e);});
+}
+function openDrill(s){
+  if(_drillBusy)return;_drillBusy=true;
+  setTimeout(function(){_drillBusy=false;},30000);
+  curScene=s;curStep=1;
+  document.getElementById('drillTitle').textContent='🔍 '+SCENES[s].title;
+  var st=document.getElementById('drillSteps');
+  st.innerHTML='';
+  for(var i=1;i<=5;i++)st.innerHTML+='<div class="drill-step'+(i===1?' active':'')+'" onclick="goStep('+i+')"><span class="snum">'+i+'</span> '+['指标差异 BI','工序钻取 BI','根因定位 AI','AI改善推荐 AI','成本闭环 半AI'][i-1]+'</div>';
+  document.getElementById('drillPanel').classList.add('show');
+  // 清除之前的AI结果
+  ai3TraceId=null;ai3Result=null;ai4TraceId=null;ai4Result=null;
+  goStep(1);
+}
+
+function startPollingAI(isStep4){
+  var traceId=isStep4?ai4TraceId:ai3TraceId;
+  var resultSetter=isStep4?'ai4Result':'ai3Result';
+  if(!traceId)return;
+  var maxAttempts=40,attempt=0;
+  var poll=setInterval(function(){
+    attempt++;
+    fetch('/api/v1/xiyi/agent/status/'+traceId,{headers:{'X-API-Key':AK}})
+    .then(function(r){return r.json()}).then(function(d){
+      if(d.code===0&&d.data.status==='done'&&d.data.result){
+        window[resultSetter]=d.data.result;
+        clearInterval(poll);
+        if(curStep>=3)renderStep(curStep);
+      }
+    }).catch(function(){});
+    if(attempt>=maxAttempts){clearInterval(poll);}
+  },1500);
+}
+
+function goStep(s){curStep=s;
+  document.querySelectorAll('.drill-step').forEach(function(e,i){e.classList.remove('active');e.classList.remove('done');if(i+1===s)e.classList.add('active');else if(i+1<s)e.classList.add('done');});
+  renderStep(s);
+}
+
+function renderStep(s){
+  var d=SCENES[curScene],el=document.getElementById('drillContent'),h='';
+  var s1=d['s'+s];
+  if(s===1){
+    h='<div style="margin-bottom:12px"><strong>Step1: 指标差异</strong> — '+s1.desc+'</div><div id="c1" style="height:180px"></div><div style="font-size:13px;color:var(--text-secondary);padding:10px;background:rgba(239,68,68,0.06);border-radius:var(--radius);margin-top:8px">'+s1.summ+'</div><div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="goStep(2)">下一步 →</button></div>';
+  }else if(s===2){
+    h='<div style="margin-bottom:12px"><strong>Step2: 工序钻取</strong> — '+s1.desc+'</div><table style="width:100%;font-size:13px;border-collapse:collapse"><tr style="color:var(--text-muted);font-size:12px"><th>工序</th><th style="text-align:right">实际</th><th style="text-align:right">基线</th><th style="text-align:right">偏差</th><th style="text-align:right">占比</th></tr>';
+    s1.items.forEach(function(i){h+='<tr style="border-bottom:1px solid var(--border-color)"><td>'+i.n+'</td><td style="text-align:right;color:var(--text-bright)">'+i.a+'</td><td style="text-align:right">'+i.b+'</td><td style="text-align:right;color:'+(i.d[0]==='+'?'var(--color-defect)':'var(--color-bear)')+'">'+i.d+'</td><td style="text-align:right;color:var(--color-cost)">'+i.p+'</td></tr>';});
+    h+='</table><div style="margin-top:8px;padding:10px;background:rgba(239,68,68,0.06);border-radius:var(--radius);color:var(--color-defect);font-size:13px">🔍 '+s1.root+'</div>';
+    h+='<div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="goStep(1)">← 上一步</button> <button class="btn btn-primary btn-sm" onclick="goStep(3)">下一步 →</button></div>';
+  }else if(s===3){
+    h='<div style="margin-bottom:12px"><strong>Step3: 根因定位 (置信度排序+证据链)</strong> '+s1.desc+'<span style="margin-left:8px;font-size:11px;color:#a78bfa;background:rgba(139,92,246,0.12);padding:2px 8px;border-radius:4px">AI</span></div>';
+    // 柱状图
+    h+='<div id="c3" style="height:'+(s1.causes.length*45+30)+'px;margin-bottom:12px"></div>';
+    // 证据链卡片
+    s1.causes.forEach(function(c){var col=c.c>=85?'var(--color-defect)':c.c>=70?'var(--color-warning)':'var(--color-hold)';h+='<div style="padding:10px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+col+'"><div style="display:flex;justify-content:space-between;font-size:13px"><strong>'+c.n+'</strong><span style="color:'+col+'">'+c.c+'% 置信度</span></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+c.detail+'</div><div style="font-size:11px;color:var(--color-hold);margin-top:2px">'+c.ev+'</div></div>';});
+    // AI结果展示或触发按钮
+    if(ai3Result&&ai3Result.ai_analysis){
+      h+='<div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.04);border-radius:var(--radius);border:1px solid rgba(139,92,246,0.2)"><div style="font-size:12px;color:#a78bfa;margin-bottom:6px">AI推理结果:</div><div style="font-size:13px;color:var(--text-secondary)">'+ai3Result.ai_analysis.replace(/##/g,'</div><h4 style="color:var(--text-bright);margin:12px 0 6px;font-size:14px">').replace(/\n/g,'<br>').replace(/<br><br>/g,'</div><br><div style="padding-left:8px">')+'</div></div>';
+    }else if(ai3TraceId){
+      h+='<div style="margin-top:8px;display:flex;gap:8px;align-items:center;padding:8px;background:rgba(139,92,246,0.04);border-radius:var(--radius)"><span style="width:12px;height:12px;border:2px solid var(--border-color);border-top-color:#a78bfa;border-radius:50%;animation:spin .8s linear infinite;display:inline-block"></span><span style="font-size:12px;color:var(--text-muted)">AI推理中(约30-60秒)...</span></div>';
+    }else{
+      h+='<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="triggerAIAnalysis(curScene)" style="background:#8b5cf6;font-size:12px"> 启动AI根因推理</button></div>';
+    }
+    h+='<div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="goStep(2)"> 上一步</button> <button class="btn btn-primary btn-sm" onclick="goStep(4)">下一步</button></div>';
+  }else if(s===4){
+    h='<div style="margin-bottom:12px"><strong>Step4: AI改善推荐 (三级方案+ROI)</strong> '+s1.desc+'<span style="margin-left:8px;font-size:11px;color:#a78bfa;background:rgba(139,92,246,0.12);padding:2px 8px;border-radius:4px">AI</span></div>';
+    // 三级整改卡片
+    s1.items.forEach(function(i){var cl=i.l.includes('紧急')?'var(--color-defect)':i.l.includes('短期')?'var(--color-warning)':'var(--color-hold)';h+='<div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.02);border-radius:var(--radius);border-left:3px solid '+cl+'"><div style="font-size:13px;font-weight:600">'+i.l+'</div><div style="font-size:13px;color:var(--text-primary);margin:4px 0">'+i.a+'</div><div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted)"><span> '+i.c+'</span><span> '+i.p+'</span><span> '+i.s+'</span></div></div>';});
+    if(ai4Result&&ai4Result.ai_analysis){
+      h+='<div style="margin-top:12px;padding:12px;background:rgba(16,185,129,0.04);border-radius:var(--radius);border:1px solid rgba(16,185,129,0.2)"><div style="font-size:12px;color:#10b981;margin-bottom:6px">AI推理结果:</div><div style="font-size:13px;color:var(--text-secondary)">'+ai4Result.ai_analysis.replace(/##/g,'</div><h4 style="color:var(--text-bright);margin:12px 0 6px;font-size:14px">').replace(/\n/g,'<br>').replace(/<br><br>/g,'</div><br><div style="padding-left:8px">')+'</div></div>';
+    }else if(ai4TraceId){
+      h+='<div style="margin-top:8px;display:flex;gap:8px;align-items:center;padding:8px;background:rgba(16,185,129,0.04);border-radius:var(--radius)"><span style="width:12px;height:12px;border:2px solid var(--border-color);border-top-color:#10b981;border-radius:50%;animation:spin .8s linear infinite;display:inline-block"></span><span style="font-size:12px;color:var(--text-muted)">AI推理中(约30-60秒)...</span></div>';
+    }else{
+      h+='<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="triggerAIAnalysis(curScene)" style="background:#10b981;font-size:12px"> 启动AI改善推荐</button></div>';
+    }
+    h+='<div style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="goStep(3)"> 上一步</button> <button class="btn btn-primary btn-sm" onclick="goStep(5)">下一步</button></div>';
+  }else{
+    h='<div style="margin-bottom:12px"><strong>Step5: 成本闭环</strong> — '+s1.desc+'</div>';
+    var maxV=Math.max(...s1.bk.map(function(b){return b.v;}));
+    h+='<div class="waterfall-row">';
+    s1.bk.forEach(function(b){var pct=Math.max(8,b.v/maxV*100);h+='<div class="waterfall-col"><div class="waterfall-val" style="color:var(--color-bear)">'+b.v+'</div><div class="waterfall-bar" style="height:'+pct+'px;background:linear-gradient(0deg,#059669,#34d399)"></div><div class="waterfall-label">'+b.n+'</div></div>';});
+    h+='</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0">';
+    h+='<div style="padding:12px;text-align:center;background:rgba(239,68,68,0.08);border-radius:var(--radius)"><div style="font-size:11px;color:var(--text-muted)">整改前</div><div style="font-size:20px;font-weight:700;color:var(--color-defect)">'+s1.before+'</div><div style="font-size:11px;color:var(--text-muted)">'+s1.unit+'</div></div>';
+    h+='<div style="padding:12px;text-align:center;background:rgba(59,130,246,0.08);border-radius:var(--radius)"><div style="font-size:11px;color:var(--text-muted)">月节省</div><div style="font-size:20px;font-weight:700;color:var(--color-hold)">'+s1.ms+'万</div><div style="font-size:11px;color:var(--text-muted)">回本 '+s1.pd+'天</div></div>';
+    h+='<div style="padding:12px;text-align:center;background:rgba(16,185,129,0.08);border-radius:var(--radius)"><div style="font-size:11px;color:var(--text-muted)">整改后</div><div style="font-size:20px;font-weight:700;color:var(--color-bear)">'+s1.after+'</div><div style="font-size:11px;color:var(--text-muted)">'+s1.unit+'</div></div>';
+    h+='</div>';
+    h+='<button class="btn btn-outline btn-sm" onclick="goStep(4)">← 上一步</button>';
+  }
+  el.innerHTML=h;
+  if(s===1)setTimeout(function(){try{echarts.init(document.getElementById('c1'))['setOption']({backgroundColor:'transparent',tooltip:{trigger:'axis'},xAxis:{type:'category',data:s1.labels,axisLabel:{color:'#64748b'},axisLine:{lineStyle:{color:'#1e2d4a'}}},yAxis:{type:'value',axisLabel:{color:'#64748b'},splitLine:{lineStyle:{color:'#1e2d4a'}}},series:[{name:'实际',type:'line',data:s1.actual,smooth:true,lineStyle:{color:'#ef4444',width:2},areaStyle:{color:'rgba(239,68,68,0.08)'}},{name:'基准',type:'line',data:s1.base,smooth:true,lineStyle:{color:'#22c55e',width:1.5,type:'dashed'}},{name:'上限',type:'line',data:s1.limit,smooth:true,lineStyle:{color:'#f59e0b',width:1,type:'dotted'},symbol:'none'}]});}catch(e){}})
+  if(s===3)setTimeout(function(){try{var ec=s1.causes.map(function(c){return{value:c.c,name:c.n};});var cr=['#ef4444','#f59e0b','#3b82f6'];echarts.init(document.getElementById('c3')).setOption({backgroundColor:'transparent',tooltip:{trigger:'item',formatter:'{b}: {c}%'},grid:{left:80,right:30,top:5,bottom:5},xAxis:{type:'value',max:100,axisLabel:{color:'#64748b'},splitLine:{lineStyle:{color:'#1e2d4a'}}},yAxis:{type:'category',data:ec.map(function(e){return e.name;}).reverse(),axisLabel:{color:'#94a3b8',fontSize:12},axisLine:{lineStyle:{color:'#1e2d4a'}}},series:[{type:'bar',data:ec.map(function(e,i){return{value:e.value,itemStyle:{color:cr[i%3]}};}).reverse(),barWidth:20,label:{show:true,position:'right',color:'#94a3b8',fontSize:12,formatter:'{c}%'}}]});}catch(e){}},200);
+}
+
+async function loadDash(){
+  var di=await fswApi(API+'/dashboard').then(function(r){return r.json()});
+  var inds=di.data?.indicators||[];
+  var grid=document.getElementById('kpiGrid');
+  grid.innerHTML=inds.map(function(ind){
+    var level=ind.alert_level||'info',col=level==='danger'?'var(--color-defect)':level==='warning'?'var(--color-warning)':'var(--color-bear)';
+    var val=ind.current_value,vs=val!=null?val+' '+(ind.unit||''):'--';
+    var thr='';if(ind.threshold_upper&&ind.threshold_lower)thr='阈值: '+ind.threshold_lower+'~'+ind.threshold_upper+(ind.unit||'');
+    var dot=ind.anomaly?'<div class="anomaly-dot"></div>':'';
+    return '<div class="kpi-card" id="kpi-'+ind.indicator_code+'">'+dot+'<div class="kpi-label">'+ind.indicator_name+'</div><div class="kpi-value" style="color:'+col+'">'+vs+'</div><div class="kpi-threshold">'+thr+'</div></div>';
+  }).join('');
+
+  var ov=await fswApi(API+'/overview').then(function(r){return r.json()});
+  var bd=ov.data?.cost_breakdown||[];
+  if(bd.length){var cm={'电耗':'#f97316','煤气耗':'#ef4444','原料成本':'#3b82f6','人工成本':'#22c55e','维修费用':'#f59e0b','其他':'#64748b'};echarts.init(document.getElementById('pieChart'))['setOption']({backgroundColor:'transparent',tooltip:{trigger:'item',formatter:'{b}: {c}万元({d}%)'},series:[{type:'pie',radius:['30%','65%'],data:bd.map(function(b){return{value:b.value,name:b.name,itemStyle:{color:cm[b.name]||'#64748b'}};}),label:{color:'#94a3b8',fontSize:12},labelLine:{lineStyle:{color:'#1e2d4a'}}}]});}
+  var tr=ov.data?.cost_trend||{};
+  if(tr.labels){echarts.init(document.getElementById('trendChart'))['setOption']({backgroundColor:'transparent',tooltip:{trigger:'axis'},legend:{data:['实际','预算'],textStyle:{color:'#94a3b8'}},xAxis:{type:'category',data:tr.labels,axisLabel:{color:'#64748b'},axisLine:{lineStyle:{color:'#1e2d4a'}}},yAxis:{type:'value',axisLabel:{color:'#64748b'},splitLine:{lineStyle:{color:'#1e2d4a'}}},series:[{name:'实际',type:'line',data:tr.actual,smooth:true,lineStyle:{color:'#f97316'},areaStyle:{color:'rgba(249,115,22,0.1)'}},{name:'预算',type:'line',data:tr.budget,smooth:true,lineStyle:{color:'#3b82f6',type:'dashed'}}]});}
+  document.getElementById('apiBadge').textContent='✅ FSW_COST';
+}
+loadDash();
+window.addEventListener('resize',function(){document.querySelectorAll('[id$=Chart]').forEach(function(e){var i=echarts.getInstanceByDom(e);if(i)i.resize();});});
+</script>
+</body>
+</html>
